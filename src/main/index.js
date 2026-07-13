@@ -41,12 +41,13 @@ function createTray() {
 
 function createAuthWindow() {
   const iconPath = path.join(__dirname, 'logo.png');
-
+ 
   authWindow = new BrowserWindow({
     width: 450,
     height: 680,
     frame: false,
     resizable: false,
+    show: false,
     icon: iconPath,
     title: 'ZONIX',
     webPreferences: {
@@ -57,24 +58,28 @@ function createAuthWindow() {
     },
     backgroundColor: '#0b0f19'
   });
-
+ 
   authWindow.loadFile(path.join(__dirname, '..', 'renderer', 'dist', 'auth.html'));
   authWindow.setMenu(null);
+  authWindow.once('ready-to-show', () => {
+    authWindow.show();
+  });
   authWindow.on('closed', () => { authWindow = null; });
 }
 
 function createMainWindow() {
   // Remove the File/Edit/View/Help menu bar globally
   Menu.setApplicationMenu(null);
-
+ 
   const iconPath = path.join(__dirname, 'logo.png');
-
+ 
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     icon: iconPath,
     title: 'ZONIX // System Control Node',
     frame: false,
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'index.js'),
       contextIsolation: true,
@@ -83,13 +88,15 @@ function createMainWindow() {
     },
     backgroundColor: '#0b0f19'
   });
-
+ 
   mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'dist', 'index.html'));
   
   mainWindow.once('ready-to-show', () => {
+    mainWindow.maximize();
+    mainWindow.show();
     mainWindow.focus();
   });
-
+ 
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
@@ -119,18 +126,19 @@ function createSyncWindow(orgId, userId, targetUrl) {
   try {
     targetDomain = new URL(targetUrl).hostname;
   } catch (e) {}
-
+ 
   prefetchData = {
     cookiesPromise: fetchCookiesForSession(orgId, userId, targetDomain, token),
     proxyPromise: getActiveProxyForOrg(orgId, token)
   };
-
+ 
   syncWindow = new BrowserWindow({
     width: 500,
     height: 480,
     frame: false,
     transparent: false,
     resizable: false,
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'index.js'),
       contextIsolation: true,
@@ -139,12 +147,13 @@ function createSyncWindow(orgId, userId, targetUrl) {
     },
     backgroundColor: '#0b0f19'
   });
-
+ 
   syncWindow.loadFile(path.join(__dirname, '..', 'renderer', 'dist', 'sync.html'));
   syncWindow.webContents.on('did-finish-load', () => {
+    syncWindow.show();
     syncWindow.webContents.send('sync:start', { orgId, userId, targetUrl });
   });
-
+ 
   return syncWindow;
 }
 
@@ -806,34 +815,67 @@ function registerIPC() {
   });
 
   ipcMain.handle('session:kill', async (event, sessionId) => {
+    const sessionData = activeSessions.get(sessionId);
+    if (sessionData) {
+      const userOrgId = store.get('orgId');
+      const userRole = store.get('userRole');
+      if (userRole !== 'SUPER_ADMIN' && sessionData.orgId !== userOrgId) {
+        throw new Error('Access denied to session');
+      }
+    }
     killSession(sessionId);
     return { success: true };
   });
 
   ipcMain.handle('session:restart', async (event, sessionId) => {
+    const sessionData = activeSessions.get(sessionId);
+    if (sessionData) {
+      const userOrgId = store.get('orgId');
+      const userRole = store.get('userRole');
+      if (userRole !== 'SUPER_ADMIN' && sessionData.orgId !== userOrgId) {
+        throw new Error('Access denied to session');
+      }
+    }
     await restartSession(sessionId);
     return { success: true };
   });
 
   ipcMain.handle('sessions:list', () => {
     const sessions = [];
+    const userOrgId = store.get('orgId');
+    const userRole = store.get('userRole');
+
     activeSessions.forEach((data, id) => {
-      sessions.push({
-        sessionId: id,
-        orgId: data.orgId,
-        userId: data.userId,
-        proxyNode: data.proxyString,
-        status: 'ACTIVE',
-        uptime: Math.floor((Date.now() - data.startTime) / 1000)
-      });
+      if (userRole === 'SUPER_ADMIN' || data.orgId === userOrgId) {
+        sessions.push({
+          sessionId: id,
+          orgId: data.orgId,
+          userId: data.userId,
+          proxyNode: data.proxyString,
+          status: 'ACTIVE',
+          uptime: Math.floor((Date.now() - data.startTime) / 1000)
+        });
+      }
     });
     return sessions;
   });
 
   ipcMain.handle('session:cookies:capture', async (event, args) => {
     const { targetUrl, orgId, userId } = args || {};
-    const targetOrgId = orgId || store.get('orgId');
-    const targetUserId = userId || store.get('userId');
+    
+    const userOrgId = store.get('orgId');
+    const userRole = store.get('userRole');
+    const userUserId = store.get('userId');
+
+    let targetOrgId = userOrgId;
+    let targetUserId = userUserId;
+
+    if (userRole === 'SUPER_ADMIN' && orgId) {
+      targetOrgId = orgId;
+    }
+    if ((userRole === 'SUPER_ADMIN' || userRole === 'ADMIN' || userRole === 'MANAGER') && userId) {
+      targetUserId = userId;
+    }
 
     if (!targetUrl) {
       throw new Error('targetUrl is required for session capture');
@@ -999,7 +1041,7 @@ function setupAutoUpdater() {
 
   function createUpdateWindow(newVersion) {
     if (updateWindow) return;
-
+ 
     updateWindow = new BrowserWindow({
       width: 460,
       height: 560,
@@ -1008,6 +1050,7 @@ function setupAutoUpdater() {
       resizable: false,
       alwaysOnTop: true,
       center: true,
+      show: false,
       title: 'ZONIX Update',
       webPreferences: {
         preload: path.join(__dirname, '..', 'preload', 'index.js'),
@@ -1017,18 +1060,18 @@ function setupAutoUpdater() {
       },
       backgroundColor: '#0b0f1e'
     });
-
+ 
     updateWindow.loadFile(path.join(__dirname, '..', 'renderer', 'dist', 'update.html'));
     updateWindow.setMenu(null);
-    updateWindow.webContents.openDevTools({ mode: 'detach' });
-
+ 
     updateWindow.webContents.on('did-finish-load', () => {
+      updateWindow.show();
       updateWindow.webContents.send('update:info', {
         newVersion,
         currentVersion: app.getVersion()
       });
     });
-
+ 
     updateWindow.on('closed', () => { updateWindow = null; });
   }
 
