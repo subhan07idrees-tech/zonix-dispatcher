@@ -90,6 +90,7 @@ export default function LogsPage() {
             <tr className="border-b border-zonix-border text-xs text-zonix-text-dim font-mono">
               <th className="py-2 px-3 text-left">TIMESTAMP</th>
               <th className="py-2 px-3 text-left">USER</th>
+              <th className="py-2 px-3 text-left">ORG</th>
               <th className="py-2 px-3 text-left">ACTION</th>
               <th className="py-2 px-3 text-left">RESOURCE</th>
               <th className="py-2 px-3 text-left">DETAILS</th>
@@ -117,7 +118,10 @@ export default function LogsPage() {
                     {new Date(log.createdAt).toLocaleString()}
                   </td>
                   <td className="py-2 px-3 text-xs font-mono text-zonix-text">
-                    {log.user?.username || 'system'}
+                    {log.user?.username || log.details?.username || 'system'}
+                  </td>
+                  <td className="py-2 px-3 text-xs font-mono text-zonix-purple">
+                    {log.org?.displayName || log.org?.name || '—'}
                   </td>
                   <td className={`py-2 px-3 text-xs font-mono ${getActionColor(log.action)}`}>
                     {log.action}
@@ -133,7 +137,9 @@ export default function LogsPage() {
                     {log.ipAddress || '—'}
                   </td>
                   <td className="py-2 px-3 text-xs font-mono text-zonix-cyan">
-                    {log.details?.city && log.details?.state ? `${log.details.city}, ${log.details.state}` : 'Local/Loopback'}
+                    {log.details?.city && log.details?.state
+                      ? `${log.details.city}, ${log.details.state}`
+                      : '—'}
                   </td>
                 </tr>
               ))
