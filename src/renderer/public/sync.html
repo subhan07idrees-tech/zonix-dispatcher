@@ -209,9 +209,12 @@
       try {
         const { targetUrl } = data;
         await runSync();
-        api.launchDispatch({
+        const result = await api.launchDispatch({
           targetUrl: targetUrl || 'https://app.example.com'
         });
+        if (result && !result.success) {
+          throw new Error(result.error || 'Launch failed');
+        }
       } catch (err) {
         console.error('Sync failed:', err);
         const lastEl = document.getElementById(steps[steps.length - 1]);

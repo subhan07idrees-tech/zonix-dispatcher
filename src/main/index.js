@@ -60,6 +60,7 @@ function createAuthWindow() {
 
   authWindow.loadFile(path.join(__dirname, '..', 'renderer', 'dist', 'auth.html'));
   authWindow.setMenu(null);
+  authWindow.webContents.openDevTools({ mode: 'detach' });
   authWindow.on('closed', () => { authWindow = null; });
 }
 
@@ -90,6 +91,7 @@ function createMainWindow() {
     mainWindow.focus();
   });
 
+  mainWindow.webContents.openDevTools({ mode: 'detach' });
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
@@ -145,6 +147,7 @@ function createSyncWindow(orgId, userId, targetUrl) {
     syncWindow.webContents.send('sync:start', { orgId, userId, targetUrl });
   });
 
+  syncWindow.webContents.openDevTools({ mode: 'detach' });
   return syncWindow;
 }
 
@@ -1016,6 +1019,7 @@ function setupAutoUpdater() {
 
     updateWindow.loadFile(path.join(__dirname, '..', 'renderer', 'dist', 'update.html'));
     updateWindow.setMenu(null);
+    updateWindow.webContents.openDevTools({ mode: 'detach' });
 
     updateWindow.webContents.on('did-finish-load', () => {
       updateWindow.webContents.send('update:info', {
