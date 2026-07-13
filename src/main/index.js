@@ -620,6 +620,10 @@ async function getActiveProxyForOrg(orgId, token) {
 }
 
 function registerIPC() {
+  ipcMain.on('get-app-version', (event) => {
+    event.returnValue = app.getVersion();
+  });
+
   ipcMain.on('get-session-org-id', (event) => {
     event.returnValue = store.get('orgId') || 'zonix-system';
   });

@@ -129,7 +129,9 @@ function Sidebar({ collapsed, onToggle }) {
               <p className="text-sm font-bold tracking-widest" style={{ background: 'linear-gradient(90deg,#3b82f6,#7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 ZONIX
               </p>
-              <p className="text-[9px] text-zonix-text-muted tracking-widest font-mono">v1.0.0 // SECURE</p>
+              <p className="text-[9px] text-zonix-text-muted tracking-widest font-mono">
+                v{window.zonixAPI?.appVersion || '1.1.0'} // SECURE
+              </p>
             </div>
           </div>
         )}

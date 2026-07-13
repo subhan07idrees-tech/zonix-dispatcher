@@ -92,7 +92,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-[10px] text-zonix-text-muted mt-6 font-mono">
-          ZONIX DISPATCHER v1.0 // ENCRYPTED CHANNEL
+          ZONIX DISPATCHER v{window.zonixAPI?.appVersion || '1.1.0'} // ENCRYPTED CHANNEL
         </p>
       </div>
     </div>

@@ -18,7 +18,8 @@ contextBridge.exposeInMainWorld('zonixAPI', {
   minimizeWindow: () => ipcRenderer.send('window:minimize'),
   maximizeWindow: () => ipcRenderer.send('window:maximize'),
   closeWindow: () => ipcRenderer.send('window:close'),
-  logoutDispatcher: () => ipcRenderer.invoke('dispatch:logout')
+  logoutDispatcher: () => ipcRenderer.invoke('dispatch:logout'),
+  appVersion: ipcRenderer.sendSync('get-app-version')
 });
 
 // Separate API for the update window
