@@ -1,13 +1,13 @@
 {
   "name": "zonix",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "ZONIX - Multi-Tenant Secure Dispatcher System",
   "main": "src/main/index.js",
   "scripts": {
     "start": "electron .",
     "dev": "concurrently \"npm run dev:backend\" \"wait-on http://localhost:4000/api/health && electron .\"",
     "dev:backend": "cd src/backend && npm run dev",
-    "build": "electron-builder",
+    "build": "npm run build --prefix src/renderer && electron-builder",
     "build:backend": "cd src/backend && npm run build",
     "lint": "eslint src/",
     "migrate": "cd src/backend && npx prisma migrate dev",
