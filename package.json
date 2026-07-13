@@ -1,6 +1,6 @@
 {
   "name": "zonix",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "ZONIX - Multi-Tenant Secure Dispatcher System",
   "main": "src/main/index.js",
   "scripts": {
@@ -50,8 +50,9 @@
       "icon": "assets/icon.png"
     },
     "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
       "shortcutName": "ZONIX Dispatcher",
