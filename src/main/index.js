@@ -1073,11 +1073,6 @@ function setupAutoUpdater() {
   autoUpdater.checkForUpdates().catch((err) => {
     console.error('[Updater] Failed to check for updates:', err.message);
   });
-
-  // Force open the update window on startup for testing/visual verification
-  setTimeout(() => {
-    createUpdateWindow('1.0.6');
-  }, 1500);
 }
 
 

@@ -364,10 +364,6 @@
 
     // Receive download progress from main (real update mode)
     window.electronAPI?.onDownloadProgress?.((pct) => {
-      if (simulationInterval) {
-        clearInterval(simulationInterval);
-        simulationInterval = null;
-      }
       handleProgress(Math.round(pct));
     });
 
@@ -381,6 +377,7 @@
       el.classList.add('visible');
     }
 
+    // Clean all steps
     function markAllDone() {
       for (let i = 0; i <= 5; i++) {
         const el = document.getElementById('step' + i);
@@ -404,21 +401,6 @@
 
       // Call startUpdate to trigger real check
       window.electronAPI?.startUpdate?.();
-
-      // Start simulation loop (falls back/runs test animation in 1.5 seconds if no real progress events)
-      let simulatedPct = 0;
-      simulationInterval = setInterval(() => {
-        simulatedPct += 2;
-        if (simulatedPct > 100) {
-          clearInterval(simulationInterval);
-          // If update actually finished, it restarts. Otherwise we simulate completion
-          setTimeout(() => {
-            window.electronAPI?.quitApp?.();
-          }, 800);
-          return;
-        }
-        handleProgress(simulatedPct);
-      }, 80);
     }
 
     function doQuit() {
