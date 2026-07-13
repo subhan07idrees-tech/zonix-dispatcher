@@ -21,6 +21,14 @@ contextBridge.exposeInMainWorld('zonixAPI', {
   logoutDispatcher: () => ipcRenderer.invoke('dispatch:logout')
 });
 
+// Separate API for the update window
+contextBridge.exposeInMainWorld('electronAPI', {
+  onUpdateInfo: (callback) => ipcRenderer.on('update:info', (_, data) => callback(data)),
+  onDownloadProgress: (callback) => ipcRenderer.on('update:progress', (_, pct) => callback(pct)),
+  startUpdate: () => ipcRenderer.send('update:start'),
+  quitApp: () => ipcRenderer.send('update:quit')
+});
+
 (function injectFingerprintOverrides() {
   const FP_CONFIG = {
     ORG_FP_SEED: 42069,

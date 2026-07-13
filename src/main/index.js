@@ -991,62 +991,89 @@ function setupAutoUpdater() {
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
 
+  let updateWindow = null;
+
+  function createUpdateWindow(newVersion) {
+    if (updateWindow) return;
+
+    updateWindow = new BrowserWindow({
+      width: 460,
+      height: 560,
+      frame: false,
+      transparent: false,
+      resizable: false,
+      alwaysOnTop: true,
+      center: true,
+      title: 'ZONIX Update',
+      webPreferences: {
+        preload: path.join(__dirname, '..', 'preload', 'index.js'),
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: false
+      },
+      backgroundColor: '#0b0f1e'
+    });
+
+    updateWindow.loadFile(path.join(__dirname, '..', 'renderer', 'dist', 'update.html'));
+    updateWindow.setMenu(null);
+
+    updateWindow.webContents.on('did-finish-load', () => {
+      updateWindow.webContents.send('update:info', {
+        newVersion,
+        currentVersion: app.getVersion()
+      });
+    });
+
+    updateWindow.on('closed', () => { updateWindow = null; });
+  }
+
+  // IPC handlers for update window buttons
+  ipcMain.on('update:start', () => {
+    autoUpdater.downloadUpdate();
+  });
+
+  ipcMain.on('update:quit', () => {
+    app.quit();
+  });
+
   autoUpdater.on('checking-for-update', () => {
     console.log('[Updater] Checking for update...');
   });
 
   autoUpdater.on('update-available', (info) => {
     console.log('[Updater] Update available:', info.version);
-    const response = dialog.showMessageBoxSync({
-      type: 'info',
-      buttons: ['Update Now', 'Quit'],
-      defaultId: 0,
-      title: 'Update Available',
-      message: `A new version (${info.version}) of Zonix Dispatcher is available.`,
-      detail: 'This update is required to continue using the application.'
-    });
-
-    if (response === 0) {
-      dialog.showMessageBox({
-        type: 'info',
-        title: 'Downloading Update',
-        message: 'The update is downloading in the background. The app will restart automatically once finished.',
-        buttons: ['OK']
-      });
-      autoUpdater.downloadUpdate();
-    } else {
-      app.quit();
-    }
+    createUpdateWindow(info.version);
   });
 
-  autoUpdater.on('update-not-available', (info) => {
-    console.log('[Updater] Update not available.');
+  autoUpdater.on('update-not-available', () => {
+    console.log('[Updater] Up to date.');
   });
 
   autoUpdater.on('error', (err) => {
-    console.error('[Updater] Error in auto-updater:', err.message);
+    console.error('[Updater] Error:', err.message);
   });
 
   autoUpdater.on('download-progress', (progressObj) => {
-    console.log(`[Updater] Download speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.percent}%`);
+    const pct = progressObj.percent || 0;
+    console.log(`[Updater] Downloading: ${Math.round(pct)}%`);
+    if (updateWindow && !updateWindow.isDestroyed()) {
+      updateWindow.webContents.send('update:progress', pct);
+    }
   });
 
-  autoUpdater.on('update-downloaded', (info) => {
-    console.log('[Updater] Update downloaded; installing...');
-    dialog.showMessageBoxSync({
-      type: 'info',
-      title: 'Update Ready',
-      message: 'The update has been downloaded. The application will now restart to apply the update.',
-      buttons: ['Restart Now']
-    });
+  autoUpdater.on('update-downloaded', () => {
+    console.log('[Updater] Download complete. Installing...');
+    if (updateWindow && !updateWindow.isDestroyed()) {
+      updateWindow.close();
+    }
     autoUpdater.quitAndInstall();
   });
 
-  // Start update check
   autoUpdater.checkForUpdates().catch((err) => {
     console.error('[Updater] Failed to check for updates:', err.message);
   });
 }
+
 
 app.whenReady().then(() => {
   proxyManager = new ProxyManager();
