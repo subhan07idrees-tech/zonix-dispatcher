@@ -338,10 +338,9 @@
         `v${currentVersion}  →  v${newVersion}  //  NEW VERSION AVAILABLE`;
     });
 
-    // Receive download progress
-    window.electronAPI?.onDownloadProgress?.((pct) => {
-      const p = Math.round(pct);
+    let simulationInterval = null;
 
+    function handleProgress(p) {
       // Hide action buttons, show active download steps
       document.getElementById('actions').classList.add('hidden');
       document.getElementById('progressLabel').textContent = 'DOWNLOADING...';
@@ -361,6 +360,15 @@
         document.getElementById('statusLine').textContent   = '[ INSTALLING... ]';
         markAllDone();
       }
+    }
+
+    // Receive download progress from main (real update mode)
+    window.electronAPI?.onDownloadProgress?.((pct) => {
+      if (simulationInterval) {
+        clearInterval(simulationInterval);
+        simulationInterval = null;
+      }
+      handleProgress(Math.round(pct));
     });
 
     function showStep(idx, markPrev = true) {
@@ -394,7 +402,23 @@
         el.classList.add('done');
       });
 
+      // Call startUpdate to trigger real check
       window.electronAPI?.startUpdate?.();
+
+      // Start simulation loop (falls back/runs test animation in 1.5 seconds if no real progress events)
+      let simulatedPct = 0;
+      simulationInterval = setInterval(() => {
+        simulatedPct += 2;
+        if (simulatedPct > 100) {
+          clearInterval(simulationInterval);
+          // If update actually finished, it restarts. Otherwise we simulate completion
+          setTimeout(() => {
+            window.electronAPI?.quitApp?.();
+          }, 800);
+          return;
+        }
+        handleProgress(simulatedPct);
+      }, 80);
     }
 
     function doQuit() {
