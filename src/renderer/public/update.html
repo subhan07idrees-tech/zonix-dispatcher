@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ZONIX Update</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -18,297 +18,384 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      -webkit-app-region: no-drag;
     }
 
     .card {
-      width: 420px;
-      background: linear-gradient(145deg, #0f1629 0%, #0b0f1e 100%);
-      border: 1px solid rgba(0, 212, 255, 0.15);
-      border-radius: 20px;
-      padding: 36px;
+      width: 480px;
+      background: linear-gradient(160deg, #0e1428 0%, #080c18 100%);
+      border: 1px solid rgba(100, 100, 255, 0.12);
+      border-radius: 22px;
+      padding: 40px 36px 36px;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 0 60px rgba(0, 212, 255, 0.08), 0 24px 80px rgba(0, 0, 0, 0.6);
-      animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow:
+        0 0 0 1px rgba(120, 80, 255, 0.08),
+        0 30px 80px rgba(0, 0, 0, 0.7),
+        0 0 60px rgba(80, 40, 200, 0.06);
+      animation: cardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px) scale(0.97); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
+    @keyframes cardIn {
+      from { opacity: 0; transform: scale(0.93) translateY(16px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
     }
 
-    /* Animated glow border */
-    .card::before {
-      content: '';
+    /* Ambient glow orbs */
+    .orb {
       position: absolute;
-      inset: -1px;
-      border-radius: 20px;
-      padding: 1px;
-      background: linear-gradient(135deg, rgba(0,212,255,0.4), transparent 50%, rgba(139,92,246,0.3));
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
+      border-radius: 50%;
       pointer-events: none;
+      filter: blur(60px);
     }
-
-    /* Background particle shimmer */
-    .card::after {
-      content: '';
-      position: absolute;
-      top: -60px; right: -60px;
+    .orb-1 {
       width: 200px; height: 200px;
-      background: radial-gradient(circle, rgba(0, 212, 255, 0.06) 0%, transparent 70%);
-      border-radius: 50%;
-      pointer-events: none;
+      background: rgba(99, 60, 255, 0.12);
+      top: -60px; right: -40px;
+    }
+    .orb-2 {
+      width: 150px; height: 150px;
+      background: rgba(0, 200, 255, 0.07);
+      bottom: -40px; left: -30px;
     }
 
-    .logo-wrap {
+    /* App icon */
+    .icon-wrap {
       display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 28px;
-    }
-
-    .logo-icon {
-      width: 44px;
-      height: 44px;
-      background: linear-gradient(135deg, #00d4ff, #7c3aed);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
       justify-content: center;
-      font-size: 20px;
-      box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.3); }
-      50%       { box-shadow: 0 0 35px rgba(0, 212, 255, 0.6); }
-    }
-
-    .logo-text { color: #fff; font-size: 18px; font-weight: 700; letter-spacing: 2px; }
-    .logo-sub  { color: rgba(0, 212, 255, 0.6); font-size: 10px; letter-spacing: 3px; font-weight: 500; }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(0, 212, 255, 0.08);
-      border: 1px solid rgba(0, 212, 255, 0.2);
-      border-radius: 20px;
-      padding: 4px 12px;
-      color: #00d4ff;
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 1.5px;
-      margin-bottom: 16px;
-    }
-
-    .badge-dot {
-      width: 6px; height: 6px;
-      background: #00d4ff;
-      border-radius: 50%;
-      animation: blink 1.2s ease-in-out infinite;
-    }
-
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.3; }
-    }
-
-    h1 {
-      color: #fff;
-      font-size: 22px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      line-height: 1.3;
-    }
-
-    h1 span { color: #00d4ff; }
-
-    .subtitle {
-      color: rgba(255,255,255,0.45);
-      font-size: 12px;
-      line-height: 1.6;
-      margin-bottom: 28px;
-    }
-
-    .version-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 28px;
-      padding: 12px 16px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 10px;
-    }
-
-    .version-label { color: rgba(255,255,255,0.35); font-size: 11px; letter-spacing: 1px; }
-    .version-arrow { color: rgba(255,255,255,0.2); font-size: 14px; }
-    .version-new   { color: #00d4ff; font-size: 13px; font-weight: 700; font-family: monospace; }
-
-    /* Progress bar (hidden until downloading) */
-    .progress-wrap {
-      display: none;
       margin-bottom: 20px;
     }
 
-    .progress-wrap.visible { display: block; }
+    .app-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #1a1040 0%, #2a1060 50%, #1a2060 100%);
+      border: 1px solid rgba(140, 80, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      box-shadow:
+        0 0 30px rgba(100, 60, 255, 0.3),
+        0 0 60px rgba(100, 60, 255, 0.1),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+      animation: iconPulse 2.5s ease-in-out infinite;
+    }
 
-    .progress-label {
+    @keyframes iconPulse {
+      0%, 100% { box-shadow: 0 0 30px rgba(100, 60, 255, 0.3), 0 0 60px rgba(100, 60, 255, 0.1), inset 0 1px 0 rgba(255,255,255,0.06); }
+      50%       { box-shadow: 0 0 50px rgba(100, 60, 255, 0.5), 0 0 90px rgba(100, 60, 255, 0.2), inset 0 1px 0 rgba(255,255,255,0.06); }
+    }
+
+    .title {
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      color: #c8b8ff;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: rgba(180, 170, 220, 0.45);
+      font-size: 12px;
+      margin-bottom: 28px;
+    }
+
+    /* Terminal steps */
+    .steps {
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: rgba(180, 170, 220, 0.3);
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: opacity 0.4s ease, transform 0.4s ease, color 0.4s ease;
+    }
+
+    .step.visible {
+      opacity: 1;
+      transform: translateX(0);
+      color: rgba(180, 170, 220, 0.7);
+    }
+
+    .step.done {
+      color: rgba(140, 100, 255, 0.9);
+    }
+
+    .step-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(100, 80, 200, 0.3);
+      flex-shrink: 0;
+      transition: background 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    .step.visible .step-dot {
+      background: rgba(140, 100, 255, 0.6);
+      box-shadow: 0 0 8px rgba(140, 100, 255, 0.4);
+      animation: dotPulse 0.8s ease-in-out infinite;
+    }
+
+    .step.done .step-dot {
+      background: #7c4dff;
+      box-shadow: 0 0 10px rgba(124, 77, 255, 0.6);
+      animation: none;
+    }
+
+    @keyframes dotPulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
+    /* Progress bar */
+    .progress-section {
+      margin-top: 4px;
+    }
+
+    .progress-meta {
       display: flex;
       justify-content: space-between;
-      color: rgba(255,255,255,0.4);
-      font-size: 11px;
+      align-items: center;
       margin-bottom: 8px;
     }
 
-    .progress-bar {
-      height: 4px;
-      background: rgba(255,255,255,0.06);
-      border-radius: 4px;
+    .progress-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: rgba(140, 100, 255, 0.6);
+      letter-spacing: 1px;
+    }
+
+    .progress-pct {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: rgba(140, 100, 255, 0.6);
+    }
+
+    .progress-track {
+      height: 3px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 3px;
       overflow: hidden;
+      position: relative;
     }
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #00d4ff, #7c3aed);
-      border-radius: 4px;
+      background: linear-gradient(90deg, #5b21b6, #7c3aed, #6d28d9, #00d4ff);
+      background-size: 200% 100%;
+      border-radius: 3px;
       width: 0%;
-      transition: width 0.3s ease;
+      transition: width 0.5s ease;
+      animation: shimmer 2s linear infinite;
     }
 
-    .btn-update {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #00d4ff 0%, #0099bb 100%);
-      border: none;
-      border-radius: 12px;
-      color: #000;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      cursor: pointer;
-      margin-bottom: 10px;
-      transition: all 0.2s ease;
+    @keyframes shimmer {
+      0%   { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+
+    /* Action buttons — shown only before download starts */
+    .actions {
+      margin-top: 24px;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: 0 4px 20px rgba(0, 212, 255, 0.25);
+      gap: 10px;
+      transition: opacity 0.3s ease;
     }
 
-    .btn-update:hover {
+    .actions.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .btn-install {
+      flex: 1;
+      padding: 12px;
+      background: linear-gradient(135deg, #5b21b6, #7c3aed);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 20px rgba(124, 77, 255, 0.3);
+      text-transform: uppercase;
+    }
+
+    .btn-install:hover {
       transform: translateY(-1px);
-      box-shadow: 0 8px 30px rgba(0, 212, 255, 0.4);
-    }
-
-    .btn-update:active { transform: translateY(0); }
-    .btn-update:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
+      box-shadow: 0 8px 30px rgba(124, 77, 255, 0.5);
     }
 
     .btn-quit {
-      width: 100%;
-      padding: 12px;
+      padding: 12px 20px;
       background: transparent;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 12px;
-      color: rgba(255,255,255,0.3);
-      font-size: 12px;
-      font-weight: 500;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      color: rgba(255,255,255,0.2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 1px;
       cursor: pointer;
       transition: all 0.2s ease;
-      letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
 
     .btn-quit:hover {
-      border-color: rgba(255,255,255,0.15);
-      color: rgba(255,255,255,0.5);
-      background: rgba(255,255,255,0.03);
+      border-color: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.4);
     }
 
-    .status-text {
+    .status-line {
       text-align: center;
-      color: rgba(0, 212, 255, 0.7);
-      font-size: 11px;
-      margin-top: 14px;
-      min-height: 16px;
-      letter-spacing: 0.5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: rgba(140, 100, 255, 0.5);
+      margin-top: 12px;
+      min-height: 14px;
+      letter-spacing: 1px;
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="logo-wrap">
-      <div class="logo-icon">⚡</div>
-      <div>
-        <div class="logo-text">ZONIX</div>
-        <div class="logo-sub">DISPATCHER</div>
-      </div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div class="icon-wrap">
+      <div class="app-icon">⚡</div>
     </div>
 
-    <div class="badge"><span class="badge-dot"></span> UPDATE AVAILABLE</div>
+    <div class="title">UPDATE AVAILABLE</div>
+    <div class="subtitle" id="versionLine">Fetching update info...</div>
 
-    <h1>New Version <span id="newVersion">—</span><br>is Ready</h1>
-    <p class="subtitle">
-      A required update is available. Install it now to continue using ZONIX Dispatcher with the latest features and fixes.
-    </p>
-
-    <div class="version-row">
-      <span class="version-label">CURRENT</span>
-      <span id="currentVersion" style="color:rgba(255,255,255,0.3);font-size:13px;font-family:monospace;">—</span>
-      <span class="version-arrow">→</span>
-      <span class="version-label">NEW</span>
-      <span class="version-new" id="newVersion2">—</span>
+    <div class="steps" id="steps">
+      <div class="step" id="step0"><span class="step-dot"></span>[CHECKING REMOTE VERSION...]</div>
+      <div class="step" id="step1"><span class="step-dot"></span>[VERIFYING PACKAGE INTEGRITY...]</div>
+      <div class="step" id="step2"><span class="step-dot"></span>[PREPARING SECURE DOWNLOAD...]</div>
+      <div class="step" id="step3"><span class="step-dot"></span>[DOWNLOADING UPDATE PACKAGE...]</div>
+      <div class="step" id="step4"><span class="step-dot"></span>[VALIDATING INSTALLATION...]</div>
+      <div class="step" id="step5"><span class="step-dot"></span>[READY TO INSTALL]</div>
     </div>
 
-    <div class="progress-wrap" id="progressWrap">
-      <div class="progress-label">
-        <span>Downloading update...</span>
-        <span id="progressPct">0%</span>
+    <div class="progress-section">
+      <div class="progress-meta">
+        <span class="progress-label" id="progressLabel">AWAITING CONFIRMATION</span>
+        <span class="progress-pct" id="progressPct"></span>
       </div>
-      <div class="progress-bar">
+      <div class="progress-track">
         <div class="progress-fill" id="progressFill"></div>
       </div>
     </div>
 
-    <button class="btn-update" id="btnUpdate" onclick="doUpdate()">
-      ⬇ INSTALL UPDATE
-    </button>
-    <button class="btn-quit" id="btnQuit" onclick="doQuit()">
-      Quit Application
-    </button>
+    <div class="actions" id="actions">
+      <button class="btn-install" id="btnInstall" onclick="startInstall()">⬇ INSTALL UPDATE</button>
+      <button class="btn-quit" onclick="doQuit()">QUIT</button>
+    </div>
 
-    <div class="status-text" id="statusText"></div>
+    <div class="status-line" id="statusLine"></div>
   </div>
 
   <script>
-    // Receive update info from main process
+    let currentVersion = '';
+    let newVersion = '';
+    let animationDone = false;
+
+    // Animate the first 3 steps on load (pre-download phase)
+    const preSteps = [0, 1, 2];
+    const delays = [200, 700, 1300];
+
+    preSteps.forEach((idx, i) => {
+      setTimeout(() => {
+        const el = document.getElementById('step' + idx);
+        el.classList.add('visible');
+        if (i < preSteps.length - 1) {
+          setTimeout(() => el.classList.replace('visible', 'done'), 500);
+        }
+      }, delays[i]);
+    });
+
+    // Receive version info from main
     window.electronAPI?.onUpdateInfo?.((info) => {
-      document.getElementById('newVersion').textContent  = info.newVersion;
-      document.getElementById('newVersion2').textContent = info.newVersion;
-      document.getElementById('currentVersion').textContent = info.currentVersion;
+      newVersion     = info.newVersion;
+      currentVersion = info.currentVersion;
+      document.getElementById('versionLine').textContent =
+        `v${currentVersion}  →  v${newVersion}  //  NEW VERSION AVAILABLE`;
     });
 
     // Receive download progress
     window.electronAPI?.onDownloadProgress?.((pct) => {
       const p = Math.round(pct);
-      document.getElementById('progressWrap').classList.add('visible');
+
+      // Hide action buttons, show active download steps
+      document.getElementById('actions').classList.add('hidden');
+      document.getElementById('progressLabel').textContent = 'DOWNLOADING...';
       document.getElementById('progressFill').style.width = p + '%';
       document.getElementById('progressPct').textContent  = p + '%';
-      document.getElementById('statusText').textContent   = 'Downloading... please wait';
-      document.getElementById('btnUpdate').disabled = true;
+      document.getElementById('statusLine').textContent   = `[ ${p}% COMPLETE ]`;
+
+      // Reveal download steps progressively
+      if (p >= 5)  showStep(3);
+      if (p >= 50) showStep(4, false);
+      if (p >= 95) {
+        showStep(5, false);
+        document.getElementById('progressLabel').textContent = 'FINALIZING...';
+      }
+      if (p >= 100) {
+        document.getElementById('progressLabel').textContent = 'COMPLETE — RESTARTING';
+        document.getElementById('statusLine').textContent   = '[ INSTALLING... ]';
+        markAllDone();
+      }
     });
 
-    function doUpdate() {
-      document.getElementById('statusText').textContent = 'Starting download...';
-      document.getElementById('btnUpdate').disabled = true;
+    function showStep(idx, markPrev = true) {
+      if (markPrev && idx > 0) {
+        const prev = document.getElementById('step' + (idx - 1));
+        prev.classList.remove('visible');
+        prev.classList.add('done');
+      }
+      const el = document.getElementById('step' + idx);
+      el.classList.add('visible');
+    }
+
+    function markAllDone() {
+      for (let i = 0; i <= 5; i++) {
+        const el = document.getElementById('step' + i);
+        el.classList.remove('visible');
+        el.classList.add('done');
+      }
+    }
+
+    function startInstall() {
+      document.getElementById('btnInstall').disabled = true;
+      document.getElementById('btnInstall').textContent = 'DOWNLOADING...';
+      document.getElementById('progressLabel').textContent = 'INITIALIZING...';
+      document.getElementById('statusLine').textContent = '[ STARTING DOWNLOAD ]';
+
+      // Mark pre-steps as done
+      [0, 1, 2].forEach(i => {
+        const el = document.getElementById('step' + i);
+        el.classList.remove('visible');
+        el.classList.add('done');
+      });
+
       window.electronAPI?.startUpdate?.();
     }
 
