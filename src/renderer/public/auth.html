@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZONIX</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #0b0f19;
+      color: #f3f4f6;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      overflow: hidden;
+    }
+    .title-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 36px;
+      background: #0b0f19;
+      display: flex;
+      align-items: center;
+      padding: 0 0 0 16px;
+      -webkit-app-region: drag;
+      justify-content: space-between;
+      border-bottom: 1px solid #1a2333;
+    }
+    .title-bar-logo {
+      width: 16px;
+      height: 16px;
+      object-fit: contain;
+    }
+    .title-bar-text {
+      font-size: 12px;
+      font-weight: 600;
+      color: #9ca3af;
+      font-family: system-ui, sans-serif;
+      letter-spacing: 0.5px;
+    }
+    .window-controls {
+      display: flex;
+      margin-left: auto;
+      height: 100%;
+      -webkit-app-region: no-drag;
+    }
+    .win-btn {
+      width: 46px;
+      height: 36px;
+      background: transparent;
+      border: none;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s, color 0.2s;
+    }
+    .win-btn:hover {
+      background: #1b2336;
+      color: #ffffff;
+    }
+    .win-btn-close:hover {
+      background: #ef4444;
+      color: #ffffff;
+    }
+    .card {
+      width: 100%;
+      max-width: 440px;
+      padding: 40px;
+      background: #121824;
+      border: 1px solid #222d42;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      text-align: center;
+      margin-top: 36px;
+    }
+    .logo-container {
+      width: 64px;
+      height: 64px;
+      background: #0b0f19;
+      border: 1px solid #222d42;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px auto;
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+    }
+    .logo-img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: #9ca3af;
+      margin-bottom: 32px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #9ca3af;
+      margin-bottom: 8px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      background: #1b2336;
+      border: 1px solid #222d42;
+      border-radius: 8px;
+      color: #f3f4f6;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-group input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+    .form-group input::placeholder {
+      color: #4b5563;
+    }
+    .remember-me {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+    .remember-me input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #3b82f6;
+      cursor: pointer;
+    }
+    .remember-me label {
+      font-size: 13px;
+      color: #9ca3af;
+      cursor: pointer;
+    }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #3b82f6;
+      border: none;
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    }
+    .btn:hover {
+      background: #2563eb;
+    }
+    .btn:active {
+      transform: scale(0.98);
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #f87171;
+      display: none;
+      text-align: left;
+    }
+    .error.visible {
+      display: block;
+    }
+    .footer {
+      font-size: 11px;
+      color: #4b5563;
+      margin-top: 24px;
+    }
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #ffffff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="title-bar">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <img src="./logo.png" alt="ZONIX" class="title-bar-logo">
+      <span class="title-bar-text">ZONIX</span>
+    </div>
+    <div class="window-controls">
+      <button class="win-btn" type="button" onclick="api.minimizeWindow()">
+        <svg viewBox="0 0 10 10" width="10" height="10"><path d="M0 5h10v1H0z" fill="currentColor"/></svg>
+      </button>
+      <button class="win-btn win-btn-close" type="button" onclick="api.closeWindow()">
+        <svg viewBox="0 0 10 10" width="10" height="10"><path d="M0 0l10 10M10 0L0 10" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="logo-container">
+      <img src="./logo.png" alt="ZONIX" class="logo-img" />
+    </div>
+    <h1 class="title">ZONIX</h1>
+    <p class="subtitle">Secure dispatcher gateway</p>
+
+    <div id="error" class="error"></div>
+
+    <form id="authForm">
+      <div class="form-group">
+        <label>Organization ID</label>
+        <input type="text" id="orgId" placeholder="Your organization name">
+      </div>
+      <div class="form-group">
+        <label>Username / Email</label>
+        <input type="text" id="userId" placeholder="you@example.com" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="••••••••" required>
+      </div>
+      
+      <div class="remember-me">
+        <input type="checkbox" id="rememberMe">
+        <label for="rememberMe">Remember me</label>
+      </div>
+
+      <button type="submit" class="btn" id="submitBtn">Sign In</button>
+    </form>
+
+    <div class="footer">Secure connection over HTTPS</div>
+  </div>
+
+  <script>
+    const api = window.zonixAPI;
+
+    // Pre-populate remembered credentials on load
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const rememberMe = await api.getConfig('rememberMe');
+        if (rememberMe) {
+          document.getElementById('rememberMe').checked = true;
+          const savedOrg = await api.getConfig('rememberedOrgId');
+          const savedUser = await api.getConfig('rememberedUserId');
+          if (savedOrg) document.getElementById('orgId').value = savedOrg;
+          if (savedUser) document.getElementById('userId').value = savedUser;
+        }
+      } catch (err) {
+        console.error('[Auth] Failed to load remembered credentials:', err);
+      }
+    });
+
+    document.getElementById('authForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const btn = document.getElementById('submitBtn');
+      const errorEl = document.getElementById('error');
+
+      const orgId = document.getElementById('orgId').value.trim();
+      const userId = document.getElementById('userId').value.trim();
+      const password = document.getElementById('password').value;
+      const rememberMe = document.getElementById('rememberMe').checked;
+
+      if (!userId || !password) {
+        errorEl.textContent = 'User ID and Password are required';
+        errorEl.classList.add('visible');
+        return;
+      }
+
+      if (!orgId && userId !== 'superadmin') {
+        errorEl.textContent = 'Organization ID required for standard users';
+        errorEl.classList.add('visible');
+        return;
+      }
+
+      btn.innerHTML = '<span class="spinner"></span>Signing In...';
+      btn.disabled = true;
+      errorEl.classList.remove('visible');
+
+      try {
+        const result = await api.login({ orgId, userId, password });
+        if (result.success) {
+          // Persist or clear credentials
+          if (rememberMe) {
+            await api.setConfig('rememberMe', true);
+            await api.setConfig('rememberedOrgId', orgId);
+            await api.setConfig('rememberedUserId', userId);
+          } else {
+            await api.setConfig('rememberMe', false);
+            await api.setConfig('rememberedOrgId', '');
+            await api.setConfig('rememberedUserId', '');
+          }
+
+          api.setConfig('orgId', result.orgId);
+          api.setConfig('userId', userId);
+          document.body.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0b0f19;color:#3b82f6;font-family:system-ui,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.5px;">
+              <span class="spinner" style="border-color:#3b82f6;border-top-color:transparent;width:18px;height:18px;margin-right:12px;"></span>
+              SESSION ESTABLISHED // PROVISIONING...
+            </div>
+          `;
+        } else {
+          errorEl.textContent = result.error || 'Authentication failed';
+          errorEl.classList.add('visible');
+          btn.innerHTML = 'Sign In';
+          btn.disabled = false;
+        }
+      } catch (err) {
+        errorEl.textContent = 'Connection error: ' + err.message;
+        errorEl.classList.add('visible');
+        btn.innerHTML = 'Sign In';
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

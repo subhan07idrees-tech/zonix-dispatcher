@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZONIX // Session Sync</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #0b0f19;
+      color: #f3f4f6;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      user-select: none;
+    }
+    .card {
+      width: 100%;
+      max-width: 440px;
+      padding: 32px;
+      background: #121824;
+      border: 1px solid #222d42;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      text-align: center;
+    }
+    .header {
+      margin-bottom: 28px;
+    }
+    .logo-img {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 16px rgba(59, 130, 246, 0.4));
+    }
+    .header h1 {
+      font-size: 14px;
+      color: #3b82f6;
+      letter-spacing: 2px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .header p {
+      font-size: 11px;
+      color: #6b7280;
+      letter-spacing: 1px;
+    }
+    .steps {
+      list-style: none;
+      text-align: left;
+      margin-bottom: 24px;
+    }
+    .steps li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      font-size: 12px;
+      color: #4b5563;
+      transition: color 0.3s;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+    .steps li.active {
+      color: #3b82f6;
+    }
+    .steps li.done {
+      color: #9ca3af;
+    }
+    .steps li.error {
+      color: #ef4444;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #222d42;
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .steps li.active .status-dot {
+      background: #3b82f6;
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+      animation: pulse 1.5s infinite;
+    }
+    .steps li.done .status-dot {
+      background: #3b82f6;
+    }
+    .steps li.error .status-dot {
+      background: #ef4444;
+    }
+    .spinner {
+      width: 8px;
+      height: 8px;
+      border: 1.5px solid #3b82f6;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    .progress {
+      height: 3px;
+      background: #1b2336;
+      border-radius: 1.5px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #7c3aed);
+      transition: width 0.5s ease;
+      width: 0%;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <img src="./logo.png" alt="ZONIX" class="logo-img" />
+      <h1>PROVISIONING SESSION</h1>
+      <p>Establishing secure dispatch channel</p>
+    </div>
+
+    <ul class="steps" id="steps">
+      <li id="step-1" class="active">
+        <div class="spinner" id="dot-1"></div>
+        <span>[PROVISIONING ENCRYPTED COOKIE STREAM...]</span>
+      </li>
+      <li id="step-2">
+        <div class="status-dot" id="dot-2"></div>
+        <span>[LOCKING STATIC HARDWARE PROFILE...]</span>
+      </li>
+      <li id="step-3">
+        <div class="status-dot" id="dot-3"></div>
+        <span>[ROUTING TARGET UPSTREAM PROXY ROUTE...]</span>
+      </li>
+      <li id="step-4">
+        <div class="status-dot" id="dot-4"></div>
+        <span>[INJECTING ANTI-FINGERPRINT LAYER...]</span>
+      </li>
+      <li id="step-5">
+        <div class="status-dot" id="dot-5"></div>
+        <span>[INITIALIZING SECURE VIEWPORT...]</span>
+      </li>
+    </ul>
+
+    <div class="progress">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+  </div>
+
+  <script>
+    const api = window.zonixAPI;
+    const steps = [
+      'step-1', 'step-2', 'step-3', 'step-4', 'step-5'
+    ];
+    let currentStep = 0;
+
+    function updateStep(stepIndex, status) {
+      const el = document.getElementById(steps[stepIndex]);
+      const dot = document.getElementById('dot-' + (stepIndex + 1));
+
+      el.className = status;
+      if (status === 'active') {
+        dot.className = 'spinner';
+        dot.innerHTML = '';
+      } else if (status === 'done') {
+        dot.className = 'status-dot';
+      } else if (status === 'error') {
+        dot.className = 'status-dot';
+      }
+    }
+
+    function setProgress(percent) {
+      document.getElementById('progressBar').style.width = percent + '%';
+    }
+
+    async function runSync() {
+      for (let i = 0; i < steps.length; i++) {
+        currentStep = i;
+        updateStep(i, 'active');
+        setProgress((i / steps.length) * 100);
+
+        await new Promise(resolve => setTimeout(resolve, 15 + Math.random() * 15));
+        updateStep(i, 'done');
+      }
+
+      setProgress(100);
+
+      const lastEl = document.getElementById(steps[steps.length - 1]);
+      lastEl.querySelector('span').textContent = '[SESSION READY]';
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    api.onSyncStart(async (data) => {
+      try {
+        const { targetUrl } = data;
+        await runSync();
+        api.launchDispatch({
+          targetUrl: targetUrl || 'https://app.example.com'
+        });
+      } catch (err) {
+        console.error('Sync failed:', err);
+        const lastEl = document.getElementById(steps[steps.length - 1]);
+        updateStep(steps.length - 1, 'error');
+        lastEl.querySelector('span').textContent = '[SYNC FAILED: ' + err.message + ']';
+      }
+    });
+  </script>
+</body>
+</html>

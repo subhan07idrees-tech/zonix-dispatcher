@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #222d42 #0b0f19;
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: #0b0f19;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: #222d42;
+    border-radius: 3px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: #31415e;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: #0b0f19;
+    color: #f3f4f6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+  }
+}
+
+@layer components {
+  .zonix-card {
+    @apply bg-zonix-surface border border-zonix-border rounded-lg;
+  }
+
+  .zonix-card-hover {
+    @apply zonix-card hover:border-zonix-cyan/30 transition-all duration-200;
+  }
+
+  .zonix-input {
+    @apply bg-zonix-surface-light border border-zonix-border rounded px-3 py-2 text-sm text-zonix-text 
+           focus:outline-none focus:border-zonix-cyan focus:ring-1 focus:ring-zonix-cyan/30
+           placeholder:text-zonix-text-muted transition-colors;
+  }
+
+  .zonix-btn {
+    @apply px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .zonix-btn-primary {
+    @apply zonix-btn bg-zonix-cyan text-white shadow-lg shadow-zonix-cyan/20
+           hover:bg-zonix-cyan-dim hover:shadow-zonix-cyan/35 hover:-translate-y-0.5 active:translate-y-0;
+  }
+
+  .zonix-btn-danger {
+    @apply zonix-btn bg-zonix-crimson text-white shadow-lg shadow-zonix-crimson/20
+           hover:bg-zonix-crimson-dim hover:shadow-zonix-crimson/35 hover:-translate-y-0.5 active:translate-y-0;
+  }
+
+  .zonix-btn-ghost {
+    @apply zonix-btn bg-transparent text-zonix-text-dim border border-zonix-border/40
+           hover:bg-zonix-surface-light hover:text-zonix-text;
+  }
+
+  .zonix-badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium font-mono;
+  }
+
+  .zonix-badge-active {
+    @apply zonix-badge bg-zonix-cyan/10 text-zonix-cyan border border-zonix-cyan/20;
+  }
+
+  .zonix-badge-error {
+    @apply zonix-badge bg-zonix-crimson/10 text-zonix-crimson border border-zonix-crimson/20;
+  }
+
+  .zonix-badge-warning {
+    @apply zonix-badge bg-yellow-500/10 text-yellow-400 border border-yellow-500/20;
+  }
+
+  .zonix-badge-purple {
+    @apply zonix-badge bg-zonix-purple/10 text-zonix-purple border border-zonix-purple/20;
+  }
+
+  .zonix-glow-cyan {
+    @apply shadow-[0_0_15px_rgba(0,240,255,0.15)];
+  }
+
+  .zonix-glow-purple {
+    @apply shadow-[0_0_15px_rgba(112,0,255,0.15)];
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+}
+
+@layer utilities {
+  .text-gradient-cyan {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-zonix-cyan to-cyan-400;
+  }
+
+  .text-gradient-purple {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-zonix-purple to-purple-400;
+  }
+
+  .border-gradient {
+    border-image: linear-gradient(135deg, #00F0FF, #7000FF) 1;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

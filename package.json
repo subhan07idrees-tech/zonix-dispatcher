@@ -1,0 +1,67 @@
+{
+  "name": "zonix",
+  "version": "1.0.0",
+  "description": "ZONIX - Multi-Tenant Secure Dispatcher System",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "concurrently \"npm run dev:backend\" \"wait-on http://localhost:4000/api/health && electron .\"",
+    "dev:backend": "cd src/backend && npm run dev",
+    "build": "electron-builder",
+    "build:backend": "cd src/backend && npm run build",
+    "lint": "eslint src/",
+    "migrate": "cd src/backend && npx prisma migrate dev",
+    "seed": "cd src/backend && node prisma/seed.js"
+  },
+  "dependencies": {
+    "crypto-js": "^4.2.0",
+    "electron-store": "^8.1.0",
+    "electron-updater": "^6.8.9",
+    "node-fetch": "^2.7.0",
+    "uuid": "^9.0.0",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^28.1.0",
+    "electron-builder": "^24.9.1",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.zonix.dispatcher",
+    "productName": "ZONIX Dispatcher",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "subhan07idrees-tech",
+        "repo": "zonix-dispatcher"
+      }
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/main/**/*",
+      "src/preload/**/*",
+      "src/renderer/dist/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "ZONIX Dispatcher",
+      "runAfterFinish": true
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}

@@ -1,0 +1,252 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { Building2, Plus, Edit2, Trash2, X, Users, Radio, Wifi } from 'lucide-react';
+
+function OrgModal({ org, onClose, onSave }) {
+  const [form, setForm] = useState({
+    name: org?.name || '',
+    displayName: org?.displayName || '',
+    maxUsers: org?.maxUsers || 50,
+    maxSessions: org?.maxSessions || 25,
+    targetUrl: org?.targetUrl || ''
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    await onSave(form);
+    setLoading(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="zonix-card w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-sm font-semibold tracking-wide">
+            {org ? 'EDIT ORGANIZATION' : 'NEW ORGANIZATION'}
+          </h3>
+          <button onClick={onClose} className="text-zonix-text-dim hover:text-zonix-text">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs text-zonix-text-dim mb-1 font-mono">NAME</label>
+            <input
+              type="text"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="zonix-input w-full font-mono"
+              required
+              disabled={!!org}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-zonix-text-dim mb-1 font-mono">DISPLAY NAME</label>
+            <input
+              type="text"
+              value={form.displayName}
+              onChange={(e) => setForm({ ...form, displayName: e.target.value })}
+              className="zonix-input w-full"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-zonix-text-dim mb-1 font-mono">MAX USERS</label>
+              <input
+                type="number"
+                value={form.maxUsers}
+                onChange={(e) => setForm({ ...form, maxUsers: parseInt(e.target.value) })}
+                className="zonix-input w-full font-mono"
+                min="1"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-zonix-text-dim mb-1 font-mono">MAX SESSIONS</label>
+              <input
+                type="number"
+                value={form.maxSessions}
+                onChange={(e) => setForm({ ...form, maxSessions: parseInt(e.target.value) })}
+                className="zonix-input w-full font-mono"
+                min="1"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs text-zonix-text-dim mb-1 font-mono">TARGET URL</label>
+            <input
+              type="url"
+              value={form.targetUrl}
+              onChange={(e) => setForm({ ...form, targetUrl: e.target.value })}
+              className="zonix-input w-full font-mono"
+              placeholder="https://app.example.com"
+            />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose} className="zonix-btn-ghost flex-1">
+              Cancel
+            </button>
+            <button type="submit" disabled={loading} className="zonix-btn-primary flex-1">
+              {loading ? 'SAVING...' : 'SAVE'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default function OrganizationsPage() {
+  const { authFetch, user, showConfirm, showAlert } = useAuth();
+  const [orgs, setOrgs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingOrg, setEditingOrg] = useState(null);
+
+  useEffect(() => { fetchOrgs(); }, []);
+
+  const fetchOrgs = async () => {
+    try {
+      const res = await authFetch('/organizations');
+      const data = await res.json();
+      setOrgs(data.organizations || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async (form) => {
+    try {
+      let res;
+      if (editingOrg) {
+        res = await authFetch(`/organizations/${editingOrg.id}`, {
+          method: 'PUT',
+          body: JSON.stringify(form)
+        });
+      } else {
+        res = await authFetch('/organizations', {
+          method: 'POST',
+          body: JSON.stringify(form)
+        });
+      }
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        showAlert(errorData.error || 'Failed to save organization', 'ERROR', 'error');
+        return;
+      }
+
+      setShowModal(false);
+      setEditingOrg(null);
+      fetchOrgs();
+    } catch (err) {
+      console.error(err);
+      showAlert(err.message || 'An error occurred', 'ERROR', 'error');
+    }
+  };
+
+  const handleDelete = async (orgId) => {
+    const confirmed = await showConfirm('Delete this organization? This is irreversible.', 'DELETE ORGANIZATION', 'error');
+    if (!confirmed) return;
+    try {
+      await authFetch(`/organizations/${orgId}`, { method: 'DELETE' });
+      fetchOrgs();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const statusColors = {
+    ACTIVE: 'zonix-badge-active',
+    SUSPENDED: 'zonix-badge-warning',
+    DEACTIVATED: 'zonix-badge-error'
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold tracking-wide">ORGANIZATIONS</h2>
+          <p className="text-xs text-zonix-text-dim mt-0.5">Manage multi-tenant organization boundaries</p>
+        </div>
+        {user?.role === 'SUPER_ADMIN' && (
+          <button onClick={() => { setEditingOrg(null); setShowModal(true); }} className="zonix-btn-primary">
+            <Plus className="w-4 h-4 mr-1.5 inline" /> NEW ORG
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="w-6 h-6 border-2 border-zonix-cyan border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-xs text-zonix-text-dim font-mono">LOADING...</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {orgs.map((org) => (
+            <div key={org.id} className="zonix-card-hover p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-zonix-purple/10 border border-zonix-purple/30 flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-zonix-purple" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold">{org.displayName}</h3>
+                    <p className="text-xs text-zonix-text-dim font-mono">{org.name} // {org.id?.substring(0, 8)}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-6 text-xs font-mono text-zonix-text-dim">
+                  <div className="flex items-center gap-1.5">
+                    <Users className="w-3 h-3" />
+                    <span>{org._count?.users || 0}/{org.maxUsers}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Radio className="w-3 h-3" />
+                    <span>{org._count?.sessions || 0}/{org.maxSessions}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Wifi className="w-3 h-3" />
+                    <span>{org._count?.proxyNodes || 0}</span>
+                  </div>
+                  <span className={statusColors[org.status] || 'zonix-badge'}>
+                    {org.status}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => { setEditingOrg(org); setShowModal(true); }}
+                      className="p-1.5 hover:bg-zonix-surface-light rounded text-zonix-text-dim hover:text-zonix-cyan"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    {user?.role === 'SUPER_ADMIN' && (
+                      <button
+                        onClick={() => handleDelete(org.id)}
+                        className="p-1.5 hover:bg-zonix-surface-light rounded text-zonix-text-dim hover:text-zonix-crimson"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showModal && (
+        <OrgModal
+          org={editingOrg}
+          onClose={() => { setShowModal(false); setEditingOrg(null); }}
+          onSave={handleSave}
+        />
+      )}
+    </div>
+  );
+}
