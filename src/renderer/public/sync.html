@@ -10,154 +10,241 @@
       padding: 0;
       box-sizing: border-box;
     }
+
     body {
-      background: #0b0f19;
+      background: transparent;
       color: #f3f4f6;
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
       user-select: none;
+      -webkit-app-region: no-drag;
     }
+
     .card {
-      width: 100%;
-      max-width: 440px;
-      padding: 32px;
-      background: #121824;
-      border: 1px solid #222d42;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      width: 440px;
+      padding: 40px 36px 36px;
+      background: linear-gradient(160deg, #0e1428 0%, #080c18 100%);
+      border: 1px solid rgba(100, 100, 255, 0.12);
+      border-radius: 22px;
+      box-shadow:
+        0 0 0 1px rgba(120, 80, 255, 0.08),
+        0 30px 80px rgba(0, 0, 0, 0.7),
+        0 0 60px rgba(80, 40, 200, 0.06);
       text-align: center;
+      position: relative;
+      overflow: hidden;
+      animation: cardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: scale(0.95) translateY(12px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* Ambient glow orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(60px);
+    }
+    .orb-1 {
+      width: 180px; height: 180px;
+      background: rgba(99, 60, 255, 0.1);
+      top: -40px; right: -30px;
+    }
+    .orb-2 {
+      width: 130px; height: 130px;
+      background: rgba(0, 200, 255, 0.06);
+      bottom: -30px; left: -25px;
+    }
+
     .header {
-      margin-bottom: 28px;
+      margin-bottom: 32px;
+      position: relative;
+      z-index: 2;
     }
-    .logo-img {
-      width: 52px;
-      height: 52px;
-      object-fit: contain;
-      border-radius: 12px;
-      margin-bottom: 12px;
-      filter: drop-shadow(0 0 16px rgba(59, 130, 246, 0.4));
+
+    .logo-container {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #1a1040 0%, #2a1060 50%, #1a2060 100%);
+      border: 1px solid rgba(140, 80, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 16px auto;
+      box-shadow:
+        0 0 25px rgba(100, 60, 255, 0.25),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+      animation: logoPulse 2.5s ease-in-out infinite;
     }
+
+    @keyframes logoPulse {
+      0%, 100% { box-shadow: 0 0 25px rgba(100, 60, 255, 0.25); transform: scale(1); }
+      50%       { box-shadow: 0 0 40px rgba(100, 60, 255, 0.45); transform: scale(1.02); }
+    }
+
     .header h1 {
-      font-size: 14px;
-      color: #3b82f6;
-      letter-spacing: 2px;
-      font-weight: 700;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      color: #c8b8ff;
       text-transform: uppercase;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
+
     .header p {
       font-size: 11px;
-      color: #6b7280;
-      letter-spacing: 1px;
+      color: rgba(180, 170, 220, 0.45);
+      letter-spacing: 0.5px;
     }
+
+    /* Steps list */
     .steps {
       list-style: none;
       text-align: left;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      z-index: 2;
     }
+
     .steps li {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 10px 0;
-      font-size: 12px;
-      color: #4b5563;
-      transition: color 0.3s;
-      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 11px;
+      color: rgba(180, 170, 220, 0.25);
+      opacity: 0.4;
+      transition: all 0.4s ease;
     }
+
     .steps li.active {
-      color: #3b82f6;
+      color: #7c4dff;
+      opacity: 1;
+      text-shadow: 0 0 8px rgba(124, 77, 255, 0.2);
     }
+
     .steps li.done {
-      color: #9ca3af;
+      color: rgba(180, 170, 220, 0.7);
+      opacity: 0.85;
     }
+
     .steps li.error {
       color: #ef4444;
+      opacity: 1;
+      text-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
     }
+
+    /* Pulse light indicator */
     .status-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background: #222d42;
+      background: rgba(255, 255, 255, 0.05);
       flex-shrink: 0;
-      transition: background 0.3s;
+      transition: background 0.4s ease, box-shadow 0.4s ease;
     }
+
     .steps li.active .status-dot {
-      background: #3b82f6;
-      box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
-      animation: pulse 1.5s infinite;
+      background: #7c4dff;
+      box-shadow: 0 0 8px #7c4dff;
+      animation: dotPulse 1s ease-in-out infinite;
     }
+
     .steps li.done .status-dot {
-      background: #3b82f6;
+      background: rgba(124, 77, 255, 0.5);
+      box-shadow: 0 0 4px rgba(124, 77, 255, 0.3);
     }
+
     .steps li.error .status-dot {
       background: #ef4444;
+      box-shadow: 0 0 8px #ef4444;
     }
-    .spinner {
-      width: 8px;
-      height: 8px;
-      border: 1.5px solid #3b82f6;
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
+
+    @keyframes dotPulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
     }
-    .progress {
+
+    /* Progress bar */
+    .progress-section {
+      position: relative;
+      z-index: 2;
+    }
+
+    .progress-track {
       height: 3px;
-      background: #1b2336;
-      border-radius: 1.5px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 3px;
       overflow: hidden;
     }
-    .progress-bar {
+
+    .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #3b82f6, #7c3aed);
-      transition: width 0.5s ease;
+      background: linear-gradient(90deg, #5b21b6, #7c3aed, #00d4ff);
+      background-size: 200% 100%;
+      border-radius: 3px;
       width: 0%;
+      transition: width 0.3s ease;
+      animation: shimmer 2s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% center; }
+      100% { background-position: -200% center; }
     }
   </style>
 </head>
 <body>
   <div class="card">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
     <div class="header">
-      <img src="./logo.png" alt="ZONIX" class="logo-img" />
+      <div class="logo-container">⚡</div>
       <h1>PROVISIONING SESSION</h1>
       <p>Establishing secure dispatch channel</p>
     </div>
 
     <ul class="steps" id="steps">
-      <li id="step-1" class="active">
-        <div class="spinner" id="dot-1"></div>
+      <li id="step-1">
+        <div class="status-dot"></div>
         <span>[PROVISIONING ENCRYPTED COOKIE STREAM...]</span>
       </li>
       <li id="step-2">
-        <div class="status-dot" id="dot-2"></div>
+        <div class="status-dot"></div>
         <span>[LOCKING STATIC HARDWARE PROFILE...]</span>
       </li>
       <li id="step-3">
-        <div class="status-dot" id="dot-3"></div>
+        <div class="status-dot"></div>
         <span>[ROUTING TARGET UPSTREAM PROXY ROUTE...]</span>
       </li>
       <li id="step-4">
-        <div class="status-dot" id="dot-4"></div>
+        <div class="status-dot"></div>
         <span>[INJECTING ANTI-FINGERPRINT LAYER...]</span>
       </li>
       <li id="step-5">
-        <div class="status-dot" id="dot-5"></div>
+        <div class="status-dot"></div>
         <span>[INITIALIZING SECURE VIEWPORT...]</span>
       </li>
     </ul>
 
-    <div class="progress">
-      <div class="progress-bar" id="progressBar"></div>
+    <div class="progress-section">
+      <div class="progress-track">
+        <div class="progress-fill" id="progressBar"></div>
+      </div>
     </div>
   </div>
 
@@ -166,21 +253,10 @@
     const steps = [
       'step-1', 'step-2', 'step-3', 'step-4', 'step-5'
     ];
-    let currentStep = 0;
 
     function updateStep(stepIndex, status) {
       const el = document.getElementById(steps[stepIndex]);
-      const dot = document.getElementById('dot-' + (stepIndex + 1));
-
       el.className = status;
-      if (status === 'active') {
-        dot.className = 'spinner';
-        dot.innerHTML = '';
-      } else if (status === 'done') {
-        dot.className = 'status-dot';
-      } else if (status === 'error') {
-        dot.className = 'status-dot';
-      }
     }
 
     function setProgress(percent) {
@@ -189,20 +265,15 @@
 
     async function runSync() {
       for (let i = 0; i < steps.length; i++) {
-        currentStep = i;
         updateStep(i, 'active');
         setProgress((i / steps.length) * 100);
-
-        await new Promise(resolve => setTimeout(resolve, 15 + Math.random() * 15));
+        await new Promise(resolve => setTimeout(resolve, 600 + Math.random() * 400));
         updateStep(i, 'done');
       }
-
       setProgress(100);
-
       const lastEl = document.getElementById(steps[steps.length - 1]);
       lastEl.querySelector('span').textContent = '[SESSION READY]';
-
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 400));
     }
 
     api.onSyncStart(async (data) => {
