@@ -362,9 +362,19 @@
       }
     }
 
-    // Receive download progress from main (real update mode)
+     // Receive download progress from main (real update mode)
     window.electronAPI?.onDownloadProgress?.((pct) => {
       handleProgress(Math.round(pct));
+    });
+
+    // Receive updater errors from main
+    window.electronAPI?.onUpdateError?.((errText) => {
+      document.getElementById('progressLabel').textContent = 'DOWNLOAD FAILED';
+      document.getElementById('statusLine').style.color = '#ef4444';
+      document.getElementById('statusLine').textContent = `[ ERROR: ${errText} ]`;
+      // Reactivate button so they can retry or quit
+      document.getElementById('btnInstall').disabled = false;
+      document.getElementById('btnInstall').textContent = 'RETRY INSTALL';
     });
 
     function showStep(idx, markPrev = true) {

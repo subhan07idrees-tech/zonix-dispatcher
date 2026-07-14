@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('zonixAPI', {
 contextBridge.exposeInMainWorld('electronAPI', {
   onUpdateInfo: (callback) => ipcRenderer.on('update:info', (_, data) => callback(data)),
   onDownloadProgress: (callback) => ipcRenderer.on('update:progress', (_, pct) => callback(pct)),
+  onUpdateError: (callback) => ipcRenderer.on('update:error', (_, errText) => callback(errText)),
   startUpdate: () => ipcRenderer.send('update:start'),
   quitApp: () => ipcRenderer.send('update:quit')
 });

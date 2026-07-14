@@ -1099,6 +1099,9 @@ function setupAutoUpdater() {
 
   autoUpdater.on('error', (err) => {
     console.error('[Updater] Error:', err.message);
+    if (updateWindow && !updateWindow.isDestroyed()) {
+      updateWindow.webContents.send('update:error', err.message || 'Download failed');
+    }
   });
 
   autoUpdater.on('download-progress', (progressObj) => {
