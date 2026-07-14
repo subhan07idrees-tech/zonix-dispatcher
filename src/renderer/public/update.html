@@ -20,143 +20,113 @@
 
     .card {
       width: 480px;
-      background: linear-gradient(160deg, #0e1428 0%, #080c18 100%);
-      border: 1px solid rgba(100, 100, 255, 0.12);
-      border-radius: 22px;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
       padding: 40px 36px 36px;
       position: relative;
       overflow: hidden;
       box-shadow:
-        0 0 0 1px rgba(120, 80, 255, 0.08),
-        0 30px 80px rgba(0, 0, 0, 0.7),
-        0 0 60px rgba(80, 40, 200, 0.06);
-      animation: cardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        0 1px 3px rgba(0, 0, 0, 0.2),
+        0 20px 50px rgba(0, 0, 0, 0.5);
+      animation: cardIn 0.3s ease-out forwards;
     }
 
     @keyframes cardIn {
-      from { opacity: 0; transform: scale(0.93) translateY(16px); }
+      from { opacity: 0; transform: scale(0.97) translateY(8px); }
       to   { opacity: 1; transform: scale(1) translateY(0); }
     }
 
-    /* Ambient glow orbs */
-    .orb {
-      position: absolute;
-      border-radius: 50%;
-      pointer-events: none;
-      filter: blur(60px);
-    }
-    .orb-1 {
-      width: 200px; height: 200px;
-      background: rgba(99, 60, 255, 0.12);
-      top: -60px; right: -40px;
-    }
-    .orb-2 {
-      width: 150px; height: 150px;
-      background: rgba(0, 200, 255, 0.07);
-      bottom: -40px; left: -30px;
-    }
-
-    /* App icon */
+    /* Minimalist App Icon */
     .icon-wrap {
       display: flex;
       justify-content: center;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
 
     .app-icon {
-      width: 72px;
-      height: 72px;
-      border-radius: 18px;
-      background: linear-gradient(135deg, #1a1040 0%, #2a1060 50%, #1a2060 100%);
-      border: 1px solid rgba(140, 80, 255, 0.3);
+      width: 64px;
+      height: 64px;
+      border-radius: 6px;
+      background: #1e293b;
+      border: 1px solid #334155;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 32px;
-      box-shadow:
-        0 0 30px rgba(100, 60, 255, 0.3),
-        0 0 60px rgba(100, 60, 255, 0.1),
-        inset 0 1px 0 rgba(255,255,255,0.06);
-      animation: iconPulse 2.5s ease-in-out infinite;
-    }
-
-    @keyframes iconPulse {
-      0%, 100% { box-shadow: 0 0 30px rgba(100, 60, 255, 0.3), 0 0 60px rgba(100, 60, 255, 0.1), inset 0 1px 0 rgba(255,255,255,0.06); }
-      50%       { box-shadow: 0 0 50px rgba(100, 60, 255, 0.5), 0 0 90px rgba(100, 60, 255, 0.2), inset 0 1px 0 rgba(255,255,255,0.06); }
+      font-size: 24px;
     }
 
     .title {
       text-align: center;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'Consolas', 'Courier New', monospace;
       font-size: 13px;
       font-weight: 600;
-      letter-spacing: 3px;
-      color: #c8b8ff;
+      letter-spacing: 2px;
+      color: #94a3b8;
       margin-bottom: 6px;
       text-transform: uppercase;
     }
 
     .subtitle {
       text-align: center;
-      color: rgba(180, 170, 220, 0.45);
-      font-size: 12px;
-      margin-bottom: 28px;
+      color: #475569;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 11px;
+      margin-bottom: 32px;
     }
 
     /* Terminal steps */
     .steps {
-      margin-bottom: 24px;
+      margin-bottom: 28px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
 
     .step {
       display: flex;
       align-items: center;
       gap: 12px;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'Consolas', 'Courier New', monospace;
       font-size: 11px;
-      color: rgba(180, 170, 220, 0.3);
+      color: #475569;
       opacity: 0;
-      transform: translateX(-8px);
-      transition: opacity 0.4s ease, transform 0.4s ease, color 0.4s ease;
+      transform: translateX(-4px);
+      transition: opacity 0.3s ease, transform 0.3s ease, color 0.3s ease;
     }
 
     .step.visible {
       opacity: 1;
       transform: translateX(0);
-      color: rgba(180, 170, 220, 0.7);
+      color: #94a3b8;
     }
 
     .step.done {
-      color: rgba(140, 100, 255, 0.9);
+      color: #3b82f6;
     }
 
     .step-dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background: rgba(100, 80, 200, 0.3);
+      background: #334155;
       flex-shrink: 0;
-      transition: background 0.4s ease, box-shadow 0.4s ease;
+      transition: background 0.3s ease;
     }
 
     .step.visible .step-dot {
-      background: rgba(140, 100, 255, 0.6);
-      box-shadow: 0 0 8px rgba(140, 100, 255, 0.4);
-      animation: dotPulse 0.8s ease-in-out infinite;
+      background: #3b82f6;
+      animation: dotPulse 1.2s ease-in-out infinite;
     }
 
     .step.done .step-dot {
-      background: #7c4dff;
-      box-shadow: 0 0 10px rgba(124, 77, 255, 0.6);
+      background: #00ff66;
       animation: none;
     }
 
     @keyframes dotPulse {
       0%, 100% { opacity: 1; }
-      50%       { opacity: 0.4; }
+      50%       { opacity: 0.3; }
     }
 
     /* Progress bar */
@@ -172,47 +142,40 @@
     }
 
     .progress-label {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'Consolas', 'Courier New', monospace;
       font-size: 10px;
-      color: rgba(140, 100, 255, 0.6);
-      letter-spacing: 1px;
+      color: #3b82f6;
+      letter-spacing: 0.5px;
     }
 
     .progress-pct {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'Consolas', 'Courier New', monospace;
       font-size: 10px;
-      color: rgba(140, 100, 255, 0.6);
+      color: #3b82f6;
     }
 
     .progress-track {
-      height: 3px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 3px;
+      height: 4px;
+      background: #1e293b;
+      border-radius: 2px;
       overflow: hidden;
       position: relative;
     }
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #5b21b6, #7c3aed, #6d28d9, #00d4ff);
-      background-size: 200% 100%;
-      border-radius: 3px;
+      background: #3b82f6;
+      border-radius: 2px;
       width: 0%;
-      transition: width 0.5s ease;
-      animation: shimmer 2s linear infinite;
+      transition: width 0.3s ease;
     }
 
-    @keyframes shimmer {
-      0%   { background-position: 200% center; }
-      100% { background-position: -200% center; }
-    }
-
-    /* Action buttons — shown only before download starts */
+    /* Action buttons */
     .actions {
-      margin-top: 24px;
+      margin-top: 28px;
       display: flex;
-      gap: 10px;
-      transition: opacity 0.3s ease;
+      gap: 12px;
+      transition: opacity 0.2s ease;
     }
 
     .actions.hidden {
@@ -222,81 +185,99 @@
 
     .btn-install {
       flex: 1;
-      padding: 12px;
-      background: linear-gradient(135deg, #5b21b6, #7c3aed);
-      border: none;
-      border-radius: 10px;
+      padding: 10px;
+      background: #3b82f6;
+      border: 1px solid #2563eb;
+      border-radius: 4px;
       color: #fff;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'Consolas', 'Courier New', monospace;
       font-size: 11px;
       font-weight: 600;
-      letter-spacing: 1.5px;
+      letter-spacing: 1px;
       cursor: pointer;
       transition: all 0.2s ease;
-      box-shadow: 0 4px 20px rgba(124, 77, 255, 0.3);
       text-transform: uppercase;
     }
 
     .btn-install:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 8px 30px rgba(124, 77, 255, 0.5);
+      background: #2563eb;
+    }
+
+    .btn-install:disabled {
+      background: #1e293b;
+      border-color: #334155;
+      color: #475569;
+      cursor: not-allowed;
     }
 
     .btn-quit {
-      padding: 12px 20px;
+      padding: 10px 20px;
       background: transparent;
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 10px;
-      color: rgba(255,255,255,0.2);
-      font-family: 'JetBrains Mono', monospace;
+      border: 1px solid #334155;
+      border-radius: 4px;
+      color: #64748b;
+      font-family: 'Consolas', 'Courier New', monospace;
       font-size: 11px;
-      letter-spacing: 1px;
       cursor: pointer;
       transition: all 0.2s ease;
       text-transform: uppercase;
     }
 
     .btn-quit:hover {
-      border-color: rgba(255,255,255,0.12);
-      color: rgba(255,255,255,0.4);
+      border-color: #475569;
+      color: #94a3b8;
     }
 
     .status-line {
       text-align: center;
-      font-family: 'JetBrains Mono', monospace;
+      margin-top: 24px;
+      font-family: 'Consolas', 'Courier New', monospace;
       font-size: 10px;
-      color: rgba(140, 100, 255, 0.5);
-      margin-top: 12px;
-      min-height: 14px;
-      letter-spacing: 1px;
+      color: #475569;
+      letter-spacing: 0.5px;
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-
     <div class="icon-wrap">
       <div class="app-icon">⚡</div>
     </div>
 
-    <div class="title">UPDATE AVAILABLE</div>
-    <div class="subtitle" id="versionLine">Fetching update info...</div>
+    <div class="title">Update Available</div>
+    <div class="subtitle" id="versionLine">CHECKING FOR UPDATES...</div>
 
-    <div class="steps" id="steps">
-      <div class="step" id="step0"><span class="step-dot"></span>[CHECKING REMOTE VERSION...]</div>
-      <div class="step" id="step1"><span class="step-dot"></span>[VERIFYING PACKAGE INTEGRITY...]</div>
-      <div class="step" id="step2"><span class="step-dot"></span>[PREPARING SECURE DOWNLOAD...]</div>
-      <div class="step" id="step3"><span class="step-dot"></span>[DOWNLOADING UPDATE PACKAGE...]</div>
-      <div class="step" id="step4"><span class="step-dot"></span>[VALIDATING INSTALLATION...]</div>
-      <div class="step" id="step5"><span class="step-dot"></span>[READY TO INSTALL]</div>
+    <div class="steps">
+      <div class="step" id="step0">
+        <div class="step-dot"></div>
+        <span>[ 01 ] RESOLVING UPDATE FEED</span>
+      </div>
+      <div class="step" id="step1">
+        <div class="step-dot"></div>
+        <span>[ 02 ] PARSING DEBIAN CHECKSUMS</span>
+      </div>
+      <div class="step" id="step2">
+        <div class="step-dot"></div>
+        <span>[ 03 ] INITIALIZING STAGED DOWNLOAD</span>
+      </div>
+      <div class="step" id="step3">
+        <div class="step-dot"></div>
+        <span>[ 04 ] DOWNLOAD COMPLETED</span>
+      </div>
+      <div class="step" id="step4">
+        <div class="step-dot"></div>
+        <span>[ 05 ] VERIFYING INTEGRITY MATCH</span>
+      </div>
+      <div class="step" id="step5">
+        <div class="step-dot"></div>
+        <span>[ 06 ] INJECTING DELTA TARGETS</span>
+      </div>
     </div>
 
     <div class="progress-section">
       <div class="progress-meta">
-        <span class="progress-label" id="progressLabel">AWAITING CONFIRMATION</span>
-        <span class="progress-pct" id="progressPct"></span>
+        <span class="progress-label" id="progressLabel">READY TO DOWNLOAD</span>
+        <span class="progress-pct" id="progressPct">0%</span>
       </div>
       <div class="progress-track">
         <div class="progress-fill" id="progressFill"></div>
@@ -314,7 +295,6 @@
   <script>
     let currentVersion = '';
     let newVersion = '';
-    let animationDone = false;
 
     // Animate the first 3 steps on load (pre-download phase)
     const preSteps = [0, 1, 2];
@@ -337,8 +317,6 @@
       document.getElementById('versionLine').textContent =
         `v${currentVersion}  →  v${newVersion}  //  NEW VERSION AVAILABLE`;
     });
-
-    let simulationInterval = null;
 
     function handleProgress(p) {
       // Hide action buttons, show active download steps

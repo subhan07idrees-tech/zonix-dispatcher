@@ -1076,8 +1076,17 @@ function setupAutoUpdater() {
   }
 
   // IPC handlers for update window buttons
-  ipcMain.on('update:start', () => {
-    autoUpdater.downloadUpdate();
+  ipcMain.on('update:start', async () => {
+    try {
+      console.log('[Updater] start download requested');
+      await autoUpdater.downloadUpdate();
+      console.log('[Updater] downloadUpdate call initiated successfully');
+    } catch (err) {
+      console.error('[Updater] downloadUpdate failed to start:', err.message);
+      if (updateWindow && !updateWindow.isDestroyed()) {
+        updateWindow.webContents.send('update:error', err.message);
+      }
+    }
   });
 
   ipcMain.on('update:quit', () => {
