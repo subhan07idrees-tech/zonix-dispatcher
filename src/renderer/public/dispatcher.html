@@ -86,6 +86,27 @@
       color: #ffffff;
       box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);
     }
+    .refresh-btn {
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .refresh-btn:hover {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+    }
     .win-btn-container {
       display: flex;
       height: 100%;
@@ -201,6 +222,12 @@
     </div>
 
     <div class="control-section">
+      <button class="refresh-btn" id="refreshBtn" title="Refresh Page">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        Refresh
+      </button>
       <button class="signout-btn" id="signOutBtn">Sign Out</button>
       
       <div class="win-btn-container">
@@ -307,6 +334,23 @@
     document.getElementById('signOutBtn').addEventListener('click', async () => {
       if (confirm('Are you sure you want to end this secure session?')) {
         await window.zonixAPI.logoutDispatcher();
+      }
+    });
+
+    // Wire up refresh button
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      const webview = document.getElementById('sessionWebview');
+      if (webview) {
+        const overlay = document.getElementById('loadingOverlay');
+        const loadingText = document.getElementById('loadingText');
+        const spinner = document.querySelector('.spinner');
+        if (overlay) {
+          loadingText.textContent = 'Refreshing target site...';
+          if (spinner) spinner.style.display = 'block';
+          overlay.style.display = 'flex';
+          overlay.style.opacity = '1';
+        }
+        webview.reloadIgnoringCache();
       }
     });
 
