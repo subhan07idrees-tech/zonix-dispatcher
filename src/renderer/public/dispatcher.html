@@ -176,8 +176,7 @@
     </div>
   </div>
 
-  <div class="webview-container">
-    <webview id="sessionWebview" style="display: none;"></webview>
+  <div class="webview-container" id="webviewContainer">
     <div class="loading-overlay" id="loadingOverlay">
       <div class="spinner"></div>
       <span id="loadingText">Connecting to target site...</span>
@@ -192,7 +191,7 @@
 
     console.log('[Dispatcher Wrapper] Initializing webview with:', { partition, url });
 
-    const webview = document.getElementById('sessionWebview');
+    const container = document.getElementById('webviewContainer');
     const overlay = document.getElementById('loadingOverlay');
     const loadingText = document.getElementById('loadingText');
     const sessionBadge = document.getElementById('sessionBadge');
@@ -203,12 +202,22 @@
       sessionBadge.textContent = u.hostname.toUpperCase();
     } catch(e) {}
 
-    // Apply partition and src
+    // Construct the webview dynamically
+    // Enforcing partition before adding to DOM prevents double guest creation lag
+    const webview = document.createElement('webview');
+    webview.id = 'sessionWebview';
+    webview.style.width = '100%';
+    webview.style.height = '100%';
+    webview.style.border = 'none';
+    webview.style.display = 'inline-flex';
+
     if (partition) {
       webview.setAttribute('partition', partition);
     }
     webview.setAttribute('src', url);
-    webview.style.display = 'inline-flex';
+
+    // Insert webview as first child (before loading overlay)
+    container.insertBefore(webview, overlay);
 
     // Show webview once it starts loading and finishes
     webview.addEventListener('did-start-loading', () => {
