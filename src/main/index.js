@@ -309,7 +309,10 @@ async function createDispatchWindow(sessionId, config) {
   });
 
   if (proxyString) {
-    proxyManager.startContinuousHealthCheck(sessionId, proxyString, dispatchWindow);
+    proxyManager.startContinuousHealthCheck(sessionId, proxyString, dispatchWindow, {
+      username: config.proxyUsername,
+      password: config.proxyPassword
+    });
   }
   startHeartbeatMonitor(sessionId);
   broadcastSessionUpdate();

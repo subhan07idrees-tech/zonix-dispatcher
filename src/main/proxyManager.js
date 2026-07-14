@@ -11,12 +11,12 @@ class ProxyManager {
     this.proxyFailures = new Map();
   }
 
-  async checkProxyHealth(proxyString, sessionId) {
+  async checkProxyHealth(proxyString, sessionId, credentials) {
     if (!proxyString) return { status: 'no-proxy', latency: 0 };
 
     try {
       const startTime = Date.now();
-      const url = new URL('http://clients3.google.com/generate_204');
+      const url = new URL('https://clients3.google.com/generate_204'); // Secure HTTPS request
       
       // Get isolated session for health checks and set the proxy rules
       const checkSess = session.fromPartition(`persist:proxy_check_${sessionId}`);
@@ -26,6 +26,15 @@ class ProxyManager {
         method: 'GET',
         url: url.toString(),
         session: checkSess
+      });
+
+      // Handle proxy authentication for background requests
+      request.on('login', (authInfo, callback) => {
+        if (credentials && credentials.username) {
+          callback(credentials.username, credentials.password);
+        } else {
+          callback();
+        }
       });
 
       const latency = await new Promise((resolve, reject) => {
@@ -163,13 +172,13 @@ class ProxyManager {
     return statuses;
   }
 
-  async startContinuousHealthCheck(sessionId, proxyString, browserWindow) {
+  async startContinuousHealthCheck(sessionId, proxyString, browserWindow, credentials) {
     if (this.healthChecks.has(sessionId)) {
       clearInterval(this.healthChecks.get(sessionId));
     }
 
     const timer = setInterval(async () => {
-      const result = await this.checkProxyHealth(proxyString, sessionId);
+      const result = await this.checkProxyHealth(proxyString, sessionId, credentials);
 
       if (result.status === 'unreachable') {
         if (!this.killSwitchActive.has(sessionId)) {
