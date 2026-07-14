@@ -100,7 +100,66 @@ function createMainWindow() {
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
-let prefetchData = null;
+async function verifyCookieSync(sess, originalCookies, targetUrl, retries = 3) {
+  let attempt = 0;
+  while (attempt < retries) {
+    attempt++;
+    console.log(`[ZONIX] Cookie verification attempt ${attempt}/${retries}...`);
+    
+    // Inject cookies
+    await Promise.all(originalCookies.map(async (cookie) => {
+      try {
+        const isSecure = cookie.secure !== undefined ? cookie.secure : true;
+        let cookieUrl = cookie.url;
+        if (!cookieUrl || cookieUrl === targetUrl) {
+          const scheme = isSecure ? 'https://' : 'http://';
+          const cleanDomain = cookie.domain.startsWith('.') ? cookie.domain.substring(1) : cookie.domain;
+          cookieUrl = `${scheme}${cleanDomain}${cookie.path || '/'}`;
+        }
+
+        const cookieDetails = {
+          url: cookieUrl,
+          name: cookie.name,
+          value: cookie.value,
+          domain: cookie.domain,
+          path: cookie.path || '/',
+          secure: isSecure,
+          httpOnly: cookie.httpOnly !== undefined ? cookie.httpOnly : false,
+          sameSite: isSecure ? (cookie.sameSite || 'no_restriction') : 'lax'
+        };
+
+        if (cookie.expirationDate) {
+          cookieDetails.expirationDate = cookie.expirationDate;
+        }
+
+        await sess.cookies.set(cookieDetails);
+      } catch (err) {
+        console.error(`[ZONIX] Injection error for '${cookie.name}':`, err.message);
+      }
+    }));
+
+    // Flush the store to commit memory cookies to partition store
+    await sess.cookies.flushStore();
+
+    // Verify all injected cookies are actually written
+    const storedCookies = await sess.cookies.get({});
+    const missingCookies = originalCookies.filter(oc => {
+      return !storedCookies.some(sc => sc.name === oc.name);
+    });
+
+    if (missingCookies.length === 0) {
+      console.log(`[ZONIX] Cookie verification PASSED. All ${originalCookies.length} cookies verified in partition.`);
+      return true;
+    }
+
+    console.warn(`[ZONIX] Cookie verification FAILED. Missing: ${missingCookies.map(c => c.name).join(', ')}. Retrying...`);
+    if (attempt < retries) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+
+  return false;
+}
 
 async function fetchCookiesForSession(orgId, userId, targetDomain, token) {
   if (!token || !targetDomain) return [];
@@ -181,38 +240,10 @@ async function createDispatchWindow(sessionId, config) {
   }
 
   if (cookies && cookies.length > 0) {
-    await Promise.all(cookies.map(async (cookie) => {
-      try {
-        const isSecure = cookie.secure !== undefined ? cookie.secure : true;
-        
-        let cookieUrl = cookie.url;
-        if (!cookieUrl || cookieUrl === targetUrl) {
-          const scheme = isSecure ? 'https://' : 'http://';
-          const cleanDomain = cookie.domain.startsWith('.') ? cookie.domain.substring(1) : cookie.domain;
-          cookieUrl = `${scheme}${cleanDomain}${cookie.path || '/'}`;
-        }
-
-        const cookieDetails = {
-          url: cookieUrl,
-          name: cookie.name,
-          value: cookie.value,
-          domain: cookie.domain,
-          path: cookie.path || '/',
-          secure: isSecure,
-          httpOnly: cookie.httpOnly !== undefined ? cookie.httpOnly : false,
-          sameSite: isSecure ? (cookie.sameSite || 'no_restriction') : 'lax'
-        };
-
-        if (cookie.expirationDate) {
-          cookieDetails.expirationDate = cookie.expirationDate;
-        }
-
-        await sess.cookies.set(cookieDetails);
-      } catch (err) {
-        console.error(`[ZONIX] Cookie injection failed for '${cookie.name}':`, err.message);
-      }
-    }));
-    console.log(`[ZONIX] Injected ${cookies.length} cookies for session ${sessionId}`);
+    const verified = await verifyCookieSync(sess, cookies, targetUrl);
+    if (!verified) {
+      throw new Error('Cookie verification failed after 3 attempts');
+    }
   }
 
   securityEngine.applyInterceptors(sess, orgId);
@@ -259,6 +290,8 @@ async function createDispatchWindow(sessionId, config) {
   });
 
   dispatchWindow.on('close', () => {
+    proxyManager.stopHealthCheck(sessionId);
+    proxyManager.clearKillSwitch(sessionId);
     activeSessions.delete(sessionId);
     broadcastSessionUpdate();
     endSessionOnBackend(sessionId);
@@ -275,6 +308,9 @@ async function createDispatchWindow(sessionId, config) {
     heartbeatTimer: null
   });
 
+  if (proxyString) {
+    proxyManager.startContinuousHealthCheck(sessionId, proxyString, dispatchWindow);
+  }
   startHeartbeatMonitor(sessionId);
   broadcastSessionUpdate();
 
@@ -547,6 +583,8 @@ function killSession(sessionId) {
   if (!sessionData) return;
 
   clearInterval(sessionData.heartbeatTimer);
+  proxyManager.stopHealthCheck(sessionId);
+  proxyManager.clearKillSwitch(sessionId);
   try {
     sessionData.window.close();
   } catch (e) {}
@@ -561,6 +599,8 @@ async function restartSession(sessionId) {
   if (!sessionData) return;
 
   clearInterval(sessionData.heartbeatTimer);
+  proxyManager.stopHealthCheck(sessionId);
+  proxyManager.clearKillSwitch(sessionId);
   try {
     sessionData.window.close();
   } catch (e) {}
@@ -810,6 +850,10 @@ function registerIPC() {
 
       return { success: true, sessionId: backendSessionId };
     } catch (err) {
+      console.error('[ZONIX Main] Launch failed:', err.message);
+      if (syncWindow && !syncWindow.isDestroyed()) {
+        syncWindow.webContents.send('sync:failed', err.message);
+      }
       return { success: false, error: err.message };
     }
   });
@@ -881,14 +925,31 @@ function registerIPC() {
       throw new Error('targetUrl is required for session capture');
     }
 
-    // The admin capture window MUST use the org's proxy so that captured cookies
-    // reflect the proxy IP (same IP that dispatchers will use). Without this,
-    // the site would see two different IPs and reject/flag the session.
+    // Check if there is an active live dispatcher session for this user
+    let activeDispatcherSession = null;
+    activeSessions.forEach((data, id) => {
+      if (data.orgId === targetOrgId && data.userId === targetUserId) {
+        activeDispatcherSession = data;
+      }
+    });
+
+    if (activeDispatcherSession) {
+      console.log(`[ZONIX Main] Pausing active dispatcher session ${activeDispatcherSession.sessionId} for credential refresh`);
+      activeDispatcherSession.window.webContents.send('session:pause');
+      // Suspend network activity to prevent IP leak and session collisions
+      const dispSess = session.fromPartition(activeDispatcherSession.partitionId);
+      await dispSess.setProxy({ proxyRules: '127.0.0.1:0' });
+    }
+
     const token = store.get('authToken');
     const proxyNode = await getActiveProxyForOrg(targetOrgId, token);
 
-    const partitionId = `${CONFIG.PARTITION_PREFIX}${targetOrgId}_user_${targetUserId}`;
+    // Use a temporary isolated partition for the capture browser to prevent SQLite locks
+    const partitionId = `temp_capture_${targetOrgId}_user_${targetUserId}`;
     const sess = session.fromPartition(partitionId);
+
+    // Clear old cookies from the temp capture session so the admin gets a clean login screen
+    await sess.clearStorageData({ storages: ['cookies'] });
 
     if (proxyNode) {
       const proxyRule = `${proxyNode.protocol.toLowerCase()}://${proxyNode.host}:${proxyNode.port}`;
@@ -903,7 +964,6 @@ function registerIPC() {
         console.log(`[ZONIX Main] Proxy credentials registered for ${proxyKey}`);
       }
     } else {
-      // No proxy configured — use direct connection
       await sess.setProxy({ proxyRules: 'direct://' });
       console.log('[ZONIX Main] No proxy configured for org, capture window using direct connection');
     }
@@ -922,14 +982,12 @@ function registerIPC() {
         partition: partitionId,
         contextIsolation: true,
         nodeIntegration: false
-        // sandbox: false intentionally — allows Chromium's native proxy auth dialog
       },
       show: true
     });
 
-    // Show a helpful error page if the URL fails (proxy unreachable, bad URL, etc.)
     captureWindow.webContents.on('did-fail-load', (ev, code, desc, url, isMain) => {
-      if (isMain && code !== -3) { // -3 = ERR_ABORTED (normal navigation)
+      if (isMain && code !== -3) {
         console.warn(`[ZONIX Main] Capture window load failed (${code} ${desc}): ${url}`);
         captureWindow.webContents.executeJavaScript(`
           document.body.style='margin:0;padding:40px;background:#0D0E12;color:#E8E8E8;font-family:monospace;';
@@ -948,7 +1006,6 @@ function registerIPC() {
       await captureWindow.loadURL(targetUrl);
     } catch (loadErr) {
       console.error('[ZONIX Main] Capture window failed to load URL:', loadErr.message);
-      // did-fail-load handler above will display the error inside the window
     }
 
     // Wait until the admin logs in and manually closes the window
@@ -957,6 +1014,50 @@ function registerIPC() {
     });
 
     const allCookies = await sess.cookies.get({});
+
+    // Clean up temporary capture session storage
+    await sess.clearStorageData({ storages: ['cookies'] });
+
+    // If there was an active dispatcher session, hot-swap the cookies and resume it
+    if (activeDispatcherSession) {
+      console.log(`[ZONIX Main] Resuming active dispatcher session ${activeDispatcherSession.sessionId} with fresh cookies`);
+      const dispSess = session.fromPartition(activeDispatcherSession.partitionId);
+      
+      // Wipe old cookies in the dispatcher's live partition
+      await dispSess.clearStorageData({ storages: ['cookies'] });
+      
+      // Inject the fresh cookies
+      await Promise.all(allCookies.map(async (c) => {
+        try {
+          const scheme = c.secure ? 'https://' : 'http://';
+          const cleanDomain = c.domain.startsWith('.') ? c.domain.substring(1) : c.domain;
+          const cookieUrl = `${scheme}${cleanDomain}${c.path || '/'}`;
+          await dispSess.cookies.set({
+            url: cookieUrl,
+            name: c.name,
+            value: c.value,
+            domain: c.domain,
+            path: c.path || '/',
+            secure: c.secure,
+            httpOnly: c.httpOnly,
+            sameSite: c.secure ? (c.sameSite || 'no_restriction') : 'lax',
+            expirationDate: c.expirationDate
+          });
+        } catch (e) {
+          console.error('[ZONIX Main] Failed to hot-swap cookie:', e.message);
+        }
+      }));
+
+      // Restore original proxy settings on the dispatcher session partition
+      if (activeDispatcherSession.proxyString) {
+        await dispSess.setProxy({ proxyRules: activeDispatcherSession.proxyString });
+      } else {
+        await dispSess.setProxy({});
+      }
+
+      // Notify the dispatcher's window to hide the overlay and resume
+      activeDispatcherSession.window.webContents.send('session:resume');
+    }
 
     let targetDomain = '';
     try {

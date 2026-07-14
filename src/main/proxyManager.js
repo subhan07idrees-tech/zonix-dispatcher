@@ -1,14 +1,13 @@
-const { session } = require('electron');
-const { net } = require('electron');
+const { session, net } = require('electron');
 
 class ProxyManager {
   constructor() {
     this.healthChecks = new Map();
     this.killSwitchActive = new Set();
     this.proxyLatencies = new Map();
-    this.PROXY_CHECK_INTERVAL = 15000;
+    this.PROXY_CHECK_INTERVAL = 10000; // 10 seconds health check
     this.MAX_LATENCY_MS = 5000;
-    this.FAILURE_THRESHOLD = 3;
+    this.FAILURE_THRESHOLD = 2; // consecutive failures before triggering block
     this.proxyFailures = new Map();
   }
 
@@ -17,12 +16,16 @@ class ProxyManager {
 
     try {
       const startTime = Date.now();
+      const url = new URL('http://clients3.google.com/generate_204');
+      
+      // Get isolated session for health checks and set the proxy rules
+      const checkSess = session.fromPartition(`persist:proxy_check_${sessionId}`);
+      await checkSess.setProxy({ proxyRules: proxyString });
 
-      const url = new URL('https://httpbin.org/ip');
       const request = net.request({
+        method: 'GET',
         url: url.toString(),
-        session: `proxy-check-${sessionId}`,
-        proxy: proxyString
+        session: checkSess
       });
 
       const latency = await new Promise((resolve, reject) => {
@@ -33,16 +36,11 @@ class ProxyManager {
 
         request.on('response', (response) => {
           clearTimeout(timeout);
-          let body = '';
-          response.on('data', (chunk) => { body += chunk.toString(); });
-          response.on('end', () => {
-            const elapsed = Date.now() - startTime;
-            if (response.statusCode >= 200 && response.statusCode < 400) {
-              resolve(elapsed);
-            } else {
-              reject(new Error(`Proxy returned status ${response.statusCode}`));
-            }
-          });
+          if (response.statusCode >= 200 && response.statusCode < 400) {
+            resolve(Date.now() - startTime);
+          } else {
+            reject(new Error(`Proxy returned status ${response.statusCode}`));
+          }
         });
 
         request.on('error', (err) => {
@@ -57,7 +55,7 @@ class ProxyManager {
       this.proxyLatencies.set(sessionId, latency);
 
       let status = 'healthy';
-      if (latency > 300) status = 'degraded';
+      if (latency > 500) status = 'degraded';
       if (latency > this.MAX_LATENCY_MS * 0.8) status = 'critical';
 
       return { status, latency, proxyString };
@@ -70,51 +68,49 @@ class ProxyManager {
       if (failures >= this.FAILURE_THRESHOLD) {
         return { status: 'unreachable', latency: -1, proxyString, consecutiveFailures: failures };
       }
-
       return { status: 'degraded', latency: -1, proxyString, consecutiveFailures: failures };
     }
   }
 
   activateKillSwitch(sessionId, browserWindow) {
-    if (this.killSwitchActive.has(sessionId)) {
-      console.log(`[ProxyManager] Kill-switch already active for session ${sessionId}`);
-      return;
-    }
+    if (this.killSwitchActive.has(sessionId)) return;
 
     this.killSwitchActive.add(sessionId);
-    console.warn(`[ProxyManager] KILL-SWITCH ACTIVATED for session ${sessionId}. Terminating connection to prevent IP leak.`);
+    console.warn(`[ProxyManager] KILL-SWITCH ACTIVATED for session ${sessionId}. Blocking connection to prevent IP leak.`);
 
     try {
-      const webContents = browserWindow.webContents;
-      webContents.stop();
+      const sess = browserWindow.webContents.session;
+      // Force invalid proxy rules to block all outbound requests instantly
+      sess.setProxy({ proxyRules: '127.0.0.1:0' });
 
-      const killScreenHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head><title>ZONIX - Kill Switch</title></head>
-        <body style="background:#0D0E12;color:#FF3B3B;font-family:'Inter',sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;">
-          <div style="text-align:center;">
-            <h1 style="font-size:28px;margin-bottom:8px;color:#FF3B3B;">PROXY KILL-SWITCH</h1>
-            <p style="color:#00F0FF;font-size:14px;margin-bottom:24px;">ACTIVE — Connection Severed</p>
-            <div style="background:#161920;border:1px solid #FF3B3B;border-radius:8px;padding:24px;max-width:480px;text-align:left;">
-              <p style="color:#888;font-size:13px;margin:8px 0;"><strong style="color:#FF3B3B;">STATUS:</strong> Proxy node unreachable</p>
-              <p style="color:#888;font-size:13px;margin:8px 0;"><strong style="color:#FF3B3B;">ACTION:</strong> All network activity halted</p>
-              <p style="color:#888;font-size:13px;margin:8px 0;"><strong style="color:#00F0FF;">PROTECTION:</strong> Your real IP was never exposed</p>
-              <p style="color:#888;font-size:13px;margin:8px 0;"><strong style="color:#00F0FF;">RECOVERY:</strong> Contact your administrator</p>
-            </div>
-            <p style="color:#555;font-size:11px;margin-top:24px;">ZONIX Protection Engine v1.0</p>
-          </div>
-        </body>
-        </html>
-      `;
-
-      browserWindow.loadURL(`data:text/html,${encodeURIComponent(killScreenHtml)}`);
-      console.log(`[ProxyManager] Kill-switch screen displayed for session ${sessionId}`);
+      // Notify the renderer overlay to show the "Reconnecting" UI
+      browserWindow.webContents.send('proxy:status', { status: 'disconnected' });
     } catch (err) {
-      console.error(`[ProxyManager] Kill-switch display error: ${err.message}`);
+      console.error(`[ProxyManager] Kill-switch activation error: ${err.message}`);
     }
 
     this.reportKillSwitch(sessionId);
+  }
+
+  deactivateKillSwitch(sessionId, browserWindow, proxyString) {
+    if (!this.killSwitchActive.has(sessionId)) return;
+
+    this.killSwitchActive.delete(sessionId);
+    console.log(`[ProxyManager] KILL-SWITCH DEACTIVATED for session ${sessionId}. Restoring proxy connection.`);
+
+    try {
+      const sess = browserWindow.webContents.session;
+      if (proxyString) {
+        sess.setProxy({ proxyRules: proxyString });
+      } else {
+        sess.setProxy({});
+      }
+
+      // Notify the renderer overlay to hide the "Reconnecting" UI
+      browserWindow.webContents.send('proxy:status', { status: 'connected' });
+    } catch (err) {
+      console.error(`[ProxyManager] Kill-switch deactivation error: ${err.message}`);
+    }
   }
 
   async reportKillSwitch(sessionId) {
@@ -145,7 +141,6 @@ class ProxyManager {
     this.killSwitchActive.delete(sessionId);
     this.proxyFailures.delete(sessionId);
     this.proxyLatencies.delete(sessionId);
-    console.log(`[ProxyManager] Kill-switch cleared for session ${sessionId}`);
   }
 
   getProxyStatus(sessionId) {
@@ -168,32 +163,27 @@ class ProxyManager {
     return statuses;
   }
 
-  async startContinuousHealthCheck(sessionId, proxyString, browserWindow, intervalMs) {
-    const checkInterval = intervalMs || this.PROXY_CHECK_INTERVAL;
-
+  async startContinuousHealthCheck(sessionId, proxyString, browserWindow) {
     if (this.healthChecks.has(sessionId)) {
       clearInterval(this.healthChecks.get(sessionId));
     }
 
     const timer = setInterval(async () => {
-      if (!this.killSwitchActive.has(sessionId)) {
-        const result = await this.checkProxyHealth(proxyString, sessionId);
+      const result = await this.checkProxyHealth(proxyString, sessionId);
 
-        if (result.status === 'unreachable') {
+      if (result.status === 'unreachable') {
+        if (!this.killSwitchActive.has(sessionId)) {
           this.activateKillSwitch(sessionId, browserWindow);
-          clearInterval(timer);
-          this.healthChecks.delete(sessionId);
-        } else if (result.status === 'critical') {
-          console.warn(`[ProxyManager] Proxy critical for session ${sessionId}: ${result.latency}ms`);
         }
       } else {
-        clearInterval(timer);
-        this.healthChecks.delete(sessionId);
+        if (this.killSwitchActive.has(sessionId)) {
+          this.deactivateKillSwitch(sessionId, browserWindow, proxyString);
+        }
       }
-    }, checkInterval);
+    }, this.PROXY_CHECK_INTERVAL);
 
     this.healthChecks.set(sessionId, timer);
-    console.log(`[ProxyManager] Continuous health check started for session ${sessionId} (interval: ${checkInterval}ms)`);
+    console.log(`[ProxyManager] Continuous health check active for session ${sessionId}`);
   }
 
   stopHealthCheck(sessionId) {
@@ -204,9 +194,7 @@ class ProxyManager {
   }
 
   stopAll() {
-    this.healthChecks.forEach((timer, sessionId) => {
-      clearInterval(timer);
-    });
+    this.healthChecks.forEach((timer) => clearInterval(timer));
     this.healthChecks.clear();
     this.killSwitchActive.clear();
     this.proxyFailures.clear();

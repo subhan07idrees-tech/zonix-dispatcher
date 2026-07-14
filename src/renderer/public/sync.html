@@ -246,6 +246,19 @@
         <div class="progress-fill" id="progressBar"></div>
       </div>
     </div>
+
+    <!-- Error View (hidden by default) -->
+    <div id="errorView" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(160deg, #180c10 0%, #0c060a 100%); flex-direction: column; align-items: center; justify-content: center; padding: 36px; z-index: 10; border-radius: 22px;">
+      <div style="font-size: 36px; margin-bottom: 16px;">⚠️</div>
+      <h2 style="font-family: 'Consolas', monospace; font-size: 13px; color: #ef4444; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px;">COOKIE SYNC FAILED</h2>
+      <p id="errorMsg" style="font-size: 11px; color: rgba(220, 180, 180, 0.7); line-height: 1.6; margin-bottom: 32px; max-width: 320px; text-align: center;">
+        Verification failed. The secure session cookies could not be completely synced after 3 attempts.
+      </p>
+      <div style="display: flex; gap: 12px; width: 100%; max-width: 280px;">
+        <button id="retryBtn" style="flex: 1; padding: 10px 0; border-radius: 8px; border: 1px solid #7c4dff; background: #7c4dff; color: #fff; font-family: 'Consolas', monospace; font-size: 11px; cursor: pointer; letter-spacing: 1px; transition: opacity 0.2s;">RETRY</button>
+        <button id="cancelBtn" style="flex: 1; padding: 10px 0; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: transparent; color: rgba(255,255,255,0.7); font-family: 'Consolas', monospace; font-size: 11px; cursor: pointer; letter-spacing: 1px; transition: opacity 0.2s;">CANCEL</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -253,6 +266,7 @@
     const steps = [
       'step-1', 'step-2', 'step-3', 'step-4', 'step-5'
     ];
+    let lastLaunchData = null;
 
     function updateStep(stepIndex, status) {
       const el = document.getElementById(steps[stepIndex]);
@@ -264,34 +278,53 @@
     }
 
     async function runSync() {
+      // Reset all steps to default state
+      for (let i = 0; i < steps.length; i++) {
+        updateStep(i, '');
+      }
+      setProgress(0);
+
+      // Perform sync animation sequence
       for (let i = 0; i < steps.length; i++) {
         updateStep(i, 'active');
         setProgress((i / steps.length) * 100);
-        await new Promise(resolve => setTimeout(resolve, 600 + Math.random() * 400));
+        await new Promise(resolve => setTimeout(resolve, 350 + Math.random() * 150));
         updateStep(i, 'done');
       }
       setProgress(100);
       const lastEl = document.getElementById(steps[steps.length - 1]);
       lastEl.querySelector('span').textContent = '[SESSION READY]';
-      await new Promise(resolve => setTimeout(resolve, 400));
+      await new Promise(resolve => setTimeout(resolve, 450));
     }
 
-    api.onSyncStart(async (data) => {
+    async function startLaunch() {
       try {
-        const { targetUrl } = data;
+        document.getElementById('errorView').style.display = 'none';
         await runSync();
         const result = await api.launchDispatch({
-          targetUrl: targetUrl || 'https://app.example.com'
+          targetUrl: lastLaunchData.targetUrl || 'https://app.example.com'
         });
         if (result && !result.success) {
           throw new Error(result.error || 'Launch failed');
         }
       } catch (err) {
         console.error('Sync failed:', err);
-        const lastEl = document.getElementById(steps[steps.length - 1]);
-        updateStep(steps.length - 1, 'error');
-        lastEl.querySelector('span').textContent = '[SYNC FAILED: ' + err.message + ']';
+        document.getElementById('errorMsg').textContent = err.message || 'Verification failed. Cookies could not be completely synced.';
+        document.getElementById('errorView').style.display = 'flex';
       }
+    }
+
+    api.onSyncStart((data) => {
+      lastLaunchData = data;
+      startLaunch();
+    });
+
+    document.getElementById('retryBtn').addEventListener('click', () => {
+      startLaunch();
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+      window.zonixAPI.closeWindow();
     });
   </script>
 </body>
