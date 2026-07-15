@@ -46,7 +46,7 @@ function createTray() {
   });
 }
 
-function createAuthWindow() {
+function createAuthWindow(errorType = '') {
   const iconPath = path.join(__dirname, 'logo.png');
  
   authWindow = new BrowserWindow({
@@ -66,7 +66,10 @@ function createAuthWindow() {
     backgroundColor: '#0b0f19'
   });
  
-  authWindow.loadFile(path.join(__dirname, '..', 'renderer', 'dist', 'auth.html'));
+  const htmlPath = path.join(__dirname, '..', 'renderer', 'dist', 'auth.html');
+  const query = errorType ? `?error=${errorType}` : '';
+  authWindow.loadURL(`file://${htmlPath}${query}`);
+
   authWindow.setMenu(null);
   authWindow.once('ready-to-show', () => {
     authWindow.show();
@@ -577,12 +580,7 @@ function forceLogout() {
     mainWindow = null;
   }
 
-  createAuthWindow();
-
-  dialog.showErrorBox(
-    'Session Expired',
-    'You have been logged out because this account was logged into on another computer.'
-  );
+  createAuthWindow('session_expired');
 }
 
 function handleWSMessage(msg) {

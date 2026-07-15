@@ -300,6 +300,18 @@
 
     // Pre-populate remembered credentials on load
     window.addEventListener('DOMContentLoaded', async () => {
+      // Handle session expiration parameter check dynamically
+      const params = new URLSearchParams(window.location.search);
+      const errorParam = params.get('error');
+      if (errorParam === 'session_expired') {
+        const errorEl = document.getElementById('error');
+        errorEl.innerHTML = `
+          <div style="font-weight: 700; margin-bottom: 4px; color: #f87171; letter-spacing: 0.5px;">🛡️ SESSION EXPIRED</div>
+          You have been logged out because this account was logged into on another computer.
+        `;
+        errorEl.classList.add('visible');
+      }
+
       try {
         const rememberMe = await api.getConfig('rememberMe');
         if (rememberMe) {
