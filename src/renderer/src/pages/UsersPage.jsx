@@ -52,19 +52,20 @@ function UserModal({ user, orgId, onClose, onSave }) {
               className="zonix-input w-full font-mono"
             />
           </div>
-          {!user && (
-            <div>
-              <label className="block text-xs text-zonix-text-dim mb-1 font-mono">PASSWORD</label>
-              <input
-                type="password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="zonix-input w-full font-mono"
-                required={!user}
-                minLength={8}
-              />
-            </div>
-          )}
+          <div>
+            <label className="block text-xs text-zonix-text-dim mb-1 font-mono">
+              {user ? 'NEW PASSWORD (LEAVE BLANK TO KEEP CURRENT)' : 'PASSWORD'}
+            </label>
+            <input
+              type="password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              className="zonix-input w-full font-mono"
+              required={!user}
+              minLength={form.password ? 8 : undefined}
+              placeholder={user ? "••••••••" : ""}
+            />
+          </div>
           <div>
             <label className="block text-xs text-zonix-text-dim mb-1 font-mono">ROLE</label>
             <select
@@ -147,9 +148,13 @@ export default function UsersPage() {
     try {
       let res;
       if (editingUser) {
+        const body = { role: form.role, email: form.email };
+        if (form.password) {
+          body.password = form.password;
+        }
         res = await authFetch(`/users/${selectedOrg}/${editingUser.id}`, {
           method: 'PUT',
-          body: JSON.stringify({ role: form.role, email: form.email })
+          body: JSON.stringify(body)
         });
       } else {
         res = await authFetch(`/users/${selectedOrg}`, {
