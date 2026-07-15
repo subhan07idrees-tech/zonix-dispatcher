@@ -1388,53 +1388,7 @@ app.whenReady().then(async () => {
   registerIPC();
   setupAutoUpdater();
 
-  const token = getAuthToken();
-  const orgId = store.get('orgId');
-  const userId = store.get('userId');
-  const userRole = store.get('userRole');
-  const targetUrl = store.get('targetUrl');
-
-  if (token && orgId && userId && userRole) {
-    console.log('[ZONIX] Found active session in local store. Verifying...');
-    try {
-      const response = await zonixFetch(`${CONFIG.BACKEND_URL}/api/auth/verify`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.valid) {
-          console.log(`[ZONIX] Session valid! Auto-logging in user: ${userId}`);
-          connectWebSocket();
-          if (userRole === 'DISPATCHER') {
-            createSyncWindow(orgId, userId, targetUrl || '');
-          } else {
-            createMainWindow();
-          }
-
-          app.on('activate', () => {
-            if (BrowserWindow.getAllWindows().length === 0) {
-              if (userRole === 'DISPATCHER') {
-                createSyncWindow(orgId, userId, targetUrl || '');
-              } else {
-                createMainWindow();
-              }
-            }
-          });
-          return;
-        }
-      }
-    } catch (err) {
-      console.error('[ZONIX] Auto-login validation failed due to network error:', err.message);
-    }
-  }
-
-  // Clear any cached session on startup so they always see the login page if not logged in
-  console.log('[ZONIX] No valid session found. Redirecting to login.');
+  // Clear any cached session on startup so they always see the login page
   store.delete('authToken');
   store.delete('orgId');
   store.delete('userId');
