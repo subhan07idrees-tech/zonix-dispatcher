@@ -1,4 +1,4 @@
-const { app, BrowserWindow, session, ipcMain, protocol, Tray, Menu, nativeImage, dialog } = require('electron');
+const { app, BrowserWindow, session, ipcMain, protocol, Tray, Menu, nativeImage, dialog, safeStorage } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 const WebSocket = require('ws');
@@ -8,6 +8,44 @@ const SecurityEngine = require('./security');
 const { autoUpdater } = require('electron-updater');
 
 const store = new Store();
+
+function getAuthToken() {
+  const token = store.get('authToken');
+  if (!token) return '';
+  try {
+    if (safeStorage.isEncryptionAvailable()) {
+      return safeStorage.decryptString(Buffer.from(token, 'base64'));
+    }
+  } catch (err) {
+    console.error('[ZONIX] Failed to decrypt authToken:', err.message);
+  }
+  return token;
+}
+
+function setAuthToken(token) {
+  if (!token) {
+    store.delete('authToken');
+    return;
+  }
+  try {
+    if (safeStorage.isEncryptionAvailable()) {
+      const encrypted = safeStorage.encryptString(token);
+      store.set('authToken', encrypted.toString('base64'));
+      return;
+    }
+  } catch (err) {
+    console.error('[ZONIX] Failed to encrypt authToken:', err.message);
+  }
+  store.set('authToken', token);
+}
+
+function disableDevTools(win) {
+  if (app.isPackaged && win) {
+    win.webContents.on('devtools-opened', () => {
+      win.webContents.closeDevTools();
+    });
+  }
+}
 let mainWindow = null;
 let authWindow = null;
 let syncWindow = null;
@@ -75,6 +113,8 @@ function createAuthWindow(errorType = '') {
     authWindow.show();
   });
   authWindow.on('closed', () => { authWindow = null; });
+
+  disableDevTools(authWindow);
 }
 
 function createMainWindow() {
@@ -108,6 +148,8 @@ function createMainWindow() {
   });
  
   mainWindow.on('closed', () => { mainWindow = null; });
+
+  disableDevTools(mainWindow);
 }
 
 async function verifyCookieSync(sess, originalCookies, targetUrl, retries = 3) {
@@ -189,7 +231,7 @@ async function fetchCookiesForSession(orgId, userId, targetDomain, token) {
 
 function createSyncWindow(orgId, userId, targetUrl) {
   // Start prefetching cookies and proxy nodes concurrently
-  const token = store.get('authToken');
+  const token = getAuthToken();
   let targetDomain = '';
   try {
     targetDomain = new URL(targetUrl).hostname;
@@ -221,6 +263,8 @@ function createSyncWindow(orgId, userId, targetUrl) {
     syncWindow.show();
     syncWindow.webContents.send('sync:start', { orgId, userId, targetUrl });
   });
+
+  disableDevTools(syncWindow);
  
   return syncWindow;
 }
@@ -333,6 +377,8 @@ async function createDispatchWindow(sessionId, config) {
     console.error(`[ZONIX] Dispatch loadURL error (${loadErr.code || loadErr.message})`);
   }
 
+  disableDevTools(dispatchWindow);
+
   return dispatchWindow;
 }
 
@@ -418,7 +464,7 @@ async function fetchSessionFromBackend(orgId, userId) {
   try {
     const response = await zonixFetch(`${CONFIG.BACKEND_URL}/api/sessions/${orgId}/${userId}`, {
       headers: {
-        'Authorization': `Bearer ${store.get('authToken')}`,
+        'Authorization': `Bearer ${getAuthToken()}`,
         'Content-Type': 'application/json'
       }
     });
@@ -443,7 +489,7 @@ function startHeartbeatMonitor(sessionId) {
       const response = await zonixFetch(`${CONFIG.BACKEND_URL}/api/heartbeat`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${store.get('authToken')}`,
+          'Authorization': `Bearer ${getAuthToken()}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -523,7 +569,7 @@ function sendToRenderer(channel, data) {
 
 function connectWebSocket() {
   const wsUrl = CONFIG.WS_URL;
-  const authToken = store.get('authToken');
+  const authToken = getAuthToken();
 
   if (!authToken) return;
 
@@ -556,7 +602,7 @@ function connectWebSocket() {
 function forceLogout() {
   console.warn('[ZONIX] Force-logout command received. Evicting local session.');
   
-  store.delete('authToken');
+  setAuthToken(null);
   store.delete('orgId');
   store.delete('userId');
   store.delete('userRole');
@@ -732,7 +778,7 @@ function registerIPC() {
 
       if (result.success) {
         const actualOrgId = result.organization.id;
-        store.set('authToken', result.token);
+        setAuthToken(result.token);
         store.set('orgId', actualOrgId);
         store.set('userId', result.user.id);
         store.set('userRole', result.user.role);
@@ -765,7 +811,7 @@ function registerIPC() {
   });
 
   ipcMain.handle('auth:logout', async () => {
-    store.delete('authToken');
+    setAuthToken(null);
     store.delete('orgId');
     store.delete('userId');
     store.delete('userRole');
@@ -801,7 +847,7 @@ function registerIPC() {
   ipcMain.handle('dispatch:launch', async (event, { targetUrl }) => {
     const orgId = store.get('orgId');
     const userId = store.get('userId');
-    const token = store.get('authToken');
+    const token = getAuthToken();
     const sessionId = uuidv4();
 
     try {

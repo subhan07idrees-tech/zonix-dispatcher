@@ -126,12 +126,22 @@ class ProxyManager {
     try {
       const Store = require('electron-store');
       const store = new Store();
+      const { safeStorage } = require('electron');
       const fetch = require('node-fetch');
+
+      let token = store.get('authToken');
+      if (token && safeStorage.isEncryptionAvailable()) {
+        try {
+          token = safeStorage.decryptString(Buffer.from(token, 'base64'));
+        } catch (e) {
+          console.error('[ProxyManager] Failed to decrypt token:', e.message);
+        }
+      }
 
       await fetch(`${process.env.ZONIX_BACKEND_URL || 'https://zonix-backend-ouhi.onrender.com'}/api/events`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${store.get('authToken')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         },
