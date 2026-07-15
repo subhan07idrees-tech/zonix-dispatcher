@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Building2, Plus, Edit2, Trash2, X, Users, Radio, Wifi } from 'lucide-react';
+import { Building2, Plus, Edit2, Trash2, X, Users, Radio, Wifi, Layers } from 'lucide-react';
 
 function OrgModal({ org, onClose, onSave }) {
   const [form, setForm] = useState({
@@ -8,6 +8,7 @@ function OrgModal({ org, onClose, onSave }) {
     displayName: org?.displayName || '',
     maxUsers: org?.maxUsers || 50,
     maxSessions: org?.maxSessions || 25,
+    maxTabs: org?.maxTabs || 5,
     targetUrl: org?.targetUrl || ''
   });
   const [loading, setLoading] = useState(false);
@@ -53,24 +54,34 @@ function OrgModal({ org, onClose, onSave }) {
               required
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2.5">
             <div>
-              <label className="block text-xs text-zonix-text-dim mb-1 font-mono">MAX USERS</label>
+              <label className="block text-[10px] text-zonix-text-dim mb-1 font-mono">MAX USERS</label>
               <input
                 type="number"
                 value={form.maxUsers}
                 onChange={(e) => setForm({ ...form, maxUsers: parseInt(e.target.value) })}
-                className="zonix-input w-full font-mono"
+                className="zonix-input w-full font-mono text-xs"
                 min="1"
               />
             </div>
             <div>
-              <label className="block text-xs text-zonix-text-dim mb-1 font-mono">MAX SESSIONS</label>
+              <label className="block text-[10px] text-zonix-text-dim mb-1 font-mono">MAX SESSIONS</label>
               <input
                 type="number"
                 value={form.maxSessions}
                 onChange={(e) => setForm({ ...form, maxSessions: parseInt(e.target.value) })}
-                className="zonix-input w-full font-mono"
+                className="zonix-input w-full font-mono text-xs"
+                min="1"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] text-zonix-text-dim mb-1 font-mono">MAX TABS</label>
+              <input
+                type="number"
+                value={form.maxTabs}
+                onChange={(e) => setForm({ ...form, maxTabs: parseInt(e.target.value) })}
+                className="zonix-input w-full font-mono text-xs"
                 min="1"
               />
             </div>
@@ -209,6 +220,10 @@ export default function OrganizationsPage() {
                   <div className="flex items-center gap-1.5">
                     <Radio className="w-3 h-3" />
                     <span>{org._count?.sessions || 0}/{org.maxSessions}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5" title="Max Tabs Per User">
+                    <Layers className="w-3 h-3" />
+                    <span>{org.maxTabs || 5} TABS</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Wifi className="w-3 h-3" />

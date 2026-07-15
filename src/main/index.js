@@ -105,8 +105,8 @@ function createAuthWindow(errorType = '') {
   });
  
   const htmlPath = path.join(__dirname, '..', 'renderer', 'dist', 'auth.html');
-  const query = errorType ? `?error=${errorType}` : '';
-  authWindow.loadURL(`file://${htmlPath}${query}`);
+  const hash = errorType ? `#${errorType}` : '';
+  authWindow.loadURL(`file://${htmlPath}${hash}`);
 
   authWindow.setMenu(null);
   authWindow.once('ready-to-show', () => {
@@ -370,7 +370,8 @@ async function createDispatchWindow(sessionId, config) {
 
   const preloadPath = path.join(__dirname, '..', 'preload', 'index.js');
   const wrapperPath = path.join(__dirname, '..', 'renderer', 'dist', 'dispatcher.html');
-  const wrapperUrl = `file://${wrapperPath}?partition=${partitionId}&url=${encodeURIComponent(targetUrl)}&preload=${encodeURIComponent(preloadPath)}`;
+  const maxTabs = store.get('maxTabs') || 5;
+  const wrapperUrl = `file://${wrapperPath}?partition=${partitionId}&url=${encodeURIComponent(targetUrl)}&preload=${encodeURIComponent(preloadPath)}&maxTabs=${maxTabs}`;
   try {
     await dispatchWindow.loadURL(wrapperUrl);
   } catch (loadErr) {
@@ -602,11 +603,14 @@ function connectWebSocket() {
 function forceLogout() {
   console.warn('[ZONIX] Force-logout command received. Evicting local session.');
   
+  createAuthWindow('session_expired');
+
   setAuthToken(null);
   store.delete('orgId');
   store.delete('userId');
   store.delete('userRole');
   store.delete('targetUrl');
+  store.delete('maxTabs');
 
   if (wsConnection) {
     wsConnection.removeAllListeners('close');
@@ -625,8 +629,6 @@ function forceLogout() {
     mainWindow.destroy();
     mainWindow = null;
   }
-
-  createAuthWindow('session_expired');
 }
 
 function handleWSMessage(msg) {
@@ -779,11 +781,12 @@ function registerIPC() {
       if (result.success) {
         const actualOrgId = result.organization.id;
         setAuthToken(result.token);
-        store.set('orgId', actualOrgId);
-        store.set('userId', result.user.id);
-        store.set('userRole', result.user.role);
-        store.set('targetUrl', result.organization.targetUrl || '');
-        connectWebSocket();
+         store.set('orgId', actualOrgId);
+         store.set('userId', result.user.id);
+         store.set('userRole', result.user.role);
+         store.set('targetUrl', result.organization.targetUrl || '');
+         store.set('maxTabs', result.organization.maxTabs || 5);
+         connectWebSocket();
         
         setTimeout(() => {
           if (result.user.role === 'DISPATCHER') {

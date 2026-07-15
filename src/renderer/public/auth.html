@@ -302,7 +302,7 @@
     window.addEventListener('DOMContentLoaded', async () => {
       // Handle session expiration parameter check dynamically
       const params = new URLSearchParams(window.location.search);
-      const errorParam = params.get('error');
+      const errorParam = params.get('error') || (window.location.hash ? window.location.hash.substring(1) : '');
       if (errorParam === 'session_expired') {
         const errorEl = document.getElementById('error');
         errorEl.innerHTML = `

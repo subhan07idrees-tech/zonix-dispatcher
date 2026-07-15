@@ -307,6 +307,96 @@
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Custom confirmation and alert modals */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      transition: opacity 0.2s ease-in-out;
+    }
+    .modal-overlay.show {
+      display: flex;
+      opacity: 1;
+    }
+    .modal-card {
+      width: 380px;
+      padding: 24px;
+      background: #121824;
+      border: 1px solid #222d42;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      transform: scale(0.9);
+      transition: transform 0.2s ease-in-out;
+    }
+    .modal-overlay.show .modal-card {
+      transform: scale(1);
+    }
+    .modal-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px auto;
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+    .modal-desc {
+      font-size: 13px;
+      color: #9ca3af;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .modal-btn {
+      flex: 1;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .modal-btn-cancel {
+      background: #1b2336;
+      border: 1px solid #222d42;
+      color: #9ca3af;
+    }
+    .modal-btn-cancel:hover {
+      background: #25304a;
+      color: #ffffff;
+    }
+    .modal-btn-confirm {
+      background: #ef4444;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+    }
+    .modal-btn-confirm:hover {
+      background: #dc2626;
+    }
   </style>
 </head>
 <body>
@@ -379,12 +469,42 @@
     </div>
   </div>
 
+  <!-- Custom Signout Confirmation Modal -->
+  <div id="confirmModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-icon">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="#f87171" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      </div>
+      <div class="modal-title">END SECURE SESSION</div>
+      <div class="modal-desc">Are you sure you want to end this secure session and log out of the gateway?</div>
+      <div class="modal-actions">
+        <button id="cancelConfirmBtn" class="modal-btn modal-btn-cancel">Cancel</button>
+        <button id="okConfirmBtn" class="modal-btn modal-btn-confirm">End Session</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Alert Modal (e.g. Tab limit reached) -->
+  <div id="alertModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-icon" style="background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.2);">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="#3b82f6" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+      </div>
+      <div class="modal-title" id="alertModalTitle">LIMIT REACHED</div>
+      <div class="modal-desc" id="alertModalDesc">You have reached the maximum allowed tab limit.</div>
+      <div class="modal-actions">
+        <button id="okAlertBtn" class="modal-btn modal-btn-cancel" style="background:#3b82f6;color:#ffffff;border:none;">OK</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Extract query parameters
     const params = new URLSearchParams(window.location.search);
     const partition = params.get('partition') || '';
     const url = params.get('url') || 'https://www.google.com';
     const preloadPath = params.get('preload') || '';
+    const maxTabs = parseInt(params.get('maxTabs') || '5', 10);
 
     console.log('[Dispatcher Wrapper] Initializing webview with:', { partition, url, preloadPath });
 
@@ -568,6 +688,12 @@
 
     // Wire up add tab (+) button to duplicate the active tab's URL
     document.getElementById('addTabBtn').addEventListener('click', () => {
+      if (tabs.length >= maxTabs) {
+        document.getElementById('alertModalTitle').textContent = 'TAB LIMIT REACHED';
+        document.getElementById('alertModalDesc').textContent = `Your administrator has limited your access to a maximum of ${maxTabs} tabs per session.`;
+        document.getElementById('alertModal').classList.add('show');
+        return;
+      }
       const activeTab = tabs.find(t => t.id === activeTabId);
       if (activeTab) {
         let currentUrl = activeTab.webview.getURL();
@@ -580,11 +706,23 @@
       }
     });
 
+    document.getElementById('okAlertBtn').addEventListener('click', () => {
+      document.getElementById('alertModal').classList.remove('show');
+    });
+
     // Wire up signout button
-    document.getElementById('signOutBtn').addEventListener('click', async () => {
-      if (confirm('Are you sure you want to end this secure session?')) {
-        await window.zonixAPI.logoutDispatcher();
-      }
+    const confirmModal = document.getElementById('confirmModal');
+    document.getElementById('signOutBtn').addEventListener('click', () => {
+      confirmModal.classList.add('show');
+    });
+
+    document.getElementById('cancelConfirmBtn').addEventListener('click', () => {
+      confirmModal.classList.remove('show');
+    });
+
+    document.getElementById('okConfirmBtn').addEventListener('click', async () => {
+      confirmModal.classList.remove('show');
+      await window.zonixAPI.logoutDispatcher();
     });
 
     // Wire up refresh button to target active webview
