@@ -235,6 +235,11 @@
       border: none;
       display: inline-flex;
     }
+    webview.hidden-tab {
+      position: absolute !important;
+      left: -99999px !important;
+      top: -99999px !important;
+    }
     .loading-overlay {
       position: absolute;
       top: 0;
@@ -410,8 +415,18 @@
     function switchTab(id) {
       tabs.forEach(t => {
         if (t.id === id) {
-          t.webview.style.display = 'inline-flex';
+          t.webview.classList.remove('hidden-tab');
           t.tabEl.classList.add('active');
+          
+          // Restore loading overlay state for the newly active tab
+          if (t.isLoading) {
+            loadingText.textContent = 'Securing tunnel connection...';
+            overlay.style.display = 'flex';
+            overlay.style.opacity = '1';
+          } else {
+            overlay.style.display = 'none';
+            overlay.style.opacity = '0';
+          }
           
           // Update header session badge dynamically based on current tab URL
           try {
@@ -422,7 +437,7 @@
             }
           } catch(e) {}
         } else {
-          t.webview.style.display = 'none';
+          t.webview.classList.add('hidden-tab');
           t.tabEl.classList.remove('active');
         }
       });
@@ -476,12 +491,12 @@
         switchTab(id);
       });
 
-      // Construct the guest webview dynamically
+      // Construct the guest webview dynamically with hidden-tab by default
       const wv = document.createElement('webview');
       wv.style.width = '100%';
       wv.style.height = '100%';
       wv.style.border = 'none';
-      wv.style.display = 'none';
+      wv.className = 'hidden-tab';
 
       if (partition) {
         wv.setAttribute('partition', partition);
@@ -491,8 +506,11 @@
       }
       wv.setAttribute('src', initialUrl);
 
+      const tabObj = { id, webview: wv, tabEl, isLoading: true };
+
       // Webview state listeners
       wv.addEventListener('did-start-loading', () => {
+        tabObj.isLoading = true;
         if (id === activeTabId) {
           loadingText.textContent = 'Securing tunnel connection...';
           overlay.style.display = 'flex';
@@ -501,10 +519,13 @@
       });
 
       wv.addEventListener('did-finish-load', () => {
+        tabObj.isLoading = false;
         if (id === activeTabId) {
           overlay.style.opacity = '0';
           setTimeout(() => {
-            overlay.style.display = 'none';
+            if (activeTabId === id && !tabObj.isLoading) {
+              overlay.style.display = 'none';
+            }
           }, 300);
         }
 
@@ -522,9 +543,12 @@
       });
 
       wv.addEventListener('did-fail-load', (e) => {
-        if (e.isMainFrame && e.errorCode !== -3 && id === activeTabId) {
-          loadingText.innerHTML = `<span style="color:#ef4444">Failed to load target site (Error: ${e.errorDescription})</span>`;
-          document.querySelector('.spinner').style.display = 'none';
+        if (e.isMainFrame && e.errorCode !== -3) {
+          tabObj.isLoading = false;
+          if (id === activeTabId) {
+            loadingText.innerHTML = `<span style="color:#ef4444">Failed to load target site (Error: ${e.errorDescription})</span>`;
+            document.querySelector('.spinner').style.display = 'none';
+          }
         }
       });
 
@@ -532,7 +556,6 @@
       container.insertBefore(wv, overlay);
       document.getElementById('tabsContainer').appendChild(tabEl);
 
-      const tabObj = { id, webview: wv, tabEl };
       tabs.push(tabObj);
 
       return tabObj;
