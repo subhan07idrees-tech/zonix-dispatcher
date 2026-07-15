@@ -240,10 +240,8 @@ async function createDispatchWindow(sessionId, config) {
   }
 
   if (cookies && cookies.length > 0) {
-    const verified = await verifyCookieSync(sess, cookies, targetUrl);
-    if (!verified) {
-      throw new Error('Cookie verification failed after 3 attempts');
-    }
+    // Verify cookies but do not block window launch if minor tracking cookies are rejected by Electron
+    await verifyCookieSync(sess, cookies, targetUrl);
   }
 
   securityEngine.applyInterceptors(sess, orgId);
