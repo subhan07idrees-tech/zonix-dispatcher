@@ -89,57 +89,57 @@ contextBridge.exposeInMainWorld('electronAPI', {
   }
 
   try {
-    Object.defineProperty(navigator, 'userAgent', {
+    Object.defineProperty(Navigator.prototype, 'userAgent', {
       get: () => FP_CONFIG.USER_AGENT,
-      configurable: false
+      configurable: true
     });
 
-    Object.defineProperty(navigator, 'platform', {
+    Object.defineProperty(Navigator.prototype, 'platform', {
       get: () => FP_CONFIG.PLATFORM,
-      configurable: false
+      configurable: true
     });
 
-    Object.defineProperty(navigator, 'vendor', {
+    Object.defineProperty(Navigator.prototype, 'vendor', {
       get: () => FP_CONFIG.VENDOR,
-      configurable: false
+      configurable: true
     });
 
-    Object.defineProperty(navigator, 'languages', {
+    Object.defineProperty(Navigator.prototype, 'languages', {
       get: () => Object.freeze([...FP_CONFIG.LANGUAGES]),
-      configurable: false
+      configurable: true
     });
 
-    Object.defineProperty(navigator, 'language', {
+    Object.defineProperty(Navigator.prototype, 'language', {
       get: () => FP_CONFIG.LANGUAGES[0],
-      configurable: false
+      configurable: true
     });
 
-    Object.defineProperty(navigator, 'hardwareConcurrency', {
+    Object.defineProperty(Navigator.prototype, 'hardwareConcurrency', {
       get: () => FP_CONFIG.HARDWARE_CONCURRENCY,
-      configurable: false
+      configurable: true
     });
 
-    Object.defineProperty(navigator, 'deviceMemory', {
+    Object.defineProperty(Navigator.prototype, 'deviceMemory', {
       get: () => FP_CONFIG.DEVICE_MEMORY,
-      configurable: false
+      configurable: true
     });
 
-    Object.defineProperty(navigator, 'maxTouchPoints', {
+    Object.defineProperty(Navigator.prototype, 'maxTouchPoints', {
       get: () => FP_CONFIG.MAX_TOUCH_POINTS,
-      configurable: false
+      configurable: true
     });
 
-    Object.defineProperty(navigator, 'webdriver', {
+    Object.defineProperty(Navigator.prototype, 'webdriver', {
       get: () => false,
-      configurable: false
+      configurable: true
     });
 
-    Object.defineProperty(navigator, 'doNotTrack', {
+    Object.defineProperty(Navigator.prototype, 'doNotTrack', {
       get: () => null,
-      configurable: false
+      configurable: true
     });
 
-    Object.defineProperty(navigator, 'plugins', {
+    Object.defineProperty(Navigator.prototype, 'plugins', {
       get: () => {
         const plugins = [
           { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer', description: 'Portable Document Format' },
@@ -149,10 +149,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
         plugins.length = 3;
         return plugins;
       },
-      configurable: false
+      configurable: true
     });
 
-    Object.defineProperty(navigator, 'mimeTypes', {
+    Object.defineProperty(Navigator.prototype, 'mimeTypes', {
       get: () => {
         const mimeTypes = [
           { type: 'application/pdf', suffixes: 'pdf', description: 'Portable Document Format' },
@@ -161,7 +161,39 @@ contextBridge.exposeInMainWorld('electronAPI', {
         mimeTypes.length = 2;
         return mimeTypes;
       },
-      configurable: false
+      configurable: true
+    });
+
+    const userAgentDataMock = {
+      brands: [
+        { brand: 'Not_A Brand', version: '8' },
+        { brand: 'Chromium', version: '120' },
+        { brand: 'Google Chrome', version: '120' }
+      ],
+      mobile: false,
+      platform: 'Windows',
+      getHighEntropyValues: async (hints) => {
+        const values = {
+          platform: 'Windows',
+          platformVersion: '10.0.0',
+          architecture: 'x86',
+          model: '',
+          uaFullVersion: '120.0.0.0',
+          fullVersionList: [
+            { brand: 'Not_A Brand', version: '8.0.0.0' },
+            { brand: 'Chromium', version: '120.0.0.0' },
+            { brand: 'Google Chrome', version: '120.0.0.0' }
+          ]
+        };
+        const result = {};
+        hints.forEach(hint => { result[hint] = values[hint] !== undefined ? values[hint] : ''; });
+        return result;
+      }
+    };
+
+    Object.defineProperty(Navigator.prototype, 'userAgentData', {
+      get: () => userAgentDataMock,
+      configurable: true
     });
 
     console.log('[ZONIX FP] Navigator properties overridden successfully');
@@ -332,14 +364,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   }
 
   try {
-    Object.defineProperty(navigator, 'webkitHardwareConcurrency', {
+    Object.defineProperty(Navigator.prototype, 'webkitHardwareConcurrency', {
       get: () => FP_CONFIG.HARDWARE_CONCURRENCY,
-      configurable: false
+      configurable: true
     });
 
-    Object.defineProperty(navigator, 'webkitDeviceMemory', {
+    Object.defineProperty(Navigator.prototype, 'webkitDeviceMemory', {
       get: () => FP_CONFIG.DEVICE_MEMORY,
-      configurable: false
+      configurable: true
     });
 
     const originalGetBattery = navigator.getBattery;

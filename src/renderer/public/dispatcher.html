@@ -107,6 +107,98 @@
       color: #ffffff;
       box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
     }
+    .tab-bar {
+      display: flex;
+      align-items: center;
+      background: #0d121f;
+      border-bottom: 1px solid #222d42;
+      padding: 0 16px;
+      height: 38px;
+      -webkit-app-region: no-drag;
+      flex-shrink: 0;
+    }
+    .tabs-container {
+      display: flex;
+      gap: 6px;
+      height: 100%;
+      align-items: flex-end;
+    }
+    .tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #171f30;
+      border: 1px solid #222d42;
+      border-bottom: none;
+      color: #9ca3af;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 6px 14px;
+      border-top-left-radius: 6px;
+      border-top-right-radius: 6px;
+      cursor: pointer;
+      max-width: 180px;
+      min-width: 110px;
+      position: relative;
+      transition: all 0.2s;
+    }
+    .tab:hover {
+      background: #1e283d;
+      color: #cbd5e1;
+    }
+    .tab.active {
+      background: #0b0f19;
+      border-color: #3b82f6;
+      border-bottom: 2px solid #0b0f19;
+      color: #3b82f6;
+      font-weight: 600;
+      z-index: 2;
+    }
+    .tab-title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+    .tab-close {
+      width: 14px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-size: 11px;
+      color: #64748b;
+      transition: all 0.15s;
+      font-family: sans-serif;
+    }
+    .tab-close:hover {
+      background: #ef4444;
+      color: #ffffff;
+    }
+    .add-tab-btn {
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      font-size: 15px;
+      font-weight: 700;
+      width: 24px;
+      height: 24px;
+      margin-left: 10px;
+      margin-bottom: 4px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .add-tab-btn:hover {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+    }
     .win-btn-container {
       display: flex;
       height: 100%;
@@ -244,6 +336,13 @@
     </div>
   </div>
 
+  <div class="tab-bar" id="tabBar">
+    <div class="tabs-container" id="tabsContainer">
+      <!-- Tabs will be dynamically added here -->
+    </div>
+    <button class="add-tab-btn" id="addTabBtn" title="Duplicate Current Tab">+</button>
+  </div>
+
   <div class="webview-container" id="webviewContainer">
     <div class="loading-overlay" id="loadingOverlay">
       <div class="spinner"></div>
@@ -280,8 +379,9 @@
     const params = new URLSearchParams(window.location.search);
     const partition = params.get('partition') || '';
     const url = params.get('url') || 'https://www.google.com';
+    const preloadPath = params.get('preload') || '';
 
-    console.log('[Dispatcher Wrapper] Initializing webview with:', { partition, url });
+    console.log('[Dispatcher Wrapper] Initializing webview with:', { partition, url, preloadPath });
 
     const container = document.getElementById('webviewContainer');
     const overlay = document.getElementById('loadingOverlay');
@@ -305,6 +405,9 @@
 
     if (partition) {
       webview.setAttribute('partition', partition);
+    }
+    if (preloadPath) {
+      webview.setAttribute('preload', preloadPath);
     }
     webview.setAttribute('src', url);
 

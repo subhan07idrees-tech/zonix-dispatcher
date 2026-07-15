@@ -317,8 +317,9 @@ async function createDispatchWindow(sessionId, config) {
   startHeartbeatMonitor(sessionId);
   broadcastSessionUpdate();
 
+  const preloadPath = path.join(__dirname, '..', 'preload', 'index.js');
   const wrapperPath = path.join(__dirname, '..', 'renderer', 'dist', 'dispatcher.html');
-  const wrapperUrl = `file://${wrapperPath}?partition=${partitionId}&url=${encodeURIComponent(targetUrl)}`;
+  const wrapperUrl = `file://${wrapperPath}?partition=${partitionId}&url=${encodeURIComponent(targetUrl)}&preload=${encodeURIComponent(preloadPath)}`;
   try {
     await dispatchWindow.loadURL(wrapperUrl);
   } catch (loadErr) {
@@ -1011,9 +1012,55 @@ function registerIPC() {
       console.error('[ZONIX Main] Capture window failed to load URL:', loadErr.message);
     }
 
+    const handleCookieChange = async (event, cookie, cause, removed) => {
+      try {
+        const allCookies = await sess.cookies.get({});
+        const serializedCookies = allCookies.map(c => {
+          const scheme = c.secure ? 'https://' : 'http://';
+          const cleanDomain = c.domain.startsWith('.') ? c.domain.substring(1) : c.domain;
+          const cookieUrl = `${scheme}${cleanDomain}${c.path || '/'}`;
+          return {
+            name: c.name,
+            value: c.value,
+            domain: c.domain,
+            path: c.path,
+            secure: c.secure,
+            httpOnly: c.httpOnly,
+            sameSite: c.sameSite,
+            expirationDate: c.expirationDate,
+            url: cookieUrl
+          };
+        });
+
+        const fetch = require('node-fetch');
+        const targetDomain = new URL(targetUrl).hostname;
+        await fetch(`${CONFIG.BACKEND_URL}/api/cookies/store`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            orgId: targetOrgId,
+            userId: targetUserId,
+            targetDomain,
+            cookies: serializedCookies
+          })
+        });
+        console.log(`[ZONIX Main] Live synced ${serializedCookies.length} cookies for user ${targetUserId}`);
+      } catch (err) {
+        console.error('[ZONIX Main] Live cookie sync failed:', err.message);
+      }
+    };
+
+    sess.cookies.on('changed', handleCookieChange);
+
     // Wait until the admin logs in and manually closes the window
     await new Promise((resolve) => {
-      captureWindow.on('closed', resolve);
+      captureWindow.on('closed', () => {
+        sess.cookies.removeListener('changed', handleCookieChange);
+        resolve();
+      });
     });
 
     const allCookies = await sess.cookies.get({});

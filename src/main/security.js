@@ -70,11 +70,12 @@ class SecurityEngine {
   }
 
   applyWebRTCLeakProtection(targetSession) {
-    const webrtcPolicy = {
-      webRTCMultipleRoutesEnabled: false,
-      webRTCIPHandlingPolicy: 'disable_non_proxied_udp_send',
-      webRTCPublicInterfacesOnly: true
-    };
+    try {
+      targetSession.setWebRTCIPHandlingPolicy('disable_non_proxied_udp_send');
+      console.log('[Security] Native WebRTC IP Handling Policy set to disable_non_proxied_udp_send');
+    } catch (e) {
+      console.error('[Security] Failed to set native WebRTC IP handling policy:', e.message);
+    }
 
     targetSession.webRequest.onBeforeSendHeaders(
       { urls: ['*://*/*'] },
