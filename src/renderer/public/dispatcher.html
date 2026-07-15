@@ -539,7 +539,7 @@
           t.tabEl.classList.add('active');
           
           // Restore loading overlay state for the newly active tab
-          if (t.isLoading) {
+          if (t.isLoading && !t.isInitiallyLoaded) {
             loadingText.textContent = 'Securing tunnel connection...';
             overlay.style.display = 'flex';
             overlay.style.opacity = '1';
@@ -626,12 +626,12 @@
       }
       wv.setAttribute('src', initialUrl);
 
-      const tabObj = { id, webview: wv, tabEl, isLoading: true };
+      const tabObj = { id, webview: wv, tabEl, isLoading: true, isInitiallyLoaded: false };
 
       // Webview state listeners
       wv.addEventListener('did-start-loading', () => {
         tabObj.isLoading = true;
-        if (id === activeTabId) {
+        if (!tabObj.isInitiallyLoaded && id === activeTabId) {
           loadingText.textContent = 'Securing tunnel connection...';
           overlay.style.display = 'flex';
           overlay.style.opacity = '1';
@@ -640,6 +640,7 @@
 
       wv.addEventListener('did-finish-load', () => {
         tabObj.isLoading = false;
+        tabObj.isInitiallyLoaded = true;
         if (id === activeTabId) {
           overlay.style.opacity = '0';
           setTimeout(() => {
@@ -738,6 +739,7 @@
           overlay.style.display = 'flex';
           overlay.style.opacity = '1';
         }
+        activeTab.isInitiallyLoaded = false;
         activeTab.webview.reloadIgnoringCache();
       }
     });
