@@ -28,6 +28,13 @@ const CONFIG = {
   PROXY_TIMEOUT: 10000
 };
 
+const nodeFetch = require('node-fetch');
+async function zonixFetch(url, options = {}) {
+  const headers = options.headers || {};
+  headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+  return nodeFetch(url, { ...options, headers });
+}
+
 function createTray() {
   const icon = nativeImage.createEmpty();
   tray = new Tray(icon);
@@ -164,8 +171,7 @@ async function verifyCookieSync(sess, originalCookies, targetUrl, retries = 3) {
 async function fetchCookiesForSession(orgId, userId, targetDomain, token) {
   if (!token || !targetDomain) return [];
   try {
-    const fetch = require('node-fetch');
-    const res = await fetch(`${CONFIG.BACKEND_URL}/api/cookies/retrieve/${orgId}/${userId}/${targetDomain}`, {
+    const res = await zonixFetch(`${CONFIG.BACKEND_URL}/api/cookies/retrieve/${orgId}/${userId}/${targetDomain}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (res.ok) {
@@ -407,8 +413,7 @@ async function handleOIDCRemediation(sessionId, browserWindow) {
 
 async function fetchSessionFromBackend(orgId, userId) {
   try {
-    const fetch = require('node-fetch');
-    const response = await fetch(`${CONFIG.BACKEND_URL}/api/sessions/${orgId}/${userId}`, {
+    const response = await zonixFetch(`${CONFIG.BACKEND_URL}/api/sessions/${orgId}/${userId}`, {
       headers: {
         'Authorization': `Bearer ${store.get('authToken')}`,
         'Content-Type': 'application/json'
@@ -432,8 +437,7 @@ function startHeartbeatMonitor(sessionId) {
 
   sessionData.heartbeatTimer = setInterval(async () => {
     try {
-      const fetch = require('node-fetch');
-      const response = await fetch(`${CONFIG.BACKEND_URL}/api/heartbeat`, {
+      const response = await zonixFetch(`${CONFIG.BACKEND_URL}/api/heartbeat`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${store.get('authToken')}`,
@@ -568,8 +572,7 @@ function handleWSMessage(msg) {
 async function endSessionOnBackend(sessionId) {
   try {
     const token = store.get('authToken');
-    const fetch = require('node-fetch');
-    await fetch(`${CONFIG.BACKEND_URL}/api/sessions/${sessionId}`, {
+    await zonixFetch(`${CONFIG.BACKEND_URL}/api/sessions/${sessionId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -655,8 +658,7 @@ async function refreshSessionCookies(sessionId) {
 
 async function getActiveProxyForOrg(orgId, token) {
   try {
-    const fetch = require('node-fetch');
-    const response = await fetch(`${CONFIG.BACKEND_URL}/api/proxies/${orgId}`, {
+    const response = await zonixFetch(`${CONFIG.BACKEND_URL}/api/proxies/${orgId}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (response.ok) {
@@ -682,8 +684,7 @@ function registerIPC() {
   ipcMain.handle('auth:login', async (event, { orgId, userId, password }) => {
     try {
       console.log('[ZONIX Main] auth:login request for org:', orgId, 'user:', userId);
-      const fetch = require('node-fetch');
-      const response = await fetch(`${CONFIG.BACKEND_URL}/api/auth/login`, {
+      const response = await zonixFetch(`${CONFIG.BACKEND_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orgId, username: userId, password })
@@ -804,8 +805,7 @@ function registerIPC() {
       }
 
       // Register session with backend
-      const fetch = require('node-fetch');
-      const sessionResponse = await fetch(`${CONFIG.BACKEND_URL}/api/sessions/${orgId}`, {
+      const sessionResponse = await zonixFetch(`${CONFIG.BACKEND_URL}/api/sessions/${orgId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -1030,9 +1030,8 @@ function registerIPC() {
           };
         });
 
-        const fetch = require('node-fetch');
         const targetDomain = new URL(targetUrl).hostname;
-        await fetch(`${CONFIG.BACKEND_URL}/api/cookies/store`, {
+        await zonixFetch(`${CONFIG.BACKEND_URL}/api/cookies/store`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
