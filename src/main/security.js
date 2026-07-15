@@ -173,20 +173,37 @@ class SecurityEngine {
       { urls: ['*://*/*'] },
       (details, callback) => {
         const headers = details.responseHeaders;
-
-        const existingCSP = headers['content-security-policy'];
-        if (existingCSP) {
-          const enhancedCSP = existingCSP.map(csp =>
-            csp.replace(/report-uri[^;]*/gi, '')
-               .replace(/report-to[^;]*/gi, '')
-               .replace(/connect-src/gi, "connect-src 'self'")
-          );
-          headers['content-security-policy'] = enhancedCSP;
+        if (!headers) {
+          callback({});
+          return;
         }
 
-        delete headers['x-device-id'];
-        delete headers['x-client-id'];
-        delete headers['x-session-fingerprint'];
+        // Map lowercase headers to their actual keys in a single quick pass
+        const headerMap = {};
+        for (const key of Object.keys(headers)) {
+          headerMap[key.toLowerCase()] = key;
+        }
+
+        const cspOriginalKey = headerMap['content-security-policy'];
+        if (cspOriginalKey) {
+          const existingCSP = headers[cspOriginalKey];
+          if (Array.isArray(existingCSP)) {
+            headers[cspOriginalKey] = existingCSP.map(csp =>
+              csp.replace(/report-uri[^;]*/gi, '')
+                 .replace(/report-to[^;]*/gi, '')
+                 .replace(/connect-src/gi, "connect-src 'self'")
+            );
+          }
+        }
+
+        // Strip tracking headers case-insensitively using the map
+        const headersToStrip = ['x-device-id', 'x-client-id', 'x-session-fingerprint'];
+        for (const h of headersToStrip) {
+          const originalKey = headerMap[h];
+          if (originalKey) {
+            delete headers[originalKey];
+          }
+        }
 
         callback({ responseHeaders: headers });
       }
@@ -200,6 +217,16 @@ class SecurityEngine {
       { urls: ['*://*/*'] },
       (details, callback) => {
         const headers = details.responseHeaders;
+        if (!headers) {
+          callback({});
+          return;
+        }
+
+        // Map lowercase headers to their actual keys in a single quick pass
+        const headerMap = {};
+        for (const key of Object.keys(headers)) {
+          headerMap[key.toLowerCase()] = key;
+        }
 
         const headersToRemove = [
           'x-powered-by',
@@ -210,9 +237,12 @@ class SecurityEngine {
           'x-debug'
         ];
 
-        headersToRemove.forEach(h => {
-          delete headers[h.toLowerCase()];
-        });
+        for (const h of headersToRemove) {
+          const originalKey = headerMap[h];
+          if (originalKey) {
+            delete headers[originalKey];
+          }
+        }
 
         callback({ responseHeaders: headers });
       }
