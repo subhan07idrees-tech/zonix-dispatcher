@@ -1216,11 +1216,18 @@ function registerIPC() {
   });
 
   ipcMain.handle('config:get', (event, key) => {
+    if (key === 'authToken') {
+      return getAuthToken();
+    }
     return store.get(key);
   });
 
   ipcMain.handle('config:set', (event, key, value) => {
-    store.set(key, value);
+    if (key === 'authToken') {
+      setAuthToken(value);
+    } else {
+      store.set(key, value);
+    }
     return { success: true };
   });
 
