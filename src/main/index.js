@@ -550,6 +550,41 @@ function connectWebSocket() {
   });
 }
 
+function forceLogout() {
+  console.warn('[ZONIX] Force-logout command received. Evicting local session.');
+  
+  store.delete('authToken');
+  store.delete('orgId');
+  store.delete('userId');
+  store.delete('userRole');
+  store.delete('targetUrl');
+
+  if (wsConnection) {
+    wsConnection.removeAllListeners('close');
+    wsConnection.close();
+    wsConnection = null;
+  }
+
+  activeSessions.forEach((sessionData) => {
+    try {
+      sessionData.window.destroy();
+    } catch (e) {}
+  });
+  activeSessions.clear();
+
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.destroy();
+    mainWindow = null;
+  }
+
+  createAuthWindow();
+
+  dialog.showErrorBox(
+    'Session Expired',
+    'You have been logged out because this account was logged into on another computer.'
+  );
+}
+
 function handleWSMessage(msg) {
   switch (msg.type) {
     case 'command:kill':
@@ -560,6 +595,9 @@ function handleWSMessage(msg) {
       break;
     case 'command:refreshCookies':
       refreshSessionCookies(msg.sessionId);
+      break;
+    case 'command:logout':
+      forceLogout();
       break;
     case 'alert:proxy':
       sendToRenderer('alert:proxy', msg.data);
