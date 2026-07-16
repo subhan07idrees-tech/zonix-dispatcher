@@ -5,28 +5,52 @@ const { contextBridge, ipcRenderer } = require('electron');
     const rawData = ipcRenderer.sendSync('get-session-local-storage');
     if (rawData && rawData !== '{}') {
       const data = JSON.parse(rawData);
-      console.log(`[ZONIX LocalStorage] Injecting ${Object.keys(data).length} keys...`);
+      console.log(`[ZONIX LocalStorage Interceptor] Initializing interceptor with ${Object.keys(data).length} keys.`);
 
-      const doInject = () => {
+      // Write keys immediately
+      const writeKeys = () => {
         if (!window.localStorage) return;
-        for (const [key, value] of Object.entries(data)) {
+        for (const [k, v] of Object.entries(data)) {
           try {
-            window.localStorage.setItem(key, value);
-          } catch (e) {
-            console.warn(`[ZONIX LocalStorage] Error setting '${key}':`, e.message);
-          }
+            window.localStorage.setItem(k, v);
+          } catch (e) {}
         }
-        console.log('[ZONIX LocalStorage] Injected successfully.');
+      };
+      writeKeys();
+
+      // Hook Storage.prototype methods to bypass any runtime overrides or wipes
+      const originalGetItem = Storage.prototype.getItem;
+      Storage.prototype.getItem = function(key) {
+        if (this === window.localStorage && data.hasOwnProperty(key)) {
+          return data[key];
+        }
+        return originalGetItem.apply(this, arguments);
       };
 
-      doInject();
-      
-      // Inject again when DOM is parsed to handle early webkit script overrides
-      document.addEventListener('DOMContentLoaded', doInject);
-      window.addEventListener('load', doInject);
+      const originalSetItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function(key, value) {
+        if (this === window.localStorage && data.hasOwnProperty(key)) {
+          data[key] = value;
+        }
+        return originalSetItem.apply(this, arguments);
+      };
+
+      // Also define direct property getters on window.localStorage itself if key-based access is used (e.g. localStorage.token)
+      for (const key of Object.keys(data)) {
+        try {
+          Object.defineProperty(window.localStorage, key, {
+            get: () => data[key],
+            set: (val) => { data[key] = val; },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {}
+      }
+
+      console.log('[ZONIX LocalStorage Interceptor] Active.');
     }
   } catch (err) {
-    console.error('[ZONIX LocalStorage] Injection failed:', err.message);
+    console.error('[ZONIX LocalStorage Interceptor] Activation failed:', err.message);
   }
 })();
 

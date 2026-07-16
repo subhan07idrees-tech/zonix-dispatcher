@@ -776,14 +776,18 @@ function registerIPC() {
   });
 
   ipcMain.on('get-session-local-storage', (event) => {
-    const senderPartition = event.sender.session.partition || '';
+    const sessionPartition = event.sender.session ? event.sender.session.partition : '';
+    const senderPartition = event.sender.partition || sessionPartition || '';
+    
     let foundData = '{}';
     activeSessions.forEach((data) => {
-      if (data.partitionId === senderPartition || `persist:${data.partitionId}` === senderPartition || senderPartition.includes(data.userId)) {
+      const match1 = (data.partitionId && senderPartition.includes(data.partitionId));
+      const match2 = (data.userId && senderPartition.includes(data.userId));
+      if (match1 || match2) {
         foundData = data.localStorageData || '{}';
       }
     });
-    console.log(`[ZONIX Main] IPC get-session-local-storage request from partition: "${senderPartition}". Found data keys: ${foundData !== '{}' ? Object.keys(JSON.parse(foundData)).length : 0}`);
+    console.log(`[ZONIX Main] IPC get-session-local-storage request. senderPartition: "${senderPartition}". Found keys: ${foundData !== '{}' ? Object.keys(JSON.parse(foundData)).length : 0}`);
     event.returnValue = foundData;
   });
 
