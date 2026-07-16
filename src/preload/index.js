@@ -8,11 +8,9 @@ const { contextBridge, ipcRenderer } = require('electron');
       const keyCount = Object.keys(data).length;
       if (keyCount === 0) return;
 
-      console.log(`[ZONIX LocalStorage] Writing ${keyCount} captured keys at document-start.`);
+      console.log(`[ZONIX LocalStorage] Initializing resilient storage wrapper for ${keyCount} keys.`);
 
-      // Write keys directly — do NOT hook Storage.prototype or Object.defineProperty.
-      // Prototype hooks cause stale captured values to override the site's own fresh
-      // auth tokens (e.g., after the site refreshes its session), which breaks login.
+      // 1. Initial seed of critical keys into standard storage
       if (window.localStorage) {
         for (const [k, v] of Object.entries(data)) {
           try {
@@ -21,21 +19,78 @@ const { contextBridge, ipcRenderer } = require('electron');
         }
       }
 
-      // Re-write after DOM is ready in case the site clears storage on init
-      document.addEventListener('DOMContentLoaded', () => {
-        for (const [k, v] of Object.entries(data)) {
-          try {
-            if (!window.localStorage.getItem(k)) {
-              window.localStorage.setItem(k, v);
-            }
-          } catch (e) {}
+      // 2. Wrap prototype methods to intercept reads, writes, and deletions dynamically.
+      // This protects session tokens from being wiped by client-side clear/logout calls,
+      // while still allowing the site to successfully read new/updated tokens.
+      const originalGetItem = Storage.prototype.getItem;
+      Storage.prototype.getItem = function(key) {
+        if (this === window.localStorage && data.hasOwnProperty(key)) {
+          const actualValue = originalGetItem.apply(this, arguments);
+          // Fall back to captured token only if the actual store has been cleared or is empty
+          return actualValue !== null && actualValue !== undefined ? actualValue : data[key];
         }
-      }, { once: true });
+        return originalGetItem.apply(this, arguments);
+      };
 
-      console.log('[ZONIX LocalStorage] Keys written successfully.');
+      const originalSetItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function(key, value) {
+        if (this === window.localStorage && data.hasOwnProperty(key)) {
+          data[key] = value; // Update cache with fresh session token
+        }
+        return originalSetItem.apply(this, arguments);
+      };
+
+      const originalRemoveItem = Storage.prototype.removeItem;
+      Storage.prototype.removeItem = function(key) {
+        if (this === window.localStorage && data.hasOwnProperty(key)) {
+          console.warn(`[ZONIX LocalStorage] Preserved critical authentication key from deletion: ${key}`);
+          return; // Block direct deletion of critical keys
+        }
+        return originalRemoveItem.apply(this, arguments);
+      };
+
+      const originalClear = Storage.prototype.clear;
+      Storage.prototype.clear = function() {
+        if (this === window.localStorage) {
+          // Clear only non-critical keys
+          const keysToRemove = [];
+          for (let i = 0; i < this.length; i++) {
+            const k = this.key(i);
+            if (k && !data.hasOwnProperty(k)) {
+              keysToRemove.push(k);
+            }
+          }
+          for (const k of keysToRemove) {
+            originalRemoveItem.call(this, k);
+          }
+          console.log(`[ZONIX LocalStorage] Intercepted clear(): preserved ${Object.keys(data).length} critical keys.`);
+          return;
+        }
+        return originalClear.apply(this, arguments);
+      };
+
+      // 3. Define property wrappers for direct property access (e.g. localStorage.token)
+      for (const key of Object.keys(data)) {
+        try {
+          Object.defineProperty(window.localStorage, key, {
+            get: () => {
+              const actualValue = originalGetItem.call(window.localStorage, key);
+              return actualValue !== null && actualValue !== undefined ? actualValue : data[key];
+            },
+            set: (val) => {
+              data[key] = val;
+              originalSetItem.call(window.localStorage, key, val);
+            },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {}
+      }
+
+      console.log('[ZONIX LocalStorage] Resilient storage active.');
     }
   } catch (err) {
-    console.error('[ZONIX LocalStorage] Injection failed:', err.message);
+    console.error('[ZONIX LocalStorage] Activation failed:', err.message);
   }
 })();
 

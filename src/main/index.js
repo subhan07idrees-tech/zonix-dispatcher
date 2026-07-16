@@ -1,5 +1,43 @@
 const { app, BrowserWindow, session, ipcMain, protocol, Tray, Menu, nativeImage, dialog, safeStorage } = require('electron');
 const path = require('path');
+const fs = require('fs');
+
+// Redirect console logs to a file in userData directory for debugging
+const logFile = path.join(app.getPath('userData'), 'app.log');
+try {
+  fs.writeFileSync(logFile, `--- ZONIX RUN START: ${new Date().toISOString()} ---\n`);
+} catch (e) {
+  console.error('Failed to create log file:', e.message);
+}
+
+const originalLog = console.log;
+const originalWarn = console.warn;
+const originalError = console.error;
+
+function writeToLogFile(level, args) {
+  try {
+    const formattedMsg = args.map(arg => {
+      if (typeof arg === 'object') {
+        try { return JSON.stringify(arg); } catch (e) { return String(arg); }
+      }
+      return String(arg);
+    }).join(' ');
+    fs.appendFileSync(logFile, `[${new Date().toLocaleTimeString()}] [${level}] ${formattedMsg}\n`);
+  } catch (e) {}
+}
+
+console.log = function(...args) {
+  writeToLogFile('INFO', args);
+  originalLog.apply(console, args);
+};
+console.warn = function(...args) {
+  writeToLogFile('WARN', args);
+  originalWarn.apply(console, args);
+};
+console.error = function(...args) {
+  writeToLogFile('ERROR', args);
+  originalError.apply(console, args);
+};
 const Store = require('electron-store');
 const WebSocket = require('ws');
 const { v4: uuidv4 } = require('uuid');
@@ -349,7 +387,12 @@ async function createDispatchWindow(sessionId, config) {
     backgroundColor: '#0b0f19'
   });
 
-  dispatchWindow.webContents.setUserAgent(hardwareProfile?.userAgent || generateStableUA());
+  const targetUserAgent = hardwareProfile?.userAgent || generateStableUA();
+  dispatchWindow.webContents.setUserAgent(targetUserAgent);
+  dispatchWindow.webContents.on('did-attach-webview', (event, webContents) => {
+    webContents.setUserAgent(targetUserAgent);
+    console.log(`[ZONIX] Inherited parent User Agent to child webview: ${targetUserAgent}`);
+  });
 
   setupOIDCLoopDetection(dispatchWindow, sessionId);
 
@@ -1098,15 +1141,40 @@ function registerIPC() {
       await dispSess.setProxy({ proxyRules: '127.0.0.1:0' });
     }
 
-    const token = store.get('authToken');
+    const token = getAuthToken(); // Use decrypted auth token!
     const proxyNode = await getActiveProxyForOrg(targetOrgId, token);
+
+    let targetDomain = '';
+    try {
+      targetDomain = new URL(targetUrl).hostname;
+    } catch (e) {
+      console.error('[ZONIX Main] Invalid targetUrl:', e.message);
+    }
+
+    // Retrieve existing credentials from database to pre-populate capture window
+    const existingData = await fetchCookiesForSession(targetOrgId, targetUserId, targetDomain, token);
 
     // Use a temporary isolated partition for the capture browser to prevent SQLite locks
     const partitionId = `temp_capture_${targetOrgId}_user_${targetUserId}`;
     const sess = session.fromPartition(partitionId);
 
-    // Clear old cookies from the temp capture session so the admin gets a clean login screen
+    // Clear old cookies from the temp capture session so the admin starts with a clean baseline
     await sess.clearStorageData({ storages: ['cookies'] });
+
+    // Pre-populate with existing cookies if present to keep session active
+    if (existingData && existingData.cookies && existingData.cookies.length > 0) {
+      console.log(`[ZONIX Main] Pre-populating capture window with ${existingData.cookies.length} existing cookies`);
+      await verifyCookieSync(sess, existingData.cookies, targetUrl);
+    }
+
+    // Map existing localStorage so the preload script can load it
+    if (existingData && existingData.localStorage) {
+      sessionLocalStorageMap.set(partitionId, existingData.localStorage);
+    }
+
+    // Apply fingerprint headers and custom WebRTC/security interceptors to match dispatcher window
+    const captureUA = generateStableUA();
+    securityEngine.applyInterceptors(sess, targetOrgId);
 
     if (proxyNode) {
       const proxyRule = `${proxyNode.protocol.toLowerCase()}://${proxyNode.host}:${proxyNode.port}`;
@@ -1137,11 +1205,14 @@ function registerIPC() {
       },
       webPreferences: {
         partition: partitionId,
+        preload: path.join(__dirname, '..', 'preload', 'index.js'), // Use preload for localStorage injection!
         contextIsolation: true,
         nodeIntegration: false
       },
       show: true
     });
+
+    captureWindow.webContents.setUserAgent(captureUA);
 
     captureWindow.webContents.on('did-fail-load', (ev, code, desc, url, isMain) => {
       if (isMain && code !== -3) {
@@ -1262,6 +1333,7 @@ function registerIPC() {
     await new Promise((resolve) => {
       captureWindow.on('closed', () => {
         sess.cookies.removeListener('changed', handleCookieChange);
+        sessionLocalStorageMap.delete(partitionId);
         resolve();
       });
     });
@@ -1323,12 +1395,7 @@ function registerIPC() {
       activeDispatcherSession.window.webContents.send('session:resume');
     }
 
-    let targetDomain = '';
-    try {
-      targetDomain = new URL(targetUrl).hostname;
-    } catch (e) {
-      console.error(e);
-    }
+
 
     const serializedCookies = allCookies.map(c => {
       const scheme = c.secure ? 'https://' : 'http://';
