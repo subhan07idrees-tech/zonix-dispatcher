@@ -277,9 +277,11 @@ async function createDispatchWindow(sessionId, config) {
   const partitionId = `${CONFIG.PARTITION_PREFIX}${orgId}_user_${userId}`;
 
   const sess = session.fromPartition(partitionId);
+  const guestSess = session.fromPartition(`persist:${partitionId}`);
 
   if (proxyString) {
     await sess.setProxy({ proxyRules: proxyString });
+    await guestSess.setProxy({ proxyRules: proxyString });
     console.log(`[ZONIX] Proxy bound for session ${sessionId}: ${proxyString}`);
     if (config.proxyUsername && config.proxyPassword) {
       // Key by host:port so app.on('login') can match by authInfo.host/port
@@ -300,11 +302,11 @@ async function createDispatchWindow(sessionId, config) {
     await verifyCookieSync(sess, cookies, targetUrl);
     
     // ALSO sync cookies to the persist partition that the guest <webview> inside dispatcher.html actually requests
-    const guestSess = session.fromPartition(`persist:${partitionId}`);
     await verifyCookieSync(guestSess, cookies, targetUrl);
   }
 
   securityEngine.applyInterceptors(sess, orgId);
+  securityEngine.applyInterceptors(guestSess, orgId);
 
   const dispatchWindow = new BrowserWindow({
     width: 1400,
