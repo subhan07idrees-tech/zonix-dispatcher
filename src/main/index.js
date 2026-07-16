@@ -51,6 +51,8 @@ let authWindow = null;
 let syncWindow = null;
 let tray = null;
 let activeSessions = new Map();
+// Maps partitionId -> localStorageData (JSON string). Used for O(1) lookup in IPC handler.
+const sessionLocalStorageMap = new Map();
 let wsConnection = null;
 let proxyManager = null;
 let securityEngine = null;
@@ -162,22 +164,35 @@ async function verifyCookieSync(sess, originalCookies, targetUrl, retries = 3) {
     await Promise.all(originalCookies.map(async (cookie) => {
       try {
         const isSecure = cookie.secure !== undefined ? cookie.secure : true;
+
+        // Build the correct URL for this cookie
         let cookieUrl = cookie.url;
         if (!cookieUrl || cookieUrl === targetUrl) {
           const scheme = isSecure ? 'https://' : 'http://';
-          const cleanDomain = cookie.domain.startsWith('.') ? cookie.domain.substring(1) : cookie.domain;
+          const rawDomain = cookie.domain || (new URL(targetUrl).hostname);
+          const cleanDomain = rawDomain.startsWith('.') ? rawDomain.substring(1) : rawDomain;
           cookieUrl = `${scheme}${cleanDomain}${cookie.path || '/'}`;
         }
+
+        // Translate sameSite value from Chrome DevTools format to Electron's expected format.
+        // Chrome uses: 'none', 'lax', 'strict', 'unspecified'
+        // Electron uses: 'no_restriction', 'lax', 'strict', 'unspecified'
+        let sameSite = 'no_restriction';
+        const rawSameSite = (cookie.sameSite || '').toLowerCase();
+        if (rawSameSite === 'strict') sameSite = 'strict';
+        else if (rawSameSite === 'lax') sameSite = 'lax';
+        else if (rawSameSite === 'unspecified') sameSite = 'unspecified';
+        else sameSite = 'no_restriction'; // 'none', empty, or unknown -> no_restriction
 
         const cookieDetails = {
           url: cookieUrl,
           name: cookie.name,
           value: cookie.value,
-          domain: cookie.domain,
+          domain: cookie.domain || (new URL(targetUrl).hostname),
           path: cookie.path || '/',
           secure: isSecure,
           httpOnly: cookie.httpOnly !== undefined ? cookie.httpOnly : false,
-          sameSite: isSecure ? (cookie.sameSite || 'no_restriction') : 'lax'
+          sameSite
         };
 
         if (cookie.expirationDate) {
@@ -185,6 +200,7 @@ async function verifyCookieSync(sess, originalCookies, targetUrl, retries = 3) {
         }
 
         await sess.cookies.set(cookieDetails);
+        // console.log(`[ZONIX] Set cookie: ${cookie.name} (sameSite=${sameSite}, domain=${cookieDetails.domain})`);
       } catch (err) {
         console.error(`[ZONIX] Injection error for '${cookie.name}':`, err.message);
       }
@@ -276,12 +292,12 @@ async function createDispatchWindow(sessionId, config) {
   const { orgId, userId, proxyString, cookies, localStorageData, targetUrl, hardwareProfile } = config;
   const partitionId = `${CONFIG.PARTITION_PREFIX}${orgId}_user_${userId}`;
 
+  // partitionId already starts with 'persist:' from CONFIG.PARTITION_PREFIX.
+  // Do NOT add another 'persist:' prefix or it becomes 'persist:persist:...' which is a different, nonexistent partition.
   const sess = session.fromPartition(partitionId);
-  const guestSess = session.fromPartition(`persist:${partitionId}`);
 
   if (proxyString) {
     await sess.setProxy({ proxyRules: proxyString });
-    await guestSess.setProxy({ proxyRules: proxyString });
     console.log(`[ZONIX] Proxy bound for session ${sessionId}: ${proxyString}`);
     if (config.proxyUsername && config.proxyPassword) {
       // Key by host:port so app.on('login') can match by authInfo.host/port
@@ -298,15 +314,13 @@ async function createDispatchWindow(sessionId, config) {
   }
 
   if (cookies && cookies.length > 0) {
-    // Verify cookies but do not block window launch if minor tracking cookies are rejected by Electron
+    // Inject cookies into the ONE correct session (partitionId already has persist: prefix).
+    // The <webview> inside dispatcher.html uses the same partitionId, so it shares this session.
     await verifyCookieSync(sess, cookies, targetUrl);
-    
-    // ALSO sync cookies to the persist partition that the guest <webview> inside dispatcher.html actually requests
-    await verifyCookieSync(guestSess, cookies, targetUrl);
+    console.log(`[ZONIX] Cookies injected into partition: ${partitionId}`);
   }
 
   securityEngine.applyInterceptors(sess, orgId);
-  securityEngine.applyInterceptors(guestSess, orgId);
 
   const dispatchWindow = new BrowserWindow({
     width: 1400,
@@ -353,10 +367,12 @@ async function createDispatchWindow(sessionId, config) {
     proxyManager.stopHealthCheck(sessionId);
     proxyManager.clearKillSwitch(sessionId);
     activeSessions.delete(sessionId);
+    sessionLocalStorageMap.delete(partitionId);
     broadcastSessionUpdate();
     endSessionOnBackend(sessionId);
   });
 
+  const lsData = localStorageData || '{}';
   activeSessions.set(sessionId, {
     window: dispatchWindow,
     orgId,
@@ -364,10 +380,12 @@ async function createDispatchWindow(sessionId, config) {
     partitionId,
     proxyString,
     targetUrl,
-    localStorageData: localStorageData || '{}',
+    localStorageData: lsData,
     startTime: Date.now(),
     heartbeatTimer: null
   });
+  // Register partition -> localStorage mapping for fast IPC lookup
+  sessionLocalStorageMap.set(partitionId, lsData);
 
   if (proxyString) {
     proxyManager.startContinuousHealthCheck(sessionId, proxyString, dispatchWindow, {
@@ -381,7 +399,8 @@ async function createDispatchWindow(sessionId, config) {
   const preloadPath = path.join(__dirname, '..', 'preload', 'index.js');
   const wrapperPath = path.join(__dirname, '..', 'renderer', 'dist', 'dispatcher.html');
   const maxTabs = store.get('maxTabs') || 5;
-  const wrapperUrl = `file://${wrapperPath}?partition=${partitionId}&url=${encodeURIComponent(targetUrl)}&preload=${encodeURIComponent(preloadPath)}&maxTabs=${maxTabs}`;
+  // URL-encode partitionId so the 'persist:' prefix (colon) doesn't break URL parsing
+  const wrapperUrl = `file://${wrapperPath}?partition=${encodeURIComponent(partitionId)}&url=${encodeURIComponent(targetUrl)}&preload=${encodeURIComponent(preloadPath)}&maxTabs=${maxTabs}`;
   try {
     await dispatchWindow.loadURL(wrapperUrl);
   } catch (loadErr) {
@@ -776,18 +795,26 @@ function registerIPC() {
   });
 
   ipcMain.on('get-session-local-storage', (event) => {
-    const sessionPartition = event.sender.session ? event.sender.session.partition : '';
-    const senderPartition = event.sender.partition || sessionPartition || '';
-    
+    // Identify the sender's session by comparing session objects directly.
+    // event.sender.session is the actual Session object of the WebContents (or guest webview).
+    const senderSession = event.sender.session;
     let foundData = '{}';
-    activeSessions.forEach((data) => {
-      const match1 = (data.partitionId && senderPartition.includes(data.partitionId));
-      const match2 = (data.userId && senderPartition.includes(data.userId));
-      if (match1 || match2) {
-        foundData = data.localStorageData || '{}';
-      }
-    });
-    console.log(`[ZONIX Main] IPC get-session-local-storage request. senderPartition: "${senderPartition}". Found keys: ${foundData !== '{}' ? Object.keys(JSON.parse(foundData)).length : 0}`);
+
+    // Fast path: iterate known partitions and compare session object identity
+    for (const [partitionId, lsData] of sessionLocalStorageMap) {
+      try {
+        const partSess = session.fromPartition(partitionId);
+        if (partSess === senderSession) {
+          foundData = lsData;
+          console.log(`[ZONIX Main] IPC get-session-local-storage: matched partition "${partitionId}". Keys: ${Object.keys(JSON.parse(foundData || '{}')).length}`);
+          break;
+        }
+      } catch (e) {}
+    }
+
+    if (foundData === '{}') {
+      console.warn('[ZONIX Main] IPC get-session-local-storage: no session match found for sender.');
+    }
     event.returnValue = foundData;
   });
 
