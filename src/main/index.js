@@ -468,8 +468,7 @@ async function createDispatchWindow(sessionId, config) {
 
 function generateStableUA() {
   const chromeVersion = '120.0.0.0';
-  const platform = 'Win32';
-  const platformVersion = '10.0.0';
+  const platform = 'Windows NT 10.0';
   return `Mozilla/5.0 (${platform}; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`;
 }
 
@@ -840,6 +839,13 @@ async function getActiveProxyForOrg(orgId, token) {
 }
 
 function registerIPC() {
+  ipcMain.on('log:write', (event, { level, message }) => {
+    const sender = event.sender;
+    const isGuest = typeof sender.isGuest === 'function' && sender.isGuest();
+    const typeLabel = isGuest ? 'WebView' : 'Renderer';
+    console.log(`[${typeLabel}] [${level}] ${message}`);
+  });
+
   ipcMain.on('get-app-version', (event) => {
     event.returnValue = app.getVersion();
   });

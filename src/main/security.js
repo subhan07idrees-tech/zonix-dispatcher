@@ -76,17 +76,6 @@ class SecurityEngine {
     } catch (e) {
       console.error('[Security] Failed to set native WebRTC IP handling policy:', e.message);
     }
-
-    targetSession.webRequest.onBeforeSendHeaders(
-      { urls: ['*://*/*'] },
-      (details, callback) => {
-        if (!details.requestHeaders['X-Zonix-Secured']) {
-          details.requestHeaders['X-Zonix-Secured'] = 'true';
-        }
-        callback({ requestHeaders: details.requestHeaders });
-      }
-    );
-
     console.log('[Security] WebRTC leak protection applied');
   }
 
@@ -108,6 +97,10 @@ class SecurityEngine {
       { urls: ['*://*/*'] },
       (details, callback) => {
         const headers = details.requestHeaders;
+
+        if (!headers['X-Zonix-Secured']) {
+          headers['X-Zonix-Secured'] = 'true';
+        }
 
         if (!headers['Accept-Language'] || headers['Accept-Language'] === '') {
           headers['Accept-Language'] = 'en-US,en;q=0.9';

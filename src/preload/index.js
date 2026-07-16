@@ -1,5 +1,38 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+(function redirectConsoleLogs() {
+  try {
+    const originalLog = console.log;
+    const originalWarn = console.warn;
+    const originalError = console.error;
+
+    function sendToMain(level, args) {
+      try {
+        const msg = args.map(arg => {
+          if (typeof arg === 'object') {
+            try { return JSON.stringify(arg); } catch(e) { return String(arg); }
+          }
+          return String(arg);
+        }).join(' ');
+        ipcRenderer.send('log:write', { level, message: msg });
+      } catch (e) {}
+    }
+
+    console.log = function(...args) {
+      sendToMain('INFO', args);
+      originalLog.apply(console, args);
+    };
+    console.warn = function(...args) {
+      sendToMain('WARN', args);
+      originalWarn.apply(console, args);
+    };
+    console.error = function(...args) {
+      sendToMain('ERROR', args);
+      originalError.apply(console, args);
+    };
+  } catch (e) {}
+})();
+
 (function injectLocalStorage() {
   try {
     const rawData = ipcRenderer.sendSync('get-session-local-storage');
