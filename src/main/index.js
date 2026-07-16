@@ -773,10 +773,11 @@ function registerIPC() {
     const senderPartition = event.sender.session.partition || '';
     let foundData = '{}';
     activeSessions.forEach((data) => {
-      if (data.partitionId === senderPartition || `persist:${data.partitionId}` === senderPartition) {
+      if (data.partitionId === senderPartition || `persist:${data.partitionId}` === senderPartition || senderPartition.includes(data.userId)) {
         foundData = data.localStorageData || '{}';
       }
     });
+    console.log(`[ZONIX Main] IPC get-session-local-storage request from partition: "${senderPartition}". Found data keys: ${foundData !== '{}' ? Object.keys(JSON.parse(foundData)).length : 0}`);
     event.returnValue = foundData;
   });
 
@@ -1258,6 +1259,9 @@ function registerIPC() {
       } else {
         await dispSess.setProxy({});
       }
+
+      // Update stored local storage in memory context
+      activeDispatcherSession.localStorageData = localStorageData || '{}';
 
       // Notify the dispatcher's window to hide the overlay and resume
       activeDispatcherSession.window.webContents.send('session:resume');

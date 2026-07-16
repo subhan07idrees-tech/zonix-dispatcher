@@ -2,21 +2,28 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 (function injectLocalStorage() {
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const rawData = ipcRenderer.sendSync('get-session-local-storage');
-      if (rawData && rawData !== '{}') {
-        const data = JSON.parse(rawData);
-        console.log(`[ZONIX LocalStorage] Injecting ${Object.keys(data).length} keys directly into localStorage...`);
-        
+    const rawData = ipcRenderer.sendSync('get-session-local-storage');
+    if (rawData && rawData !== '{}') {
+      const data = JSON.parse(rawData);
+      console.log(`[ZONIX LocalStorage] Injecting ${Object.keys(data).length} keys...`);
+
+      const doInject = () => {
+        if (!window.localStorage) return;
         for (const [key, value] of Object.entries(data)) {
           try {
             window.localStorage.setItem(key, value);
           } catch (e) {
-            console.warn(`[ZONIX LocalStorage] Failed to set key '${key}':`, e.message);
+            console.warn(`[ZONIX LocalStorage] Error setting '${key}':`, e.message);
           }
         }
-        console.log(`[ZONIX LocalStorage] Injection complete!`);
-      }
+        console.log('[ZONIX LocalStorage] Injected successfully.');
+      };
+
+      doInject();
+      
+      // Inject again when DOM is parsed to handle early webkit script overrides
+      document.addEventListener('DOMContentLoaded', doInject);
+      window.addEventListener('load', doInject);
     }
   } catch (err) {
     console.error('[ZONIX LocalStorage] Injection failed:', err.message);
