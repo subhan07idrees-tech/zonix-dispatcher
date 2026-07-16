@@ -177,12 +177,23 @@ async function verifyCookieSync(sess, originalCookies, targetUrl, retries = 3) {
         // Translate sameSite value from Chrome DevTools format to Electron's expected format.
         // Chrome uses: 'none', 'lax', 'strict', 'unspecified'
         // Electron uses: 'no_restriction', 'lax', 'strict', 'unspecified'
-        let sameSite = 'no_restriction';
+        // IMPORTANT: SameSite=None (no_restriction) requires Secure=true in Chromium.
+        // Non-secure cookies with empty/none sameSite must use 'lax' instead.
+        let sameSite;
         const rawSameSite = (cookie.sameSite || '').toLowerCase();
-        if (rawSameSite === 'strict') sameSite = 'strict';
-        else if (rawSameSite === 'lax') sameSite = 'lax';
-        else if (rawSameSite === 'unspecified') sameSite = 'unspecified';
-        else sameSite = 'no_restriction'; // 'none', empty, or unknown -> no_restriction
+        if (rawSameSite === 'strict') {
+          sameSite = 'strict';
+        } else if (rawSameSite === 'lax') {
+          sameSite = 'lax';
+        } else if (rawSameSite === 'unspecified') {
+          sameSite = 'unspecified';
+        } else if (rawSameSite === 'none' || rawSameSite === 'no_restriction') {
+          // SameSite=None requires Secure. If not secure, downgrade to lax.
+          sameSite = isSecure ? 'no_restriction' : 'lax';
+        } else {
+          // empty/unknown: use lax for non-secure, no_restriction for secure
+          sameSite = isSecure ? 'no_restriction' : 'lax';
+        }
 
         const cookieDetails = {
           url: cookieUrl,
@@ -200,7 +211,7 @@ async function verifyCookieSync(sess, originalCookies, targetUrl, retries = 3) {
         }
 
         await sess.cookies.set(cookieDetails);
-        // console.log(`[ZONIX] Set cookie: ${cookie.name} (sameSite=${sameSite}, domain=${cookieDetails.domain})`);
+        console.log(`[ZONIX] Set cookie: ${cookie.name} domain=${cookieDetails.domain} secure=${isSecure} sameSite=${sameSite}`);
       } catch (err) {
         console.error(`[ZONIX] Injection error for '${cookie.name}':`, err.message);
       }

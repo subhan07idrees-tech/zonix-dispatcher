@@ -5,52 +5,37 @@ const { contextBridge, ipcRenderer } = require('electron');
     const rawData = ipcRenderer.sendSync('get-session-local-storage');
     if (rawData && rawData !== '{}') {
       const data = JSON.parse(rawData);
-      console.log(`[ZONIX LocalStorage Interceptor] Initializing interceptor with ${Object.keys(data).length} keys.`);
+      const keyCount = Object.keys(data).length;
+      if (keyCount === 0) return;
 
-      // Write keys immediately
-      const writeKeys = () => {
-        if (!window.localStorage) return;
+      console.log(`[ZONIX LocalStorage] Writing ${keyCount} captured keys at document-start.`);
+
+      // Write keys directly — do NOT hook Storage.prototype or Object.defineProperty.
+      // Prototype hooks cause stale captured values to override the site's own fresh
+      // auth tokens (e.g., after the site refreshes its session), which breaks login.
+      if (window.localStorage) {
         for (const [k, v] of Object.entries(data)) {
           try {
             window.localStorage.setItem(k, v);
           } catch (e) {}
         }
-      };
-      writeKeys();
-
-      // Hook Storage.prototype methods to bypass any runtime overrides or wipes
-      const originalGetItem = Storage.prototype.getItem;
-      Storage.prototype.getItem = function(key) {
-        if (this === window.localStorage && data.hasOwnProperty(key)) {
-          return data[key];
-        }
-        return originalGetItem.apply(this, arguments);
-      };
-
-      const originalSetItem = Storage.prototype.setItem;
-      Storage.prototype.setItem = function(key, value) {
-        if (this === window.localStorage && data.hasOwnProperty(key)) {
-          data[key] = value;
-        }
-        return originalSetItem.apply(this, arguments);
-      };
-
-      // Also define direct property getters on window.localStorage itself if key-based access is used (e.g. localStorage.token)
-      for (const key of Object.keys(data)) {
-        try {
-          Object.defineProperty(window.localStorage, key, {
-            get: () => data[key],
-            set: (val) => { data[key] = val; },
-            configurable: true,
-            enumerable: true
-          });
-        } catch (e) {}
       }
 
-      console.log('[ZONIX LocalStorage Interceptor] Active.');
+      // Re-write after DOM is ready in case the site clears storage on init
+      document.addEventListener('DOMContentLoaded', () => {
+        for (const [k, v] of Object.entries(data)) {
+          try {
+            if (!window.localStorage.getItem(k)) {
+              window.localStorage.setItem(k, v);
+            }
+          } catch (e) {}
+        }
+      }, { once: true });
+
+      console.log('[ZONIX LocalStorage] Keys written successfully.');
     }
   } catch (err) {
-    console.error('[ZONIX LocalStorage Interceptor] Activation failed:', err.message);
+    console.error('[ZONIX LocalStorage] Injection failed:', err.message);
   }
 })();
 

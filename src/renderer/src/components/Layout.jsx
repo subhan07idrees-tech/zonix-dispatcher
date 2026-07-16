@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { WebSocketProvider, useWebSocket } from '../contexts/WebSocketContext';
 import {
   LayoutDashboard, Building2, Users, Wifi, Radio, FileText,
-  LogOut, Menu, X, Circle, ChevronRight
+  LogOut, Menu, X, Circle, ChevronRight, ShieldCheck
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { path: '/users', label: 'User Registry', icon: Users },
   { path: '/proxies', label: 'Proxy Nodes', icon: Wifi },
   { path: '/sessions', label: 'Active Sessions', icon: Radio },
+  { path: '/diagnostics', label: 'Diagnostics', icon: ShieldCheck },
   { path: '/logs', label: 'System Logs', icon: FileText },
 ];
 
