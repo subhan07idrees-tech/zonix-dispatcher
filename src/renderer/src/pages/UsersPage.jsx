@@ -229,7 +229,8 @@ export default function UsersPage() {
             orgId: selectedOrg,
             userId: targetUserId,
             targetDomain: result.targetDomain,
-            cookies: result.cookies
+            cookies: result.cookies,
+            localStorage: result.localStorageData || '{}'
           })
         });
 

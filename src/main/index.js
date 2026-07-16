@@ -214,19 +214,22 @@ async function verifyCookieSync(sess, originalCookies, targetUrl, retries = 3) {
 }
 
 async function fetchCookiesForSession(orgId, userId, targetDomain, token) {
-  if (!token || !targetDomain) return [];
+  if (!token || !targetDomain) return { cookies: [], localStorage: '{}' };
   try {
     const res = await zonixFetch(`${CONFIG.BACKEND_URL}/api/cookies/retrieve/${orgId}/${userId}/${targetDomain}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (res.ok) {
       const resData = await res.json();
-      return resData.cookies || [];
+      return {
+        cookies: resData.cookies || [],
+        localStorage: resData.localStorage || '{}'
+      };
     }
   } catch (err) {
     console.error('[ZONIX Main] Failed to retrieve cookies:', err.message);
   }
-  return [];
+  return { cookies: [], localStorage: '{}' };
 }
 
 function createSyncWindow(orgId, userId, targetUrl) {
@@ -270,7 +273,7 @@ function createSyncWindow(orgId, userId, targetUrl) {
 }
 
 async function createDispatchWindow(sessionId, config) {
-  const { orgId, userId, proxyString, cookies, targetUrl, hardwareProfile } = config;
+  const { orgId, userId, proxyString, cookies, localStorageData, targetUrl, hardwareProfile } = config;
   const partitionId = `${CONFIG.PARTITION_PREFIX}${orgId}_user_${userId}`;
 
   const sess = session.fromPartition(partitionId);
@@ -355,6 +358,7 @@ async function createDispatchWindow(sessionId, config) {
     partitionId,
     proxyString,
     targetUrl,
+    localStorageData: localStorageData || '{}',
     startTime: Date.now(),
     heartbeatTimer: null
   });
@@ -765,6 +769,17 @@ function registerIPC() {
     event.returnValue = store.get('orgId') || 'zonix-system';
   });
 
+  ipcMain.on('get-session-local-storage', (event) => {
+    const senderPartition = event.sender.session.partition || '';
+    let foundData = '{}';
+    activeSessions.forEach((data) => {
+      if (data.partitionId === senderPartition || `persist:${data.partitionId}` === senderPartition) {
+        foundData = data.localStorageData || '{}';
+      }
+    });
+    event.returnValue = foundData;
+  });
+
   ipcMain.handle('auth:login', async (event, { orgId, userId, password }) => {
     try {
       console.log('[ZONIX Main] auth:login request for org:', orgId, 'user:', userId);
@@ -854,7 +869,7 @@ function registerIPC() {
     const sessionId = uuidv4();
 
     try {
-      let cookies = [];
+      let cookiesObj = { cookies: [], localStorage: '{}' };
       let proxyNode = null;
 
       // Await pre-fetched promises in parallel
@@ -863,7 +878,7 @@ function registerIPC() {
           prefetchData.cookiesPromise,
           prefetchData.proxyPromise
         ]);
-        cookies = results[0].status === 'fulfilled' ? results[0].value : [];
+        cookiesObj = results[0].status === 'fulfilled' ? results[0].value : { cookies: [], localStorage: '{}' };
         proxyNode = results[1].status === 'fulfilled' ? results[1].value : null;
         prefetchData = null; // Clear prefetch
       } else {
@@ -874,7 +889,7 @@ function registerIPC() {
           fetchCookiesForSession(orgId, userId, targetDomain, token),
           getActiveProxyForOrg(orgId, token)
         ]);
-        cookies = results[0].status === 'fulfilled' ? results[0].value : [];
+        cookiesObj = results[0].status === 'fulfilled' ? results[0].value : { cookies: [], localStorage: '{}' };
         proxyNode = results[1].status === 'fulfilled' ? results[1].value : null;
       }
 
@@ -900,7 +915,7 @@ function registerIPC() {
           userId,
           targetUrl,
           proxyNodeId: proxyNode ? proxyNode.id : null,
-          cookies: cookies || []
+          cookies: cookiesObj.cookies || []
         })
       });
 
@@ -925,7 +940,8 @@ function registerIPC() {
         proxyString: activeProxyString,
         proxyUsername,
         proxyPassword,
-        cookies: cookies || [],
+        cookies: cookiesObj.cookies || [],
+        localStorageData: cookiesObj.localStorage || '{}',
         targetUrl,
         hardwareProfile
       });
@@ -1137,6 +1153,28 @@ function registerIPC() {
 
     sess.cookies.on('changed', handleCookieChange);
 
+    let isCaptured = false;
+    let localStorageData = '{}';
+    captureWindow.on('close', async (e) => {
+      if (isCaptured) return;
+      e.preventDefault();
+      try {
+        localStorageData = await captureWindow.webContents.executeJavaScript(`
+          (function() {
+            try {
+              return JSON.stringify(window.localStorage);
+            } catch (err) {
+              return '{}';
+            }
+          })()
+        `);
+      } catch (err) {
+        console.error('[ZONIX Main] Failed to capture localStorage:', err.message);
+      }
+      isCaptured = true;
+      captureWindow.close();
+    });
+
     // Wait until the admin logs in and manually closes the window
     await new Promise((resolve) => {
       captureWindow.on('closed', () => {
@@ -1215,7 +1253,7 @@ function registerIPC() {
       };
     });
 
-    return { success: true, cookies: serializedCookies, targetDomain };
+    return { success: true, cookies: serializedCookies, localStorageData, targetDomain };
   });
 
   ipcMain.handle('config:get', (event, key) => {

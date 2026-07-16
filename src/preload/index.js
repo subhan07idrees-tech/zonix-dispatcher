@@ -1,5 +1,26 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+(function injectLocalStorage() {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const rawData = ipcRenderer.sendSync('get-session-local-storage');
+      if (rawData && rawData !== '{}') {
+        const data = JSON.parse(rawData);
+        console.log(`[ZONIX LocalStorage] Injecting ${Object.keys(data).length} keys into localStorage...`);
+        for (const [key, value] of Object.entries(data)) {
+          try {
+            window.localStorage.setItem(key, value);
+          } catch (e) {
+            console.warn(`[ZONIX LocalStorage] Failed to set key '${key}':`, e.message);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[ZONIX LocalStorage] Injection failed:', err.message);
+  }
+})();
+
 contextBridge.exposeInMainWorld('zonixAPI', {
   login: (credentials) => ipcRenderer.invoke('auth:login', credentials),
   logout: () => ipcRenderer.invoke('auth:logout'),
