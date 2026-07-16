@@ -1414,6 +1414,27 @@ function registerIPC() {
       };
     });
 
+    // Save final captured state (including final localStorage) to the database on close
+    try {
+      await zonixFetch(`${CONFIG.BACKEND_URL}/api/cookies/store`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          orgId: targetOrgId,
+          userId: targetUserId,
+          targetDomain,
+          cookies: serializedCookies,
+          localStorage: localStorageData || '{}'
+        })
+      });
+      console.log(`[ZONIX Main] Final captured state saved successfully to DB. Cookies: ${serializedCookies.length}, LocalStorage size: ${(localStorageData || '').length} chars`);
+    } catch (saveErr) {
+      console.error('[ZONIX Main] Failed to save final captured state to DB:', saveErr.message);
+    }
+
     return { success: true, cookies: serializedCookies, localStorageData, targetDomain };
   });
 
