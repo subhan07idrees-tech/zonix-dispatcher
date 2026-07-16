@@ -1162,7 +1162,12 @@ function registerIPC() {
         localStorageData = await captureWindow.webContents.executeJavaScript(`
           (function() {
             try {
-              return JSON.stringify(window.localStorage);
+              const iframe = document.createElement('iframe');
+              iframe.style.display = 'none';
+              document.documentElement.appendChild(iframe);
+              const data = JSON.stringify(iframe.contentWindow.localStorage);
+              iframe.remove();
+              return data;
             } catch (err) {
               return '{}';
             }
