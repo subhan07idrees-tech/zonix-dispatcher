@@ -298,6 +298,10 @@ async function createDispatchWindow(sessionId, config) {
   if (cookies && cookies.length > 0) {
     // Verify cookies but do not block window launch if minor tracking cookies are rejected by Electron
     await verifyCookieSync(sess, cookies, targetUrl);
+    
+    // ALSO sync cookies to the persist partition that the guest <webview> inside dispatcher.html actually requests
+    const guestSess = session.fromPartition(`persist:${partitionId}`);
+    await verifyCookieSync(guestSess, cookies, targetUrl);
   }
 
   securityEngine.applyInterceptors(sess, orgId);
@@ -1226,38 +1230,46 @@ function registerIPC() {
     // If there was an active dispatcher session, hot-swap the cookies and resume it
     if (activeDispatcherSession) {
       console.log(`[ZONIX Main] Resuming active dispatcher session ${activeDispatcherSession.sessionId} with fresh cookies`);
-      const dispSess = session.fromPartition(activeDispatcherSession.partitionId);
       
-      // Wipe old cookies in the dispatcher's live partition
-      await dispSess.clearStorageData({ storages: ['cookies'] });
-      
-      // Inject the fresh cookies
-      await Promise.all(allCookies.map(async (c) => {
-        try {
-          const scheme = c.secure ? 'https://' : 'http://';
-          const cleanDomain = c.domain.startsWith('.') ? c.domain.substring(1) : c.domain;
-          const cookieUrl = `${scheme}${cleanDomain}${c.path || '/'}`;
-          await dispSess.cookies.set({
-            url: cookieUrl,
-            name: c.name,
-            value: c.value,
-            domain: c.domain,
-            path: c.path || '/',
-            secure: c.secure,
-            httpOnly: c.httpOnly,
-            sameSite: c.secure ? (c.sameSite || 'no_restriction') : 'lax',
-            expirationDate: c.expirationDate
-          });
-        } catch (e) {
-          console.error('[ZONIX Main] Failed to hot-swap cookie:', e.message);
-        }
-      }));
+      const partitions = [
+        activeDispatcherSession.partitionId,
+        `persist:${activeDispatcherSession.partitionId}`
+      ];
 
-      // Restore original proxy settings on the dispatcher session partition
-      if (activeDispatcherSession.proxyString) {
-        await dispSess.setProxy({ proxyRules: activeDispatcherSession.proxyString });
-      } else {
-        await dispSess.setProxy({});
+      for (const part of partitions) {
+        const dispSess = session.fromPartition(part);
+        
+        // Wipe old cookies in the dispatcher's live partition
+        await dispSess.clearStorageData({ storages: ['cookies'] });
+        
+        // Inject the fresh cookies
+        await Promise.all(allCookies.map(async (c) => {
+          try {
+            const scheme = c.secure ? 'https://' : 'http://';
+            const cleanDomain = c.domain.startsWith('.') ? c.domain.substring(1) : c.domain;
+            const cookieUrl = `${scheme}${cleanDomain}${c.path || '/'}`;
+            await dispSess.cookies.set({
+              url: cookieUrl,
+              name: c.name,
+              value: c.value,
+              domain: c.domain,
+              path: c.path || '/',
+              secure: c.secure,
+              httpOnly: c.httpOnly,
+              sameSite: c.secure ? (c.sameSite || 'no_restriction') : 'lax',
+              expirationDate: c.expirationDate
+            });
+          } catch (e) {
+            console.error(`[ZONIX Main] Failed to hot-swap cookie in partition ${part}:`, e.message);
+          }
+        }));
+
+        // Restore original proxy settings on the dispatcher session partition
+        if (activeDispatcherSession.proxyString) {
+          await dispSess.setProxy({ proxyRules: activeDispatcherSession.proxyString });
+        } else {
+          await dispSess.setProxy({});
+        }
       }
 
       // Update stored local storage in memory context
