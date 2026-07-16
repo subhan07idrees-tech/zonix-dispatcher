@@ -1172,10 +1172,6 @@ function registerIPC() {
       sessionLocalStorageMap.set(partitionId, existingData.localStorage);
     }
 
-    // Apply fingerprint headers and custom WebRTC/security interceptors to match dispatcher window
-    const captureUA = generateStableUA();
-    securityEngine.applyInterceptors(sess, targetOrgId);
-
     if (proxyNode) {
       const proxyRule = `${proxyNode.protocol.toLowerCase()}://${proxyNode.host}:${proxyNode.port}`;
       const proxyKey = `${proxyNode.host}:${proxyNode.port}`;
@@ -1211,8 +1207,6 @@ function registerIPC() {
       },
       show: true
     });
-
-    captureWindow.webContents.setUserAgent(captureUA);
 
     captureWindow.webContents.on('did-fail-load', (ev, code, desc, url, isMain) => {
       if (isMain && code !== -3) {

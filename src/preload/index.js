@@ -94,41 +94,43 @@ const { contextBridge, ipcRenderer } = require('electron');
   }
 })();
 
-contextBridge.exposeInMainWorld('zonixAPI', {
-  login: (credentials) => ipcRenderer.invoke('auth:login', credentials),
-  logout: () => ipcRenderer.invoke('auth:logout'),
-  launchDispatch: (config) => ipcRenderer.invoke('dispatch:launch', config),
-  killSession: (sessionId) => ipcRenderer.invoke('session:kill', sessionId),
-  restartSession: (sessionId) => ipcRenderer.invoke('session:restart', sessionId),
-  listSessions: () => ipcRenderer.invoke('sessions:list'),
-  captureCookies: (args) => ipcRenderer.invoke('session:cookies:capture', args),
-  getConfig: (key) => ipcRenderer.invoke('config:get', key),
-  setConfig: (key, value) => ipcRenderer.invoke('config:set', key, value),
-  onSessionsUpdate: (callback) => ipcRenderer.on('sessions:update', (_, data) => callback(data)),
-  onSessionWarning: (callback) => ipcRenderer.on('session:warning', (_, data) => callback(data)),
-  onAlertProxy: (callback) => ipcRenderer.on('alert:proxy', (_, data) => callback(data)),
-  onSyncStart: (callback) => ipcRenderer.on('sync:start', (_, data) => callback(data)),
-  onSyncFailed: (callback) => ipcRenderer.on('sync:failed', (_, reason) => callback(reason)),
-  retryCookieSync: () => ipcRenderer.send('sync:retry'),
-  onProxyStatus: (callback) => ipcRenderer.on('proxy:status', (_, status) => callback(status)),
-  onSessionPause: (callback) => ipcRenderer.on('session:pause', (_, data) => callback(data)),
-  onSessionResume: (callback) => ipcRenderer.on('session:resume', (_, data) => callback(data)),
-  removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel),
-  minimizeWindow: () => ipcRenderer.send('window:minimize'),
-  maximizeWindow: () => ipcRenderer.send('window:maximize'),
-  closeWindow: () => ipcRenderer.send('window:close'),
-  logoutDispatcher: () => ipcRenderer.invoke('dispatch:logout'),
-  appVersion: ipcRenderer.sendSync('get-app-version')
-});
+if (window.location.protocol === 'file:') {
+  contextBridge.exposeInMainWorld('zonixAPI', {
+    login: (credentials) => ipcRenderer.invoke('auth:login', credentials),
+    logout: () => ipcRenderer.invoke('auth:logout'),
+    launchDispatch: (config) => ipcRenderer.invoke('dispatch:launch', config),
+    killSession: (sessionId) => ipcRenderer.invoke('session:kill', sessionId),
+    restartSession: (sessionId) => ipcRenderer.invoke('session:restart', sessionId),
+    listSessions: () => ipcRenderer.invoke('sessions:list'),
+    captureCookies: (args) => ipcRenderer.invoke('session:cookies:capture', args),
+    getConfig: (key) => ipcRenderer.invoke('config:get', key),
+    setConfig: (key, value) => ipcRenderer.invoke('config:set', key, value),
+    onSessionsUpdate: (callback) => ipcRenderer.on('sessions:update', (_, data) => callback(data)),
+    onSessionWarning: (callback) => ipcRenderer.on('session:warning', (_, data) => callback(data)),
+    onAlertProxy: (callback) => ipcRenderer.on('alert:proxy', (_, data) => callback(data)),
+    onSyncStart: (callback) => ipcRenderer.on('sync:start', (_, data) => callback(data)),
+    onSyncFailed: (callback) => ipcRenderer.on('sync:failed', (_, reason) => callback(reason)),
+    retryCookieSync: () => ipcRenderer.send('sync:retry'),
+    onProxyStatus: (callback) => ipcRenderer.on('proxy:status', (_, status) => callback(status)),
+    onSessionPause: (callback) => ipcRenderer.on('session:pause', (_, data) => callback(data)),
+    onSessionResume: (callback) => ipcRenderer.on('session:resume', (_, data) => callback(data)),
+    removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel),
+    minimizeWindow: () => ipcRenderer.send('window:minimize'),
+    maximizeWindow: () => ipcRenderer.send('window:maximize'),
+    closeWindow: () => ipcRenderer.send('window:close'),
+    logoutDispatcher: () => ipcRenderer.invoke('dispatch:logout'),
+    appVersion: ipcRenderer.sendSync('get-app-version')
+  });
 
-// Separate API for the update window
-contextBridge.exposeInMainWorld('electronAPI', {
-  onUpdateInfo: (callback) => ipcRenderer.on('update:info', (_, data) => callback(data)),
-  onDownloadProgress: (callback) => ipcRenderer.on('update:progress', (_, pct) => callback(pct)),
-  onUpdateError: (callback) => ipcRenderer.on('update:error', (_, errText) => callback(errText)),
-  startUpdate: () => ipcRenderer.send('update:start'),
-  quitApp: () => ipcRenderer.send('update:quit')
-});
+  // Separate API for the update window
+  contextBridge.exposeInMainWorld('electronAPI', {
+    onUpdateInfo: (callback) => ipcRenderer.on('update:info', (_, data) => callback(data)),
+    onDownloadProgress: (callback) => ipcRenderer.on('update:progress', (_, pct) => callback(pct)),
+    onUpdateError: (callback) => ipcRenderer.on('update:error', (_, errText) => callback(errText)),
+    startUpdate: () => ipcRenderer.send('update:start'),
+    quitApp: () => ipcRenderer.send('update:quit')
+  });
+}
 
 (function injectFingerprintOverrides() {
   const FP_CONFIG = {

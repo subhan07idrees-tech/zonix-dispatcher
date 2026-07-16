@@ -124,7 +124,7 @@ class SecurityEngine {
         headers['sec-ch-ua'] = '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"';
         headers['sec-ch-ua-model'] = '""';
         headers['sec-ch-ua-full-Version'] = '"120.0.6099.110"';
-        headers['sec-ch-ua-platform-version'] = '"15.0.0"';
+        headers['sec-ch-ua-platform-version'] = '"10.0.0"';
 
         callback({ requestHeaders: headers });
       }
