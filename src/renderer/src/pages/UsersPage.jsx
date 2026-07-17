@@ -191,6 +191,25 @@ export default function UsersPage() {
     }
   };
 
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
+    try {
+      const res = await authFetch(`/users/${selectedOrg}/${userId}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        showAlert(errorData.error || 'Failed to delete user', 'ERROR', 'error');
+        return;
+      }
+      showAlert('User deleted successfully', 'DELETED', 'success');
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+      showAlert(err.message || 'An error occurred', 'ERROR', 'error');
+    }
+  };
+
   const handleAuthenticateSite = async (targetUserId) => {
     let targetOrg = null;
     if (currentUser?.role === 'SUPER_ADMIN') {
@@ -407,6 +426,15 @@ export default function UsersPage() {
                       >
                         {u.status === 'ACTIVE' ? <ShieldOff className="w-3.5 h-3.5" /> : <Shield className="w-3.5 h-3.5" />}
                       </button>
+                      {currentUser?.id !== u.id && (
+                        <button
+                          onClick={() => handleDeleteUser(u.id)}
+                          className="p-1.5 hover:bg-zonix-surface-light rounded text-zonix-text-dim hover:text-red-400"
+                          title="Delete User"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

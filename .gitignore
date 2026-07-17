@@ -46,3 +46,6 @@ preload.js
 tmp/
 temp/
 .cache/
+
+# Website
+website/

@@ -417,13 +417,26 @@ async function createDispatchWindow(sessionId, config) {
     }
   });
 
-  dispatchWindow.on('close', () => {
+  let isClosed = false;
+  dispatchWindow.on('close', async (e) => {
+    if (isClosed) return;
+    e.preventDefault();
+
     proxyManager.stopHealthCheck(sessionId);
     proxyManager.clearKillSwitch(sessionId);
     activeSessions.delete(sessionId);
     sessionLocalStorageMap.delete(partitionId);
     broadcastSessionUpdate();
-    endSessionOnBackend(sessionId);
+
+    try {
+      console.log(`[ZONIX] Notifying backend of session termination for ${sessionId}...`);
+      await endSessionOnBackend(sessionId);
+    } catch (err) {
+      console.error(`[ZONIX] Failed to notify backend of session termination:`, err.message);
+    }
+
+    isClosed = true;
+    dispatchWindow.close();
   });
 
   const lsData = localStorageData || '{}';
@@ -737,7 +750,7 @@ function handleWSMessage(msg) {
 
 async function endSessionOnBackend(sessionId) {
   try {
-    const token = store.get('authToken');
+    const token = getAuthToken();
     await zonixFetch(`${CONFIG.BACKEND_URL}/api/sessions/${sessionId}`, {
       method: 'DELETE',
       headers: {
