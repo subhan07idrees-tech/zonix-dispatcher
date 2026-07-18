@@ -810,7 +810,8 @@ if (window.location.protocol === 'file:') {
       });
 
       // Inject Route Copy Button next to location text pairs (Origin ➔ Destination)
-      const potentialRouteElements = document.querySelectorAll('div, td, span, h1, h2, h3, h4, h5, h6, p, a, [role="gridcell"], [role="cell"]');
+      // Restrict query to headers or elements inside detail/drawer/pane/sidebar panels to prevent table column cluttering
+      const potentialRouteElements = document.querySelectorAll('h1, h2, h3, h4, [class*="detail"] div, [class*="pane"] div, [class*="drawer"] div, [class*="sidebar"] div');
       potentialRouteElements.forEach(el => {
         if (el.querySelector('.zonix-quick-copy-btn')) return;
         
@@ -859,6 +860,26 @@ if (window.location.protocol === 'file:') {
           el.appendChild(copyBtn);
         }
       });
+
+      // 2. Dashboard Page Lockdown (Restricts dispatcher clicks to 'SEARCH LOADS' buttons only)
+      const isDashboard = window.location.pathname.includes('/dashboard') || 
+                          window.location.hash.includes('/dashboard') || 
+                          (document.querySelector('h1')?.textContent === 'Dashboard');
+                          
+      if (isDashboard) {
+        const interactiveElements = document.querySelectorAll('a, button, [role="button"], [class*="card"], [class*="button"]');
+        interactiveElements.forEach(el => {
+          const text = (el.textContent || '').toLowerCase().trim();
+          if (text.includes('search loads')) {
+            el.style.setProperty('pointer-events', 'auto', 'important');
+            el.style.setProperty('opacity', '1', 'important');
+            el.style.setProperty('display', 'inline-flex', 'important');
+          } else {
+            el.style.setProperty('pointer-events', 'none', 'important');
+            el.style.setProperty('opacity', '0.3', 'important');
+          }
+        });
+      }
     }, 1000);
 
     console.log('[ZONIX] DAT One interface lockdown engine initialized');
