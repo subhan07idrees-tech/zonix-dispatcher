@@ -626,6 +626,40 @@
       }
       wv.setAttribute('src', initialUrl);
 
+      // Lock down navigation and window popups
+      wv.addEventListener('will-navigate', (e) => {
+        const urlString = e.url;
+        console.log(`[webview] will-navigate: ${urlString}`);
+        
+        // 1. Block mailto:, tel:, and other non-http protocols from opening apps on system
+        if (!urlString.startsWith('http://') && !urlString.startsWith('https://')) {
+          e.preventDefault();
+          return;
+        }
+
+        // 2. Block navigation away from search-loads on DAT One
+        if (urlString.includes('one.dat.com') && 
+            !urlString.includes('/search-loads') && 
+            !urlString.includes('/loads') && 
+            !urlString.includes('/login') && 
+            !urlString.includes('/auth') && 
+            !urlString.includes('/callback') && 
+            !urlString.includes('/oidc')) {
+          const currentUrl = wv.getURL();
+          // Only block if we are already inside the authenticated session (not during login flow redirects)
+          if (currentUrl && currentUrl.includes('one.dat.com') && !currentUrl.includes('/login') && !currentUrl.includes('/auth')) {
+            e.preventDefault();
+            console.warn(`[webview] Navigation blocked to preserve search-loads lockdown: ${urlString}`);
+          }
+        }
+      });
+
+      // Block all secondary popups / target="_blank" window creations
+      wv.addEventListener('new-window', (e) => {
+        e.preventDefault();
+        console.warn(`[webview] Blocked opening new window: ${e.url}`);
+      });
+
       const tabObj = { id, webview: wv, tabEl, isLoading: true, isInitiallyLoaded: false };
 
       // Webview state listeners

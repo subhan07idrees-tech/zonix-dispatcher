@@ -660,3 +660,84 @@ if (window.location.protocol === 'file:') {
     console.error('[ZONIX FP] Script monitor failed:', err.message);
   }
 })();
+
+// Sidebar and Link Lockdown for DAT One
+(function applyDATLockdown() {
+  try {
+    if (!window.location.hostname.includes('dat.com')) {
+      return;
+    }
+
+    // 1. Inject custom CSS rules to block clicking broker profile links
+    const style = document.createElement('style');
+    style.id = 'zonix-dat-lockdown-css';
+    style.innerHTML = `
+      /* Disable clicking on broker profile links or search directories in the loads list */
+      a[href*="/directory/"], a[href*="/profile/"], [class*="company"] a, [class*="broker"] a {
+        pointer-events: none !important;
+        cursor: default !important;
+        text-decoration: none !important;
+        color: inherit !important;
+      }
+    `;
+    
+    const insertStyle = () => {
+      if (document.head && !document.getElementById('zonix-dat-lockdown-css')) {
+        document.head.appendChild(style);
+      }
+    };
+
+    if (document.head) {
+      insertStyle();
+    } else {
+      document.addEventListener('DOMContentLoaded', insertStyle);
+    }
+
+    // List of DAT menu items we want to hide to restrict dispatchers to "Search Loads" only
+    const blockLabels = [
+      'dashboard',
+      'my trucks',
+      'my loads',
+      'private network',
+      'tools',
+      'support',
+      'my account',
+      'notifications'
+    ];
+
+    // Periodic check to hide blocked links and clean mailto handlers
+    setInterval(() => {
+      // Hide sidebar/menu items
+      const elements = document.querySelectorAll('a, button, li, div[role="button"], span');
+      elements.forEach(el => {
+        if (!el.textContent) return;
+        const text = el.textContent.toLowerCase().trim();
+        
+        blockLabels.forEach(label => {
+          if (text === label || (text.startsWith(label) && text.length < label.length + 5)) {
+            el.style.setProperty('display', 'none', 'important');
+            el.style.setProperty('pointer-events', 'none', 'important');
+          }
+        });
+      });
+
+      // Intercept and cancel clicks on mailto: links
+      const mailtoLinks = document.querySelectorAll('a[href^="mailto:"]');
+      mailtoLinks.forEach(link => {
+        if (link.dataset.hooked) return;
+        link.dataset.hooked = 'true';
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }, true);
+        link.style.setProperty('pointer-events', 'none', 'important');
+        link.style.setProperty('cursor', 'default', 'important');
+        link.style.setProperty('text-decoration', 'none', 'important');
+      });
+    }, 1000);
+
+    console.log('[ZONIX] DAT One interface lockdown engine initialized');
+  } catch (err) {
+    console.error('[ZONIX] DAT lockdown engine error:', err.message);
+  }
+})();
