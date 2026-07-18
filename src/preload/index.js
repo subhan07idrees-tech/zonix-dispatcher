@@ -814,8 +814,8 @@ if (window.location.protocol === 'file:') {
       const candidates = [];
       const potentialRouteElements = document.querySelectorAll('h1, h2, h3, h4, div, span');
       potentialRouteElements.forEach(el => {
-        // Exclude table rows/grid rows completely to avoid layout cluttering
-        if (el.closest('[role="row"], tr, [class*="row"], [class*="grid-row"], [class*="list-row"]')) return;
+        // Exclude table rows/grid rows completely to avoid layout cluttering, while avoiding matching layout classes like Tailwind's flex-row
+        if (el.closest('[role="row"], tr, [role="gridcell"], [role="cell"], [class*="grid-cell"], [class*="grid-row"], [class*="table-row"], [class*="row-item"]')) return;
         
         const rawText = el.textContent || '';
         if (rawText.length > 150) return; // Avoid large body descriptions
