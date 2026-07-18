@@ -810,12 +810,16 @@ if (window.location.protocol === 'file:') {
       });
 
       // Inject Route Copy Button next to location text pairs (Origin ➔ Destination)
-      // Strictly target the main detail header by finding the deepest element with 2 locations, excluding any table row environments
+      // Strictly target the main detail header by finding the deepest element with 2 locations inside the details pane / drawer
       const candidates = [];
       const potentialRouteElements = document.querySelectorAll('h1, h2, h3, h4, div, span');
       potentialRouteElements.forEach(el => {
-        // Exclude table rows/grid rows completely to avoid layout cluttering, while avoiding matching layout classes like Tailwind's flex-row
-        if (el.closest('[role="row"], tr, [role="gridcell"], [role="cell"], [class*="grid-cell"], [class*="grid-row"], [class*="table-row"], [class*="row-item"]')) return;
+        // Must be located inside the active load details panel/drawer
+        const inPanel = el.closest('[class*="detail"], [class*="drawer"], [class*="sidebar"]');
+        if (!inPanel) return;
+        
+        // Exclude grid cell layout wrappers inside details pane if any
+        if (el.closest('[role="gridcell"], [role="cell"], [class*="grid-cell"]')) return;
         
         const rawText = el.textContent || '';
         if (rawText.length > 150) return; // Avoid large body descriptions
