@@ -810,7 +810,7 @@ if (window.location.protocol === 'file:') {
       });
 
       // Inject Route Copy Button next to location text pairs (Origin ➔ Destination)
-      const potentialRouteElements = document.querySelectorAll('div, td, span, h1, h2, h3, p');
+      const potentialRouteElements = document.querySelectorAll('div, td, span, h1, h2, h3, h4, h5, h6, p, a, [role="gridcell"], [role="cell"]');
       potentialRouteElements.forEach(el => {
         if (el.querySelector('.zonix-quick-copy-btn')) return;
         
@@ -819,10 +819,10 @@ if (window.location.protocol === 'file:') {
         
         // Find all unique "City, ST" patterns in the text
         const matches = [];
-        const cityStateRegexGlobal = /\b([A-Za-z\s\.\'-]+,\s*[A-Z]{2})\b/g;
+        const cityStateRegexGlobal = /([A-Za-z\s\.\'-]+),\s*([A-Z]{2})/g;
         let m;
         while ((m = cityStateRegexGlobal.exec(rawText)) !== null) {
-          const matchedText = m[1].trim();
+          const matchedText = `${m[1].trim()}, ${m[2].trim()}`;
           if (!matches.includes(matchedText)) {
             matches.push(matchedText);
           }
@@ -841,7 +841,7 @@ if (window.location.protocol === 'file:') {
             let cm;
             cityStateRegexGlobal.lastIndex = 0; // Reset regex state
             while ((cm = cityStateRegexGlobal.exec(childText)) !== null) {
-              const cleaned = cm[1].trim();
+              const cleaned = `${cm[1].trim()}, ${cm[2].trim()}`;
               if (!childMatches.includes(cleaned)) childMatches.push(cleaned);
             }
             if (childMatches.length === 2) {
