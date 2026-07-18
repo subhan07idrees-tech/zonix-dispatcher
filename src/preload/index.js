@@ -705,19 +705,73 @@ if (window.location.protocol === 'file:') {
       'notifications'
     ];
 
-    const copyToClipboard = (text, buttonElement) => {
-      navigator.clipboard.writeText(text).then(() => {
-        const originalHTML = buttonElement.innerHTML;
-        buttonElement.innerHTML = '✔️';
-        setTimeout(() => {
-          buttonElement.innerHTML = originalHTML;
-        }, 1000);
-      }).catch(err => {
-        console.error('[ZONIX] Clipboard write failed:', err);
+    const getCopySVG = (color) => `
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+    `;
+    const getCheckSVG = () => `
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    `;
+
+    const createStyledCopyButton = (getTextFn, titleText) => {
+      const btn = document.createElement('button');
+      btn.className = 'zonix-quick-copy-btn';
+      btn.title = titleText;
+      btn.style.cssText = `
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: 1px solid #334155;
+        background: #1e293b;
+        border-radius: 4px;
+        padding: 4px;
+        margin-left: 6px;
+        width: 22px;
+        height: 22px;
+        vertical-align: middle;
+        transition: all 0.2s ease;
+      `;
+      
+      btn.innerHTML = getCopySVG('#94a3b8');
+      
+      btn.addEventListener('mouseenter', () => {
+        btn.style.background = '#334155';
+        btn.style.borderColor = '#475569';
       });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.background = '#1e293b';
+        btn.style.borderColor = '#334155';
+      });
+      
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const text = getTextFn();
+        navigator.clipboard.writeText(text).then(() => {
+          btn.innerHTML = getCheckSVG();
+          btn.style.borderColor = '#10b981';
+          btn.style.background = '#064e3b';
+          
+          setTimeout(() => {
+            btn.innerHTML = getCopySVG('#94a3b8');
+            btn.style.borderColor = '#334155';
+            btn.style.background = '#1e293b';
+          }, 1000);
+        }).catch(err => {
+          console.error('[ZONIX] Copy failed:', err);
+        });
+      });
+      
+      return btn;
     };
 
-    // Periodic check to hide blocked links and clean mailto handlers
+    // Periodic check to hide blocked links, manage copy buttons, and enforce restrictions
     setInterval(() => {
       // Hide sidebar/menu items
       const elements = document.querySelectorAll('a, button, li, div[role="button"], span');
@@ -748,62 +802,65 @@ if (window.location.protocol === 'file:') {
         }
 
         // Inject Copy Button next to the email address
-        if (!link.parentNode.querySelector('.zonix-copy-btn-email')) {
-          const btn = document.createElement('button');
-          btn.className = 'zonix-copy-btn-email';
-          btn.innerHTML = '📋';
-          btn.title = 'Copy Email Address';
-          btn.style = 'margin-left: 6px; cursor: pointer; border: none; background: transparent; font-size: 11px; display: inline-block; vertical-align: middle; padding: 2px;';
-          
+        if (!link.parentNode.querySelector('.zonix-quick-copy-btn')) {
           const emailText = link.getAttribute('href').replace('mailto:', '');
-          btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            copyToClipboard(emailText, btn);
-          });
-          
-          // Insert immediately after the link
-          link.parentNode.insertBefore(btn, link.nextSibling);
+          const copyBtn = createStyledCopyButton(() => emailText, 'Copy Email Address');
+          link.parentNode.insertBefore(copyBtn, link.nextSibling);
         }
       });
 
-      // Inject Route Copy Button next to location text pairs (Origin ➔ Destination)
+      // Inject Route Copy Button next to location text pairs in the search results table
       const rows = document.querySelectorAll('[role="row"], tr, [class*="row"], [class*="item-list"], [class*="grid-row"]');
       rows.forEach(row => {
-        if (row.querySelector('.zonix-copy-route-btn')) return;
+        if (row.querySelector('.zonix-quick-copy-btn')) return;
         
         const textElements = row.querySelectorAll('span, div, td, p, a');
         const locationsInRow = [];
+        
         textElements.forEach(el => {
-          if (el.children.length === 0) {
-            const text = el.textContent.trim();
-            // Matches e.g. "Chicago, IL", "Florence, KY", "Dallas, TX"
-            if (/^[A-Za-z\s\.\'-]+,\s*[A-Z]{2}$/.test(text) && text.length < 30) {
-              if (!locationsInRow.includes(el)) locationsInRow.push(el);
-            }
+          const rawText = el.textContent || '';
+          // Strip out non-alphabetic leading prefix (like arrow symbols or dots inside element)
+          const cleanText = rawText.replace(/^[^A-Za-z]+/, '').trim();
+          
+          if (/^[A-Za-z\s\.\'-]+,\s*[A-Z]{2}$/.test(cleanText) && cleanText.length < 30) {
+            locationsInRow.push({ el, text: cleanText });
           }
         });
 
+        // Filter out parent container elements that contain child matched elements to keep only the deepest leaf elements
+        const leafLocations = locationsInRow.filter(item1 => {
+          return !locationsInRow.some(item2 => item1.el !== item2.el && item1.el.contains(item2.el));
+        });
+
         // If exactly 2 matching locations are found (Origin, Destination)
-        if (locationsInRow.length === 2) {
-          const originEl = locationsInRow[0];
-          const destEl = locationsInRow[1];
+        if (leafLocations.length === 2) {
+          const originText = leafLocations[0].text;
+          const destEl = leafLocations[1].el;
+          const destText = leafLocations[1].text;
           
-          const copyBtn = document.createElement('button');
-          copyBtn.className = 'zonix-copy-route-btn';
-          copyBtn.innerHTML = '📋';
-          copyBtn.title = 'Copy Route (Origin ➔ Destination)';
-          copyBtn.style = 'margin-left: 6px; cursor: pointer; border: none; background: transparent; font-size: 11px; display: inline-block; vertical-align: middle; padding: 2px;';
+          const routeText = `${originText} ➔ ${destText}`;
+          const copyBtn = createStyledCopyButton(() => routeText, 'Copy Route (Origin ➔ Destination)');
           
-          const routeText = `${originEl.textContent.trim()} ➔ ${destEl.textContent.trim()}`;
-          copyBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            copyToClipboard(routeText, copyBtn);
-          });
-          
-          // Insert immediately after the destination element
           destEl.parentNode.insertBefore(copyBtn, destEl.nextSibling);
+        }
+      });
+
+      // Inject Route Copy Button directly next to detail view headers showing "[Origin] ... [Destination]"
+      const detailHeaderCandidates = document.querySelectorAll('h1, h2, h3, div[class*="header"], div[class*="title"]');
+      detailHeaderCandidates.forEach(el => {
+        if (el.children.length > 5) return; // Only process simple header wrappers
+        if (el.querySelector('.zonix-quick-copy-btn')) return;
+
+        const rawText = el.textContent || '';
+        const match = rawText.match(/([A-Za-z\s\.\'-]+,\s*[A-Z]{2})\s*[^A-Za-z0-9]*[➔→-]+\s*([A-Za-z\s\.\'-]+,\s*[A-Z]{2})/);
+        if (match) {
+          const originText = match[1].trim();
+          const destText = match[2].trim();
+          const routeText = `${originText} ➔ ${destText}`;
+          
+          const copyBtn = createStyledCopyButton(() => routeText, 'Copy Route (Origin ➔ Destination)');
+          copyBtn.style.marginLeft = '12px';
+          el.appendChild(copyBtn);
         }
       });
     }, 1000);
