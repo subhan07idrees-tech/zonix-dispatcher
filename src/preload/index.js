@@ -809,36 +809,52 @@ if (window.location.protocol === 'file:') {
         }
       });
 
-      // Inject Route Copy Button next to location text pairs (Origin ➔ Destination)
-      // Strictly target the main detail header by finding the deepest element with 2 locations inside the details pane / drawer
-      const candidates = [];
-      const potentialRouteElements = document.querySelectorAll('h1, h2, h3, h4, div, span');
-      potentialRouteElements.forEach(el => {
-        // Must be located inside the active load details panel/drawer
-        const inPanel = el.closest('[class*="detail"], [class*="drawer"], [class*="sidebar"]');
-        if (!inPanel) return;
-        
-        // Exclude grid cell layout wrappers inside details pane if any
-        if (el.closest('[role="gridcell"], [role="cell"], [class*="grid-cell"]')) return;
-        
-        const rawText = el.textContent || '';
-        if (rawText.length > 150) return; // Avoid large body descriptions
-        
-        // Find all unique "City, ST" patterns (case-insensitive to support lowercase DOM states upcased via CSS text-transform)
-        const matches = [];
-        const cityStateRegexGlobal = /([A-Za-z\s\.\'-]+),\s*([A-Za-z]{2})/g;
-        let m;
-        while ((m = cityStateRegexGlobal.exec(rawText)) !== null) {
-          const matchedText = `${m[1].trim()}, ${m[2].trim().toUpperCase()}`;
-          if (!matches.includes(matchedText)) {
-            matches.push(matchedText);
+      // Inject Route Copy Button strictly inside the Detail Drawer
+      // Locate the active details panel using the VIEW ROUTE button as a layout anchor
+      let detailsContainer = null;
+      const viewRouteBtn = Array.from(document.querySelectorAll('button, a, div, span')).find(el => (el.textContent || '').trim() === 'VIEW ROUTE');
+      if (viewRouteBtn) {
+        let current = viewRouteBtn.parentElement;
+        while (current && current !== document.body) {
+          const className = current.className || '';
+          const matchesDrawer = /drawer|panel|pane|detail/i.test(typeof className === 'string' ? className : '');
+          if (matchesDrawer) {
+            detailsContainer = current;
+            break;
           }
+          current = current.parentElement;
         }
-        
-        if (matches.length >= 2) {
-          candidates.push({ el, matches });
+        if (!detailsContainer) {
+          detailsContainer = viewRouteBtn.parentElement?.parentElement;
         }
-      });
+      }
+
+      const candidates = [];
+      if (detailsContainer) {
+        const potentialRouteElements = detailsContainer.querySelectorAll('h1, h2, h3, h4, div, span');
+        potentialRouteElements.forEach(el => {
+          // Avoid grid cells inside details wrapper if any
+          if (el.closest('[role="gridcell"], [role="cell"], [class*="grid-cell"]')) return;
+          
+          const rawText = el.textContent || '';
+          if (rawText.length > 150) return; // Avoid large body descriptions
+          
+          // Find all unique "City, ST" patterns (case-insensitive to support lowercase DOM states upcased via CSS text-transform)
+          const matches = [];
+          const cityStateRegexGlobal = /([A-Za-z\s\.\'-]+),\s*([A-Za-z]{2})/g;
+          let m;
+          while ((m = cityStateRegexGlobal.exec(rawText)) !== null) {
+            const matchedText = `${m[1].trim()}, ${m[2].trim().toUpperCase()}`;
+            if (!matches.includes(matchedText)) {
+              matches.push(matchedText);
+            }
+          }
+          
+          if (matches.length >= 2) {
+            candidates.push({ el, matches });
+          }
+        });
+      }
       
       // Filter candidates to find the deepest (leaf) element containing both locations
       const leafCandidates = candidates.filter(item1 => {
