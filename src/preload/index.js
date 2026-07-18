@@ -705,6 +705,18 @@ if (window.location.protocol === 'file:') {
       'notifications'
     ];
 
+    const copyToClipboard = (text, buttonElement) => {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalHTML = buttonElement.innerHTML;
+        buttonElement.innerHTML = '✔️';
+        setTimeout(() => {
+          buttonElement.innerHTML = originalHTML;
+        }, 1000);
+      }).catch(err => {
+        console.error('[ZONIX] Clipboard write failed:', err);
+      });
+    };
+
     // Periodic check to hide blocked links and clean mailto handlers
     setInterval(() => {
       // Hide sidebar/menu items
@@ -721,18 +733,78 @@ if (window.location.protocol === 'file:') {
         });
       });
 
-      // Intercept and cancel clicks on mailto: links
+      // Intercept and cancel clicks on mailto: links & inject Copy Email button
       const mailtoLinks = document.querySelectorAll('a[href^="mailto:"]');
       mailtoLinks.forEach(link => {
-        if (link.dataset.hooked) return;
-        link.dataset.hooked = 'true';
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }, true);
-        link.style.setProperty('pointer-events', 'none', 'important');
-        link.style.setProperty('cursor', 'default', 'important');
-        link.style.setProperty('text-decoration', 'none', 'important');
+        if (!link.dataset.hooked) {
+          link.dataset.hooked = 'true';
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }, true);
+          link.style.setProperty('pointer-events', 'none', 'important');
+          link.style.setProperty('cursor', 'default', 'important');
+          link.style.setProperty('text-decoration', 'none', 'important');
+        }
+
+        // Inject Copy Button next to the email address
+        if (!link.parentNode.querySelector('.zonix-copy-btn-email')) {
+          const btn = document.createElement('button');
+          btn.className = 'zonix-copy-btn-email';
+          btn.innerHTML = '📋';
+          btn.title = 'Copy Email Address';
+          btn.style = 'margin-left: 6px; cursor: pointer; border: none; background: transparent; font-size: 11px; display: inline-block; vertical-align: middle; padding: 2px;';
+          
+          const emailText = link.getAttribute('href').replace('mailto:', '');
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            copyToClipboard(emailText, btn);
+          });
+          
+          // Insert immediately after the link
+          link.parentNode.insertBefore(btn, link.nextSibling);
+        }
+      });
+
+      // Inject Route Copy Button next to location text pairs (Origin ➔ Destination)
+      const rows = document.querySelectorAll('[role="row"], tr, [class*="row"], [class*="item-list"], [class*="grid-row"]');
+      rows.forEach(row => {
+        if (row.querySelector('.zonix-copy-route-btn')) return;
+        
+        const textElements = row.querySelectorAll('span, div, td, p, a');
+        const locationsInRow = [];
+        textElements.forEach(el => {
+          if (el.children.length === 0) {
+            const text = el.textContent.trim();
+            // Matches e.g. "Chicago, IL", "Florence, KY", "Dallas, TX"
+            if (/^[A-Za-z\s\.\'-]+,\s*[A-Z]{2}$/.test(text) && text.length < 30) {
+              if (!locationsInRow.includes(el)) locationsInRow.push(el);
+            }
+          }
+        });
+
+        // If exactly 2 matching locations are found (Origin, Destination)
+        if (locationsInRow.length === 2) {
+          const originEl = locationsInRow[0];
+          const destEl = locationsInRow[1];
+          
+          const copyBtn = document.createElement('button');
+          copyBtn.className = 'zonix-copy-route-btn';
+          copyBtn.innerHTML = '📋';
+          copyBtn.title = 'Copy Route (Origin ➔ Destination)';
+          copyBtn.style = 'margin-left: 6px; cursor: pointer; border: none; background: transparent; font-size: 11px; display: inline-block; vertical-align: middle; padding: 2px;';
+          
+          const routeText = `${originEl.textContent.trim()} ➔ ${destEl.textContent.trim()}`;
+          copyBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            copyToClipboard(routeText, copyBtn);
+          });
+          
+          // Insert immediately after the destination element
+          destEl.parentNode.insertBefore(copyBtn, destEl.nextSibling);
+        }
       });
     }, 1000);
 
