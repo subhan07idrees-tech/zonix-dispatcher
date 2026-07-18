@@ -809,57 +809,53 @@ if (window.location.protocol === 'file:') {
         }
       });
 
-      // Inject Route Copy Button next to location text pairs in the search results table
-      const rows = document.querySelectorAll('[role="row"], tr, [class*="row"], [class*="item-list"], [class*="grid-row"]');
-      rows.forEach(row => {
-        if (row.querySelector('.zonix-quick-copy-btn')) return;
-        
-        const textElements = row.querySelectorAll('span, div, td, p, a');
-        const locationsInRow = [];
-        
-        textElements.forEach(el => {
-          const rawText = el.textContent || '';
-          // Strip out non-alphabetic leading prefix (like arrow symbols or dots inside element)
-          const cleanText = rawText.replace(/^[^A-Za-z]+/, '').trim();
-          
-          if (/^[A-Za-z\s\.\'-]+,\s*[A-Z]{2}$/.test(cleanText) && cleanText.length < 30) {
-            locationsInRow.push({ el, text: cleanText });
-          }
-        });
-
-        // Filter out parent container elements that contain child matched elements to keep only the deepest leaf elements
-        const leafLocations = locationsInRow.filter(item1 => {
-          return !locationsInRow.some(item2 => item1.el !== item2.el && item1.el.contains(item2.el));
-        });
-
-        // If exactly 2 matching locations are found (Origin, Destination)
-        if (leafLocations.length === 2) {
-          const originText = leafLocations[0].text;
-          const destEl = leafLocations[1].el;
-          const destText = leafLocations[1].text;
-          
-          const routeText = `${originText} ➔ ${destText}`;
-          const copyBtn = createStyledCopyButton(() => routeText, 'Copy Route (Origin ➔ Destination)');
-          
-          destEl.parentNode.insertBefore(copyBtn, destEl.nextSibling);
-        }
-      });
-
-      // Inject Route Copy Button directly next to detail view headers showing "[Origin] ... [Destination]"
-      const detailHeaderCandidates = document.querySelectorAll('h1, h2, h3, div[class*="header"], div[class*="title"]');
-      detailHeaderCandidates.forEach(el => {
-        if (el.children.length > 5) return; // Only process simple header wrappers
+      // Inject Route Copy Button next to location text pairs (Origin ➔ Destination)
+      const potentialRouteElements = document.querySelectorAll('div, td, span, h1, h2, h3, p');
+      potentialRouteElements.forEach(el => {
         if (el.querySelector('.zonix-quick-copy-btn')) return;
-
+        
         const rawText = el.textContent || '';
-        const match = rawText.match(/([A-Za-z\s\.\'-]+,\s*[A-Z]{2})\s*[^A-Za-z0-9]*[➔→-]+\s*([A-Za-z\s\.\'-]+,\s*[A-Z]{2})/);
-        if (match) {
-          const originText = match[1].trim();
-          const destText = match[2].trim();
-          const routeText = `${originText} ➔ ${destText}`;
+        if (rawText.length > 120) return; // Avoid paragraphs / descriptions
+        
+        // Find all unique "City, ST" patterns in the text
+        const matches = [];
+        const cityStateRegexGlobal = /\b([A-Za-z\s\.\'-]+,\s*[A-Z]{2})\b/g;
+        let m;
+        while ((m = cityStateRegexGlobal.exec(rawText)) !== null) {
+          const matchedText = m[1].trim();
+          if (!matches.includes(matchedText)) {
+            matches.push(matchedText);
+          }
+        }
+        
+        // If exactly 2 matching locations are found (Origin, Destination)
+        if (matches.length === 2) {
+          // Check if any child element also has exactly 2 matches
+          let hasChildWith2Matches = false;
+          for (let i = 0; i < el.children.length; i++) {
+            const child = el.children[i];
+            const childText = child.textContent || '';
+            if (childText.length > 120) continue;
+            
+            const childMatches = [];
+            let cm;
+            cityStateRegexGlobal.lastIndex = 0; // Reset regex state
+            while ((cm = cityStateRegexGlobal.exec(childText)) !== null) {
+              const cleaned = cm[1].trim();
+              if (!childMatches.includes(cleaned)) childMatches.push(cleaned);
+            }
+            if (childMatches.length === 2) {
+              hasChildWith2Matches = true;
+              break;
+            }
+          }
+          if (hasChildWith2Matches) return;
           
+          const routeText = `${matches[0]} ➔ ${matches[1]}`;
           const copyBtn = createStyledCopyButton(() => routeText, 'Copy Route (Origin ➔ Destination)');
-          copyBtn.style.marginLeft = '12px';
+          copyBtn.style.marginLeft = '8px';
+          copyBtn.style.display = 'inline-flex';
+          
           el.appendChild(copyBtn);
         }
       });
