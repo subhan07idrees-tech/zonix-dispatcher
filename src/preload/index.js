@@ -820,18 +820,18 @@ if (window.location.protocol === 'file:') {
         const rawText = el.textContent || '';
         if (rawText.length > 150) return; // Avoid large body descriptions
         
-        // Find all unique "City, ST" patterns in the text
+        // Find all unique "City, ST" patterns (case-insensitive to support lowercase DOM states upcased via CSS text-transform)
         const matches = [];
-        const cityStateRegexGlobal = /([A-Za-z\s\.\'-]+),\s*([A-Z]{2})/g;
+        const cityStateRegexGlobal = /([A-Za-z\s\.\'-]+),\s*([A-Za-z]{2})/g;
         let m;
         while ((m = cityStateRegexGlobal.exec(rawText)) !== null) {
-          const matchedText = `${m[1].trim()}, ${m[2].trim()}`;
+          const matchedText = `${m[1].trim()}, ${m[2].trim().toUpperCase()}`;
           if (!matches.includes(matchedText)) {
             matches.push(matchedText);
           }
         }
         
-        if (matches.length === 2) {
+        if (matches.length >= 2) {
           candidates.push({ el, matches });
         }
       });
@@ -840,6 +840,19 @@ if (window.location.protocol === 'file:') {
       const leafCandidates = candidates.filter(item1 => {
         return !candidates.some(item2 => item1.el !== item2.el && item1.el.contains(item2.el));
       });
+      
+      const findDeepestElementContainingText = (parent, text) => {
+        let result = parent;
+        for (let i = 0; i < parent.children.length; i++) {
+          const child = parent.children[i];
+          const childText = child.textContent || '';
+          if (childText.toLowerCase().includes(text.toLowerCase())) {
+            result = findDeepestElementContainingText(child, text);
+            break;
+          }
+        }
+        return result;
+      };
       
       leafCandidates.forEach(item => {
         const el = item.el;
@@ -850,7 +863,13 @@ if (window.location.protocol === 'file:') {
         copyBtn.style.marginLeft = '8px';
         copyBtn.style.display = 'inline-flex';
         
-        el.appendChild(copyBtn);
+        // Find the child element containing the destination city to insert inline next to the text flow
+        const destinationEl = findDeepestElementContainingText(el, item.matches[1]);
+        if (destinationEl && destinationEl !== el) {
+          destinationEl.insertAdjacentElement('afterend', copyBtn);
+        } else {
+          el.appendChild(copyBtn);
+        }
       });
 
       // 2. Dashboard Page Lockdown (Restricts dispatcher clicks to 'SEARCH LOADS' buttons only)
