@@ -810,13 +810,17 @@ if (window.location.protocol === 'file:') {
       });
 
       // Inject Route Copy Button next to location text pairs (Origin ➔ Destination)
-      // Restrict query to headers or elements inside detail/drawer/pane/sidebar panels to prevent table column cluttering
-      const potentialRouteElements = document.querySelectorAll('h1, h2, h3, h4, [class*="detail"] div, [class*="pane"] div, [class*="drawer"] div, [class*="sidebar"] div');
+      // Strictly target the main details view header title by matching route arrow markers (➔, →, ->, o..)
+      const potentialRouteElements = document.querySelectorAll('h1, h2, h3, h4, div, span');
       potentialRouteElements.forEach(el => {
         if (el.querySelector('.zonix-quick-copy-btn')) return;
         
         const rawText = el.textContent || '';
         if (rawText.length > 120) return; // Avoid paragraphs / descriptions
+        
+        // Filter out table cells and vertical list containers (they lack horizontal route arrows)
+        const hasRouteArrow = rawText.includes('➔') || rawText.includes('→') || rawText.includes('->') || rawText.includes('o..');
+        if (!hasRouteArrow) return;
         
         // Find all unique "City, ST" patterns in the text
         const matches = [];
