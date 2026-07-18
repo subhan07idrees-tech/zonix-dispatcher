@@ -810,17 +810,15 @@ if (window.location.protocol === 'file:') {
       });
 
       // Inject Route Copy Button next to location text pairs (Origin ➔ Destination)
-      // Strictly target the main details view header title by matching mileage suffix pattern (e.g., "469 mi")
+      // Strictly target the main detail header by finding the deepest element with 2 locations, excluding any table row environments
+      const candidates = [];
       const potentialRouteElements = document.querySelectorAll('h1, h2, h3, h4, div, span');
       potentialRouteElements.forEach(el => {
-        if (el.querySelector('.zonix-quick-copy-btn')) return;
+        // Exclude table rows/grid rows completely to avoid layout cluttering
+        if (el.closest('[role="row"], tr, [class*="row"], [class*="grid-row"], [class*="list-row"]')) return;
         
         const rawText = el.textContent || '';
-        if (rawText.length > 120) return; // Avoid paragraphs / descriptions
-        
-        // Ensure it contains a mileage indicator (e.g., "591 mi" or "469 mi"), which uniquely flags the main detail header
-        const hasMileage = /\b\d+\s*mi\b/.test(rawText);
-        if (!hasMileage) return;
+        if (rawText.length > 150) return; // Avoid large body descriptions
         
         // Find all unique "City, ST" patterns in the text
         const matches = [];
@@ -833,38 +831,26 @@ if (window.location.protocol === 'file:') {
           }
         }
         
-        // If exactly 2 matching locations are found (Origin, Destination)
         if (matches.length === 2) {
-          // Check if any child element also has exactly 2 matches with mileage
-          let hasChildWith2Matches = false;
-          for (let i = 0; i < el.children.length; i++) {
-            const child = el.children[i];
-            const childText = child.textContent || '';
-            if (childText.length > 120) continue;
-            
-            const childMatches = [];
-            let cm;
-            cityStateRegexGlobal.lastIndex = 0; // Reset regex state
-            while ((cm = cityStateRegexGlobal.exec(childText)) !== null) {
-              const cleaned = `${cm[1].trim()}, ${cm[2].trim()}`;
-              if (!childMatches.includes(cleaned)) childMatches.push(cleaned);
-            }
-            if (childMatches.length === 2) {
-              if (/\b\d+\s*mi\b/.test(childText)) {
-                hasChildWith2Matches = true;
-                break;
-              }
-            }
-          }
-          if (hasChildWith2Matches) return;
-          
-          const routeText = `${matches[0]} ➔ ${matches[1]}`;
-          const copyBtn = createStyledCopyButton(() => routeText, 'Copy Route (Origin ➔ Destination)');
-          copyBtn.style.marginLeft = '8px';
-          copyBtn.style.display = 'inline-flex';
-          
-          el.appendChild(copyBtn);
+          candidates.push({ el, matches });
         }
+      });
+      
+      // Filter candidates to find the deepest (leaf) element containing both locations
+      const leafCandidates = candidates.filter(item1 => {
+        return !candidates.some(item2 => item1.el !== item2.el && item1.el.contains(item2.el));
+      });
+      
+      leafCandidates.forEach(item => {
+        const el = item.el;
+        if (el.querySelector('.zonix-quick-copy-btn')) return;
+        
+        const routeText = `${item.matches[0]} ➔ ${item.matches[1]}`;
+        const copyBtn = createStyledCopyButton(() => routeText, 'Copy Route (Origin ➔ Destination)');
+        copyBtn.style.marginLeft = '8px';
+        copyBtn.style.display = 'inline-flex';
+        
+        el.appendChild(copyBtn);
       });
 
       // 2. Dashboard Page Lockdown (Restricts dispatcher clicks to 'SEARCH LOADS' buttons only)
