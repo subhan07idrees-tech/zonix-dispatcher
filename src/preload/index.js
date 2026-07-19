@@ -772,9 +772,10 @@ if (window.location.protocol === 'file:') {
     };
 
     // Periodic check to hide blocked links, manage copy buttons, and enforce restrictions
+    // Runs every 2.5s instead of every 1s to reduce CPU/jank on the guest page
     setInterval(() => {
-      // Hide sidebar/menu items
-      const elements = document.querySelectorAll('a, button, li, div[role="button"], span');
+      // Hide sidebar/menu items - only scan nav/header elements, not entire DOM (performance)
+      const elements = Array.from(document.querySelectorAll('nav a, nav button, nav li, header a, header button, [role="navigation"] a, [role="navigation"] button, [role="navigation"] li'));
       elements.forEach(el => {
         if (!el.textContent) return;
         const text = el.textContent.toLowerCase().trim();
@@ -809,88 +810,62 @@ if (window.location.protocol === 'file:') {
         }
       });
 
-      // Inject Route Copy Button strictly inside the Detail Drawer
-      // Locate the active details panel using the VIEW ROUTE button as a layout anchor
-      let detailsContainer = null;
-      const viewRouteBtn = Array.from(document.querySelectorAll('button, a, div, span')).find(el => (el.textContent || '').trim() === 'VIEW ROUTE');
-      if (viewRouteBtn) {
-        let current = viewRouteBtn.parentElement;
-        while (current && current !== document.body) {
-          const className = current.className || '';
-          const matchesDrawer = /drawer|panel|pane|detail/i.test(typeof className === 'string' ? className : '');
-          if (matchesDrawer) {
-            detailsContainer = current;
-            break;
-          }
-          current = current.parentElement;
-        }
-        if (!detailsContainer) {
-          detailsContainer = viewRouteBtn.parentElement?.parentElement;
-        }
-      }
-
-      const candidates = [];
-      if (detailsContainer) {
-        const potentialRouteElements = detailsContainer.querySelectorAll('h1, h2, h3, h4, div, span');
-        potentialRouteElements.forEach(el => {
-          // Avoid grid cells inside details wrapper if any
-          if (el.closest('[role="gridcell"], [role="cell"], [class*="grid-cell"]')) return;
-          
-          const rawText = el.textContent || '';
-          if (rawText.length > 150) return; // Avoid large body descriptions
-          
-          // Find all unique "City, ST" patterns (case-insensitive to support lowercase DOM states upcased via CSS text-transform)
-          const matches = [];
-          const cityStateRegexGlobal = /([A-Za-z\s\.\'-]+),\s*([A-Za-z]{2})/g;
-          let m;
-          while ((m = cityStateRegexGlobal.exec(rawText)) !== null) {
-            const matchedText = `${m[1].trim()}, ${m[2].trim().toUpperCase()}`;
-            if (!matches.includes(matchedText)) {
-              matches.push(matchedText);
-            }
-          }
-          
-          if (matches.length >= 2) {
-            candidates.push({ el, matches });
-          }
+      // Inject Route Copy Button ONLY in the Detail Header
+      // Strategy: Find VIEW ROUTE button → walk up to find the section-level container
+      // → within that container find the header element with City,ST City,ST pattern
+      // This guarantees the copy button never appears in grid rows or list items
+      (() => {
+        const viewRouteBtn = Array.from(document.querySelectorAll('button, a')).find(el => {
+          const t = (el.textContent || '').trim().toUpperCase();
+          return t === 'VIEW ROUTE' || t === 'VIEW MAP';
         });
-      }
-      
-      // Filter candidates to find the deepest (leaf) element containing both locations
-      const leafCandidates = candidates.filter(item1 => {
-        return !candidates.some(item2 => item1.el !== item2.el && item1.el.contains(item2.el));
-      });
-      
-      const findDeepestElementContainingText = (parent, text) => {
-        let result = parent;
-        for (let i = 0; i < parent.children.length; i++) {
-          const child = parent.children[i];
-          const childText = child.textContent || '';
-          if (childText.toLowerCase().includes(text.toLowerCase())) {
-            result = findDeepestElementContainingText(child, text);
-            break;
+        if (!viewRouteBtn) return; // No details pane open - do nothing
+
+        // Walk up from VIEW ROUTE to find a meaningful section-level container
+        // We go up exactly 5 levels max - enough to reach the card/section but not the whole page
+        let sectionEl = viewRouteBtn;
+        for (let i = 0; i < 8; i++) {
+          if (!sectionEl.parentElement || sectionEl.parentElement === document.body) break;
+          sectionEl = sectionEl.parentElement;
+        }
+
+        // Now search ONLY inside this section for an element that has exactly 2 City,ST patterns
+        const cityStateRegex = /([A-Za-z][A-Za-z\s\.\'-]*),\s*([A-Za-z]{2})(?:\s|$)/g;
+        const allEls = Array.from(sectionEl.querySelectorAll('h1, h2, h3, h4, [class*="header"], [class*="title"], [class*="heading"]'));
+        
+        // Also check a few divs/spans at the top level of the section (direct children)
+        const directChildren = Array.from(sectionEl.children).slice(0, 3);
+        const candidates = [...allEls, ...directChildren];
+
+        for (const el of candidates) {
+          // Skip if already has button
+          if (el.querySelector('.zonix-route-copy-btn') || el.querySelector('.zonix-quick-copy-btn')) continue;
+
+          const rawText = (el.textContent || '').trim();
+          if (rawText.length < 5 || rawText.length > 200) continue;
+
+          // Reset regex and find matches
+          cityStateRegex.lastIndex = 0;
+          const matches = [];
+          let m;
+          while ((m = cityStateRegex.exec(rawText)) !== null) {
+            const loc = `${m[1].trim()}, ${m[2].trim().toUpperCase()}`;
+            if (!matches.includes(loc)) matches.push(loc);
+          }
+
+          if (matches.length >= 2) {
+            // Found the header with 2 locations - inject button once
+            const copyBtn = createStyledCopyButton(
+              () => `${matches[0]} ➔ ${matches[1]}`,
+              'Copy Route'
+            );
+            copyBtn.className = 'zonix-quick-copy-btn zonix-route-copy-btn';
+            copyBtn.style.marginLeft = '8px';
+            el.appendChild(copyBtn);
+            break; // Only inject once
           }
         }
-        return result;
-      };
-      
-      leafCandidates.forEach(item => {
-        const el = item.el;
-        if (el.querySelector('.zonix-quick-copy-btn')) return;
-        
-        const routeText = `${item.matches[0]} ➔ ${item.matches[1]}`;
-        const copyBtn = createStyledCopyButton(() => routeText, 'Copy Route (Origin ➔ Destination)');
-        copyBtn.style.marginLeft = '8px';
-        copyBtn.style.display = 'inline-flex';
-        
-        // Find the child element containing the destination city to insert inline next to the text flow
-        const destinationEl = findDeepestElementContainingText(el, item.matches[1]);
-        if (destinationEl && destinationEl !== el) {
-          destinationEl.insertAdjacentElement('afterend', copyBtn);
-        } else {
-          el.appendChild(copyBtn);
-        }
-      });
+      })();
 
       // 2. Dashboard Page Lockdown (Restricts dispatcher clicks to 'SEARCH LOADS' buttons only)
       const isDashboard = window.location.pathname.includes('/dashboard') || 
@@ -911,7 +886,7 @@ if (window.location.protocol === 'file:') {
           }
         });
       }
-    }, 1000);
+    }, 2500);
 
     console.log('[ZONIX] DAT One interface lockdown engine initialized');
   } catch (err) {

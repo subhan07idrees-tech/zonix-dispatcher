@@ -1,6 +1,6 @@
 {
   "name": "zonix",
-  "version": "1.6.4",
+  "version": "1.6.5",
   "description": "ZONIX - Multi-Tenant Secure Dispatcher System",
   "main": "src/main/index.js",
   "scripts": {
