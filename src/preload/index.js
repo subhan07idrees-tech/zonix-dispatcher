@@ -875,6 +875,14 @@ if (window.location.protocol === 'file:') {
       if (isDashboard) {
         const interactiveElements = document.querySelectorAll('a, button, [role="button"], [class*="card"], [class*="button"]');
         interactiveElements.forEach(el => {
+          // Never block buttons inside DAT's own modal/dialog popups (e.g. "Login Anyway", "Go Back")
+          const inModal = el.closest('[role="dialog"], [role="alertdialog"], .modal, [class*="modal"], [class*="dialog"], [class*="popup"], [class*="overlay"]');
+          if (inModal) {
+            el.style.setProperty('pointer-events', 'auto', 'important');
+            el.style.setProperty('opacity', '1', 'important');
+            return;
+          }
+
           const text = (el.textContent || '').toLowerCase().trim();
           if (text.includes('search loads')) {
             el.style.setProperty('pointer-events', 'auto', 'important');
