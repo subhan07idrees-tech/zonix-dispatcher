@@ -8,7 +8,8 @@ function UserModal({ user, orgId, onClose, onSave }) {
     username: user?.username || '',
     email: user?.email || '',
     password: '',
-    role: user?.role || 'DISPATCHER'
+    role: user?.role || 'DISPATCHER',
+    maxTabs: user?.maxTabs || 5
   });
   const [loading, setLoading] = useState(false);
 
@@ -64,6 +65,18 @@ function UserModal({ user, orgId, onClose, onSave }) {
               required={!user}
               minLength={form.password ? 8 : undefined}
               placeholder={user ? "••••••••" : ""}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-zonix-text-dim mb-1 font-mono">MAX ALLOWED TABS / SESSIONS</label>
+            <input
+              type="number"
+              min="1"
+              max="100"
+              value={form.maxTabs}
+              onChange={(e) => setForm({ ...form, maxTabs: parseInt(e.target.value) || 1 })}
+              className="zonix-input w-full font-mono"
+              required
             />
           </div>
           <div>
@@ -148,7 +161,7 @@ export default function UsersPage() {
     try {
       let res;
       if (editingUser) {
-        const body = { role: form.role, email: form.email };
+        const body = { role: form.role, email: form.email, maxTabs: form.maxTabs };
         if (form.password) {
           body.password = form.password;
         }
@@ -366,7 +379,7 @@ export default function UsersPage() {
               <th className="py-2 px-3 text-left">EMAIL</th>
               <th className="py-2 px-3 text-left">ROLE</th>
               <th className="py-2 px-3 text-left">STATUS</th>
-              <th className="py-2 px-3 text-left">SESSIONS</th>
+              <th className="py-2 px-3 text-left">ACTIVE TABS / MAX</th>
               <th className="py-2 px-3 text-left">LAST LOGIN</th>
               <th className="py-2 px-3 text-right">ACTIONS</th>
             </tr>
@@ -397,7 +410,9 @@ export default function UsersPage() {
                       {u.status}
                     </span>
                   </td>
-                  <td className="py-2 px-3 text-xs font-mono text-zonix-text-dim">{u._count?.sessions || 0}</td>
+                  <td className="py-2 px-3 text-xs font-mono text-zonix-text-dim">
+                    <span className="text-zonix-cyan font-semibold">{u._count?.sessions || 0}</span> / {u.maxTabs || 5}
+                  </td>
                   <td className="py-2 px-3 text-xs font-mono text-zonix-text-dim">
                     {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : 'Never'}
                   </td>
