@@ -1,6 +1,97 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Users, Plus, Edit2, Trash2, X, Shield, ShieldOff, Key } from 'lucide-react';
+import { Users, Plus, Edit2, Trash2, X, Shield, ShieldOff, Key, Mail, Send, Copy, Check, Clock } from 'lucide-react';
+
+function InviteModal({ orgId, onClose, onSend }) {
+  const { user: currentUser } = useAuth();
+  const [form, setForm] = useState({
+    email: '',
+    role: 'DISPATCHER',
+    maxTabs: 5
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    await onSend(form);
+    setLoading(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="zonix-card w-full max-w-md p-6 border border-zonix-cyan/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-zonix-cyan/10 border border-zonix-cyan/30 flex items-center justify-center">
+              <Mail className="w-4 h-4 text-zonix-cyan" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold tracking-wide text-zonix-text">INVITE USER VIA EMAIL</h3>
+              <p className="text-[10px] text-zonix-text-dim font-mono">Send an invitation email to create their own credentials</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-zonix-text-dim hover:text-zonix-text">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs text-zonix-text-dim mb-1 font-mono">RECIPIENT EMAIL ADDRESS</label>
+            <input
+              type="email"
+              placeholder="dispatcher@fleetlogistics.com"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className="zonix-input w-full font-mono"
+              required
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-zonix-text-dim mb-1 font-mono">MAX ALLOWED TABS / SESSIONS</label>
+            <input
+              type="number"
+              min="1"
+              max="50"
+              value={form.maxTabs}
+              onChange={(e) => setForm({ ...form, maxTabs: parseInt(e.target.value) || 1 })}
+              className="zonix-input w-full font-mono"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-zonix-text-dim mb-1 font-mono">ASSIGNED ROLE</label>
+            <select
+              value={form.role}
+              onChange={(e) => setForm({ ...form, role: e.target.value })}
+              className="zonix-input w-full font-mono bg-zonix-surface"
+            >
+              <option value="DISPATCHER">Dispatcher</option>
+              <option value="ADMIN">Org Admin</option>
+              {currentUser?.role === 'SUPER_ADMIN' && (
+                <option value="SUPER_ADMIN">Super Admin</option>
+              )}
+            </select>
+          </div>
+
+          <div className="p-3 bg-zonix-surface border border-zonix-border/40 rounded-lg text-xs text-zonix-text-dim font-mono leading-relaxed">
+            💡 The recipient will receive an email from <span className="text-zonix-cyan font-bold">invites@thezonix.com</span> with a secure 48-hour link to set their username and password.
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose} className="zonix-btn-ghost flex-1">Cancel</button>
+            <button type="submit" disabled={loading} className="zonix-btn-primary flex-1 bg-zonix-cyan text-black hover:bg-zonix-cyan/90 font-semibold flex items-center justify-center gap-1.5">
+              <Send className="w-3.5 h-3.5" />
+              {loading ? 'SENDING...' : 'SEND INVITE'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 function UserModal({ user, orgId, onClose, onSave }) {
   const { user: currentUser } = useAuth();
@@ -63,7 +154,7 @@ function UserModal({ user, orgId, onClose, onSave }) {
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               className="zonix-input w-full font-mono"
               required={!user}
-              minLength={form.password ? 8 : undefined}
+              minLength={form.password ? 6 : undefined}
               placeholder={user ? "••••••••" : ""}
             />
           </div>
@@ -108,12 +199,15 @@ function UserModal({ user, orgId, onClose, onSave }) {
 export default function UsersPage() {
   const { authFetch, user: currentUser, showAlert } = useAuth();
   const [users, setUsers] = useState([]);
+  const [invites, setInvites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [selectedOrg, setSelectedOrg] = useState(currentUser?.orgId || '');
   const [orgs, setOrgs] = useState([]);
   const [selectedDispatcherId, setSelectedDispatcherId] = useState('');
+  const [copiedInviteId, setCopiedInviteId] = useState(null);
 
   const dispatchers = users.filter(u => u.role === 'DISPATCHER');
 
@@ -124,7 +218,10 @@ export default function UsersPage() {
   }, [currentUser]);
 
   useEffect(() => {
-    if (selectedOrg) fetchUsers();
+    if (selectedOrg) {
+      fetchUsers();
+      fetchInvites();
+    }
   }, [selectedOrg]);
 
   useEffect(() => {
@@ -155,6 +252,62 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchInvites = async () => {
+    try {
+      const res = await authFetch(`/invites/${selectedOrg}`);
+      if (res.ok) {
+        const data = await res.json();
+        setInvites(data.invites || []);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSendInvite = async (form) => {
+    try {
+      const res = await authFetch(`/invites/${selectedOrg}`, {
+        method: 'POST',
+        body: JSON.stringify(form)
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        showAlert(data.error || 'Failed to send invitation', 'INVITE FAILED', 'error');
+        return;
+      }
+
+      setShowInviteModal(false);
+      showAlert(`Invitation email sent to ${form.email}!`, 'INVITATION SENT', 'success');
+      fetchInvites();
+    } catch (err) {
+      console.error(err);
+      showAlert(err.message || 'An error occurred', 'ERROR', 'error');
+    }
+  };
+
+  const handleCancelInvite = async (inviteId) => {
+    if (!window.confirm("Cancel this invitation?")) return;
+    try {
+      const res = await authFetch(`/invites/${selectedOrg}/${inviteId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        showAlert('Invitation cancelled', 'CANCELLED', 'info');
+        fetchInvites();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleCopyInviteLink = (invite) => {
+    const link = `https://thezonix.com/join.html?token=${invite.token}`;
+    navigator.clipboard.writeText(link);
+    setCopiedInviteId(invite.id);
+    setTimeout(() => setCopiedInviteId(null), 2000);
   };
 
   const handleSave = async (form) => {
@@ -248,21 +401,27 @@ export default function UsersPage() {
     );
 
     try {
-      const result = await window.zonixAPI.captureCookies({
+      const authRes = await window.electronAPI.invoke('launch-auth-window', {
         targetUrl,
-        orgId: selectedOrg,
+        orgId: targetOrg.id,
         userId: targetUserId
       });
 
-      if (result.success && result.cookies) {
+      if (!authRes.success) {
+        await showAlert(`Failed to launch session capture: ${authRes.error}`, 'LAUNCH ERROR', 'error');
+        return;
+      }
+
+      if (authRes.cookies && authRes.cookies.length > 0) {
+        const targetDomain = new URL(targetUrl).hostname;
         const storeRes = await authFetch('/cookies/store', {
           method: 'POST',
           body: JSON.stringify({
-            orgId: selectedOrg,
+            orgId: targetOrg.id,
             userId: targetUserId,
-            targetDomain: result.targetDomain,
-            cookies: result.cookies,
-            localStorage: result.localStorageData || '{}'
+            targetDomain,
+            cookies: authRes.cookies,
+            localStorage: authRes.localStorage
           })
         });
 
@@ -340,10 +499,11 @@ export default function UsersPage() {
           </button>
         </div>
       </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold tracking-wide">USER REGISTRY</h2>
-          <p className="text-xs text-zonix-text-dim mt-0.5">Manage dispatcher accounts & access control</p>
+          <p className="text-xs text-zonix-text-dim mt-0.5">Manage dispatcher accounts &amp; access control</p>
         </div>
         <div className="flex items-center gap-3">
           {currentUser?.role === 'SUPER_ADMIN' && orgs.length > 0 && (
@@ -365,12 +525,18 @@ export default function UsersPage() {
               </select>
             </div>
           )}
+
+          <button onClick={() => setShowInviteModal(true)} className="zonix-btn-primary bg-zonix-cyan/15 border border-zonix-cyan/40 text-zonix-cyan hover:bg-zonix-cyan/30">
+            <Mail className="w-4 h-4 mr-1.5 inline" /> INVITE VIA EMAIL
+          </button>
+
           <button onClick={() => { setEditingUser(null); setShowModal(true); }} className="zonix-btn-primary">
             <Plus className="w-4 h-4 mr-1.5 inline" /> NEW USER
           </button>
         </div>
       </div>
 
+      {/* USERS TABLE */}
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -459,12 +625,85 @@ export default function UsersPage() {
         </table>
       </div>
 
+      {/* PENDING INVITATIONS TABLE */}
+      {invites.length > 0 && (
+        <div className="pt-4 border-t border-zonix-border/40">
+          <div className="flex items-center gap-2 mb-3">
+            <Mail className="w-4 h-4 text-zonix-cyan" />
+            <h3 className="text-sm font-semibold tracking-wide text-zonix-text">PENDING INVITATIONS ({invites.length})</h3>
+          </div>
+          <div className="overflow-x-auto zonix-card p-0">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-zonix-border text-xs text-zonix-text-dim font-mono">
+                  <th className="py-2 px-3 text-left">RECIPIENT EMAIL</th>
+                  <th className="py-2 px-3 text-left">ROLE</th>
+                  <th className="py-2 px-3 text-left">MAX TABS</th>
+                  <th className="py-2 px-3 text-left">STATUS</th>
+                  <th className="py-2 px-3 text-left">EXPIRES AT</th>
+                  <th className="py-2 px-3 text-right">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invites.map((inv) => (
+                  <tr key={inv.id} className="border-b border-zonix-border/40 hover:bg-zonix-surface-light/30">
+                    <td className="py-2 px-3 text-xs font-mono text-zonix-cyan">{inv.email}</td>
+                    <td className="py-2 px-3">
+                      <span className={`zonix-badge ${roleColors[inv.role] || 'zonix-badge'}`}>{inv.role}</span>
+                    </td>
+                    <td className="py-2 px-3 text-xs font-mono text-zonix-text-dim">{inv.maxTabs}</td>
+                    <td className="py-2 px-3">
+                      <span className={`zonix-badge ${inv.status === 'PENDING' ? 'zonix-badge-warning' : inv.status === 'ACCEPTED' ? 'zonix-badge-active' : 'zonix-badge-error'}`}>
+                        {inv.status}
+                      </span>
+                    </td>
+                    <td className="py-2 px-3 text-xs font-mono text-zonix-text-dim">
+                      {new Date(inv.expiresAt).toLocaleString()}
+                    </td>
+                    <td className="py-2 px-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {inv.status === 'PENDING' && (
+                          <>
+                            <button
+                              onClick={() => handleCopyInviteLink(inv)}
+                              className="p-1.5 hover:bg-zonix-surface-light rounded text-zonix-text-dim hover:text-zonix-cyan font-mono text-xs flex items-center gap-1"
+                              title="Copy Invite Link"
+                            >
+                              {copiedInviteId === inv.id ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
+                            <button
+                              onClick={() => handleCancelInvite(inv.id)}
+                              className="p-1.5 hover:bg-zonix-surface-light rounded text-zonix-text-dim hover:text-red-400"
+                              title="Cancel Invitation"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {showModal && (
         <UserModal
           user={editingUser}
           orgId={selectedOrg}
           onClose={() => { setShowModal(false); setEditingUser(null); }}
           onSave={handleSave}
+        />
+      )}
+
+      {showInviteModal && (
+        <InviteModal
+          orgId={selectedOrg}
+          onClose={() => setShowInviteModal(false)}
+          onSend={handleSendInvite}
         />
       )}
     </div>
