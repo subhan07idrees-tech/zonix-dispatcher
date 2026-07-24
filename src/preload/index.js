@@ -128,7 +128,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 })();
 
 if (window.location.protocol === 'file:') {
-  contextBridge.exposeInMainWorld('zonixAPI', {
+  const zonixBridge = {
     login: (credentials) => ipcRenderer.invoke('auth:login', credentials),
     logout: () => ipcRenderer.invoke('auth:logout'),
     launchDispatch: (config) => ipcRenderer.invoke('dispatch:launch', config),
@@ -136,6 +136,7 @@ if (window.location.protocol === 'file:') {
     restartSession: (sessionId) => ipcRenderer.invoke('session:restart', sessionId),
     listSessions: () => ipcRenderer.invoke('sessions:list'),
     captureCookies: (args) => ipcRenderer.invoke('session:cookies:capture', args),
+    invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
     getConfig: (key) => ipcRenderer.invoke('config:get', key),
     setConfig: (key, value) => ipcRenderer.invoke('config:set', key, value),
     onSessionsUpdate: (callback) => ipcRenderer.on('sessions:update', (_, data) => callback(data)),
@@ -153,10 +154,13 @@ if (window.location.protocol === 'file:') {
     closeWindow: () => ipcRenderer.send('window:close'),
     logoutDispatcher: () => ipcRenderer.invoke('dispatch:logout'),
     appVersion: ipcRenderer.sendSync('get-app-version')
-  });
+  };
 
-  // Separate API for the update window
+  contextBridge.exposeInMainWorld('zonixAPI', zonixBridge);
+
+  // Expose API for update window & backward compatibility
   contextBridge.exposeInMainWorld('electronAPI', {
+    ...zonixBridge,
     onUpdateInfo: (callback) => ipcRenderer.on('update:info', (_, data) => callback(data)),
     onDownloadProgress: (callback) => ipcRenderer.on('update:progress', (_, pct) => callback(pct)),
     onUpdateError: (callback) => ipcRenderer.on('update:error', (_, errText) => callback(errText)),

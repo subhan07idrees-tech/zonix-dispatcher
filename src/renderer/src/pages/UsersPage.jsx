@@ -401,40 +401,28 @@ export default function UsersPage() {
     );
 
     try {
-      const authRes = await window.electronAPI.invoke('launch-auth-window', {
-        targetUrl,
-        orgId: targetOrg.id,
-        userId: targetUserId
-      });
-
-      if (!authRes.success) {
-        await showAlert(`Failed to launch session capture: ${authRes.error}`, 'LAUNCH ERROR', 'error');
+      const api = window.zonixAPI || window.electronAPI;
+      if (api && api.captureCookies) {
+        await api.captureCookies({
+          targetUrl,
+          orgId: targetOrg.id,
+          userId: targetUserId
+        });
+      } else if (api && api.invoke) {
+        await api.invoke('session:cookies:capture', {
+          targetUrl,
+          orgId: targetOrg.id,
+          userId: targetUserId
+        });
+      } else {
+        await showAlert('Session capture is only available inside the ZONIX Desktop App.', 'DESKTOP APP REQUIRED', 'warning');
         return;
       }
 
-      if (authRes.cookies && authRes.cookies.length > 0) {
-        const targetDomain = new URL(targetUrl).hostname;
-        const storeRes = await authFetch('/cookies/store', {
-          method: 'POST',
-          body: JSON.stringify({
-            orgId: targetOrg.id,
-            userId: targetUserId,
-            targetDomain,
-            cookies: authRes.cookies,
-            localStorage: authRes.localStorage
-          })
-        });
-
-        if (storeRes.ok) {
-          await showAlert(`Successfully authenticated and saved secure login session for "${displayUsername}"!`, 'AUTHENTICATED', 'success');
-        } else {
-          const storeData = await storeRes.json();
-          await showAlert(`Failed to save captured session: ${storeData.error || 'Unknown error'}`, 'SAVE FAILED', 'error');
-        }
-      }
+      fetchUsers();
     } catch (err) {
-      console.error(err);
-      await showAlert(`Error authenticating site: ${err.message}`, 'AUTHENTICATION ERROR', 'error');
+      console.error('[ZONIX] Authentication window launch error:', err);
+      showAlert(err.message || 'An error occurred while launching session capture window', 'AUTHENTICATION ERROR', 'error');
     }
   };
 
@@ -626,11 +614,13 @@ export default function UsersPage() {
       </div>
 
       {/* PENDING INVITATIONS TABLE */}
-      {invites.length > 0 && (
+      {invites.filter(i => i.status === 'PENDING').length > 0 && (
         <div className="pt-4 border-t border-zonix-border/40">
           <div className="flex items-center gap-2 mb-3">
             <Mail className="w-4 h-4 text-zonix-cyan" />
-            <h3 className="text-sm font-semibold tracking-wide text-zonix-text">PENDING INVITATIONS ({invites.length})</h3>
+            <h3 className="text-sm font-semibold tracking-wide text-zonix-text">
+              PENDING INVITATIONS ({invites.filter(i => i.status === 'PENDING').length})
+            </h3>
           </div>
           <div className="overflow-x-auto zonix-card p-0">
             <table className="w-full">
@@ -645,7 +635,7 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {invites.map((inv) => (
+                {invites.filter(i => i.status === 'PENDING').map((inv) => (
                   <tr key={inv.id} className="border-b border-zonix-border/40 hover:bg-zonix-surface-light/30">
                     <td className="py-2 px-3 text-xs font-mono text-zonix-cyan">{inv.email}</td>
                     <td className="py-2 px-3">

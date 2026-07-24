@@ -1609,6 +1609,19 @@ function setupAutoUpdater() {
 
 
 app.whenReady().then(async () => {
+  // Register zonix:// deep-link protocol scheme in Windows OS
+  try {
+    if (process.defaultApp) {
+      if (process.argv.length >= 2) {
+        app.setAsDefaultProtocolClient('zonix', process.execPath, [path.resolve(process.argv[1])]);
+      }
+    } else {
+      app.setAsDefaultProtocolClient('zonix');
+    }
+  } catch (err) {
+    console.error('[ZONIX] Protocol registration error:', err.message);
+  }
+
   proxyManager = new ProxyManager();
   securityEngine = new SecurityEngine();
 

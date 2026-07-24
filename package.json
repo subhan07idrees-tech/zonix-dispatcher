@@ -41,6 +41,14 @@
     "directories": {
       "output": "dist"
     },
+    "protocols": [
+      {
+        "name": "ZONIX Dispatcher Protocol",
+        "schemes": [
+          "zonix"
+        ]
+      }
+    ],
     "files": [
       "src/main/**/*",
       "src/preload/**/*",
