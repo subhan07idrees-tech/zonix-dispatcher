@@ -402,14 +402,15 @@ export default function UsersPage() {
 
     try {
       const api = window.zonixAPI || window.electronAPI;
+      let captureRes = null;
       if (api && api.captureCookies) {
-        await api.captureCookies({
+        captureRes = await api.captureCookies({
           targetUrl,
           orgId: targetOrg.id,
           userId: targetUserId
         });
       } else if (api && api.invoke) {
-        await api.invoke('session:cookies:capture', {
+        captureRes = await api.invoke('session:cookies:capture', {
           targetUrl,
           orgId: targetOrg.id,
           userId: targetUserId
@@ -417,6 +418,10 @@ export default function UsersPage() {
       } else {
         await showAlert('Session capture is only available inside the ZONIX Desktop App.', 'DESKTOP APP REQUIRED', 'warning');
         return;
+      }
+
+      if (captureRes && captureRes.success) {
+        await showAlert(`Successfully authenticated and saved secure login session for "${displayUsername}"!`, 'AUTHENTICATED', 'success');
       }
 
       fetchUsers();
