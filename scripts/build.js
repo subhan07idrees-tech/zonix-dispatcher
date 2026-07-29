@@ -13,6 +13,7 @@ try {
   execSync('npx electron-builder', { stdio: 'inherit' });
 } catch (err) {
   console.error('[Build Orchestrator] Compilation error occurred:', err.message);
+  process.exitCode = 1;
 } finally {
   console.log('[Build Orchestrator] 4. Running cleanup and restoring original source files...');
   try {
