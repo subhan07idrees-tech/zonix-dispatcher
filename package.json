@@ -71,6 +71,7 @@
     },
     "mac": {
       "target": "dmg",
+      "icon": "assets/icon.png",
       "category": "public.app-category.business",
       "artifactName": "ZONIX-Dispatcher-Setup-Mac-${version}.${ext}",
       "identity": null,
