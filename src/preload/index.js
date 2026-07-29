@@ -677,7 +677,7 @@ if (window.location.protocol === 'file:') {
     style.id = 'zonix-dat-lockdown-css';
     style.innerHTML = `
       /* Disable clicking on broker profile links or search directories in the loads list */
-      a[href*="/directory/"], a[href*="/profile/"], [class*="company"] a, [class*="broker"] a {
+      a[href*="/directory/"], a[href*="/profile/"], a[href*="/broker/"], [class*="company"] a, [class*="broker"] a {
         pointer-events: none !important;
         cursor: default !important;
         text-decoration: none !important;
@@ -697,6 +697,38 @@ if (window.location.protocol === 'file:') {
       document.addEventListener('DOMContentLoaded', insertStyle);
     }
 
+    // Document-Level Event Capture Delegation: Immediately intercepts and blocks email/contact links at the root
+    document.addEventListener('click', (e) => {
+      const target = e.target;
+      if (!target) return;
+
+      const clickable = target.closest('a, button, [role="button"], [class*="company"], [class*="broker"]');
+      if (!clickable) return;
+
+      const href = (clickable.getAttribute('href') || '').toLowerCase();
+      const rawText = (clickable.textContent || '').toLowerCase();
+      const emailMatch = (href + ' ' + rawText).match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
+
+      if (href.startsWith('mailto:') || href.includes('mailto:') || emailMatch) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        const emailToCopy = emailMatch ? emailMatch[0] : href.replace('mailto:', '');
+        if (emailToCopy) {
+          navigator.clipboard.writeText(emailToCopy).catch(() => {});
+        }
+        return false;
+      }
+
+      if (href.includes('/directory/') || href.includes('/profile/') || href.includes('/broker/')) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+      }
+    }, true);
+
     // List of DAT menu items we want to hide to restrict dispatchers to "Search Loads" only
     const blockLabels = [
       'dashboard',
@@ -706,7 +738,10 @@ if (window.location.protocol === 'file:') {
       'tools',
       'support',
       'my account',
-      'notifications'
+      'notifications',
+      'account settings',
+      'user profile',
+      'help center'
     ];
 
     const getCopySVG = (color) => `
@@ -775,19 +810,23 @@ if (window.location.protocol === 'file:') {
       return btn;
     };
 
-    // Periodic check to hide blocked links, manage copy buttons, and enforce restrictions
-    // Runs every 2.5s instead of every 1s to reduce CPU/jank on the guest page
-    setInterval(() => {
-      // Hide sidebar/menu items - only scan nav/header elements, not entire DOM (performance)
-      const elements = Array.from(document.querySelectorAll('nav a, nav button, nav li, header a, header button, [role="navigation"] a, [role="navigation"] button, [role="navigation"] li'));
+    const applyLockdownPass = () => {
+      // Hide sidebar/menu items - expanded scanning including drawer/footer elements
+      const selectors = 'nav a, nav button, nav li, header a, header button, footer a, footer button, footer li, aside a, aside button, aside li, [role="navigation"] a, [role="navigation"] button, [class*="sidebar"] a, [class*="sidebar"] button, [class*="sidebar"] li, [class*="drawer"] a, [class*="drawer"] button, [class*="footer"] a, [class*="footer"] button, [class*="account"] a, [class*="account"] button';
+      const elements = Array.from(document.querySelectorAll(selectors));
+      
       elements.forEach(el => {
-        if (!el.textContent) return;
-        const text = el.textContent.toLowerCase().trim();
+        const text = (el.innerText || el.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim();
+        if (!text) return;
         
         blockLabels.forEach(label => {
-          if (text === label || (text.startsWith(label) && text.length < label.length + 5)) {
+          if (text === label || text.startsWith(label) || (text.includes(label) && text.length < label.length + 15)) {
             el.style.setProperty('display', 'none', 'important');
             el.style.setProperty('pointer-events', 'none', 'important');
+            if (el.parentElement && (el.parentElement.tagName === 'LI' || el.parentElement.classList.toString().includes('item'))) {
+              el.parentElement.style.setProperty('display', 'none', 'important');
+              el.parentElement.style.setProperty('pointer-events', 'none', 'important');
+            }
           }
         });
       });
@@ -815,9 +854,6 @@ if (window.location.protocol === 'file:') {
       });
 
       // Inject Route Copy Button ONLY in the Detail Header
-      // Strategy: Find VIEW ROUTE button → walk up to find the section-level container
-      // → within that container find the header element with City,ST City,ST pattern
-      // This guarantees the copy button never appears in grid rows or list items
       (() => {
         const viewRouteBtn = Array.from(document.querySelectorAll('button, a')).find(el => {
           const t = (el.textContent || '').trim().toUpperCase();
@@ -825,30 +861,23 @@ if (window.location.protocol === 'file:') {
         });
         if (!viewRouteBtn) return; // No details pane open - do nothing
 
-        // Walk up from VIEW ROUTE to find a meaningful section-level container
-        // We go up exactly 5 levels max - enough to reach the card/section but not the whole page
         let sectionEl = viewRouteBtn;
         for (let i = 0; i < 8; i++) {
           if (!sectionEl.parentElement || sectionEl.parentElement === document.body) break;
           sectionEl = sectionEl.parentElement;
         }
 
-        // Now search ONLY inside this section for an element that has exactly 2 City,ST patterns
         const cityStateRegex = /([A-Za-z][A-Za-z\s\.\'-]*),\s*([A-Za-z]{2})(?:\s|$)/g;
         const allEls = Array.from(sectionEl.querySelectorAll('h1, h2, h3, h4, [class*="header"], [class*="title"], [class*="heading"]'));
-        
-        // Also check a few divs/spans at the top level of the section (direct children)
         const directChildren = Array.from(sectionEl.children).slice(0, 3);
         const candidates = [...allEls, ...directChildren];
 
         for (const el of candidates) {
-          // Skip if already has button
           if (el.querySelector('.zonix-route-copy-btn') || el.querySelector('.zonix-quick-copy-btn')) continue;
 
           const rawText = (el.textContent || '').trim();
           if (rawText.length < 5 || rawText.length > 200) continue;
 
-          // Reset regex and find matches
           cityStateRegex.lastIndex = 0;
           const matches = [];
           let m;
@@ -858,7 +887,6 @@ if (window.location.protocol === 'file:') {
           }
 
           if (matches.length >= 2) {
-            // Found the header with 2 locations - inject button once
             const copyBtn = createStyledCopyButton(
               () => `${matches[0]} ➔ ${matches[1]}`,
               'Copy Route'
@@ -866,12 +894,12 @@ if (window.location.protocol === 'file:') {
             copyBtn.className = 'zonix-quick-copy-btn zonix-route-copy-btn';
             copyBtn.style.marginLeft = '8px';
             el.appendChild(copyBtn);
-            break; // Only inject once
+            break;
           }
         }
       })();
 
-      // 2. Dashboard Page Lockdown (Restricts dispatcher clicks to 'SEARCH LOADS' buttons only)
+      // Dashboard Page Lockdown
       const isDashboard = window.location.pathname.includes('/dashboard') || 
                           window.location.hash.includes('/dashboard') || 
                           (document.querySelector('h1')?.textContent === 'Dashboard');
@@ -879,7 +907,6 @@ if (window.location.protocol === 'file:') {
       if (isDashboard) {
         const interactiveElements = document.querySelectorAll('a, button, [role="button"], [class*="card"], [class*="button"]');
         interactiveElements.forEach(el => {
-          // Never block buttons inside DAT's own modal/dialog popups (e.g. "Login Anyway", "Go Back")
           const inModal = el.closest('[role="dialog"], [role="alertdialog"], .modal, [class*="modal"], [class*="dialog"], [class*="popup"], [class*="overlay"]');
           if (inModal) {
             el.style.setProperty('pointer-events', 'auto', 'important');
@@ -898,10 +925,22 @@ if (window.location.protocol === 'file:') {
           }
         });
       }
-    }, 2500);
+    };
 
-    console.log('[ZONIX] DAT One interface lockdown engine initialized');
+    // Real-Time MutationObserver for Instant <10ms UI Restrictions
+    const observer = new MutationObserver(() => {
+      applyLockdownPass();
+    });
+
+    if (document.documentElement) {
+      observer.observe(document.documentElement, { childList: true, subtree: true });
+    }
+    document.addEventListener('DOMContentLoaded', applyLockdownPass);
+    setInterval(applyLockdownPass, 1000);
+
+    console.log('[ZONIX] DAT One real-time interface lockdown engine active');
   } catch (err) {
     console.error('[ZONIX] DAT lockdown engine error:', err.message);
   }
 })();
+

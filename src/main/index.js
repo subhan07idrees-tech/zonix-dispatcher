@@ -84,6 +84,30 @@ function disableDevTools(win) {
     });
   }
 }
+
+// Global Security Safeguard: Deny mailto, tel, and unauthorized popup window creation across all webContents
+app.on('web-contents-created', (event, contents) => {
+  contents.setWindowOpenHandler(({ url }) => {
+    const lowerUrl = (url || '').toLowerCase();
+    if (lowerUrl.startsWith('mailto:') || lowerUrl.startsWith('tel:') || lowerUrl.includes('mailto:')) {
+      return { action: 'deny' };
+    }
+    if (lowerUrl.startsWith('http:') || lowerUrl.startsWith('https:')) {
+      if (!lowerUrl.includes('dat.com') && !lowerUrl.includes('truckstop.com') && !lowerUrl.includes('123loadboard.com')) {
+        return { action: 'deny' };
+      }
+    }
+    return { action: 'allow' };
+  });
+
+  contents.on('will-navigate', (e, navigationUrl) => {
+    const lowerUrl = (navigationUrl || '').toLowerCase();
+    if (lowerUrl.startsWith('mailto:') || lowerUrl.startsWith('tel:') || lowerUrl.includes('mailto:')) {
+      e.preventDefault();
+    }
+  });
+});
+
 let mainWindow = null;
 let authWindow = null;
 let syncWindow = null;

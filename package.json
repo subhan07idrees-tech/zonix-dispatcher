@@ -1,6 +1,6 @@
 {
   "name": "zonix",
-  "version": "1.6.8",
+  "version": "1.7.0",
   "description": "ZONIX - Multi-Tenant Secure Dispatcher System",
   "main": "src/main/index.js",
   "scripts": {
@@ -75,7 +75,9 @@
         "zip"
       ],
       "category": "public.app-category.business",
-      "artifactName": "ZONIX-Dispatcher-Setup-Mac-${version}.${ext}"
+      "artifactName": "ZONIX-Dispatcher-Setup-Mac-${version}.${ext}",
+      "identity": null,
+      "hardenedRuntime": false
     },
     "linux": {
       "target": "AppImage"
