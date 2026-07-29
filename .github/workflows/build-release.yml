@@ -41,13 +41,13 @@ jobs:
 
       - name: Build Electron App (Windows)
         if: matrix.os == 'windows-latest'
-        run: npx electron-builder --win --config.publish=never
+        run: npx electron-builder --win --publish never
 
       - name: Build Electron App (macOS)
         if: matrix.os == 'macos-latest'
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npx electron-builder --mac --config.publish=never
+        run: npx electron-builder --mac --publish never
 
       - name: Restore Source Backup
         if: always()

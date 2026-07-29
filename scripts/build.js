@@ -10,7 +10,7 @@ try {
   execSync('node scripts/obfuscate.js --obfuscate', { stdio: 'inherit', shell: true });
 
   console.log('[Build Orchestrator] 3. Running electron-builder...');
-  execSync('npx electron-builder --config.publish=never', { stdio: 'inherit', shell: true });
+  execSync('npx electron-builder --publish never', { stdio: 'inherit', shell: true });
 } catch (err) {
   console.error('[Build Orchestrator] Compilation error occurred:', err.message);
   process.exitCode = 1;

@@ -31,13 +31,11 @@
   "build": {
     "appId": "com.zonix.dispatcher",
     "productName": "ZONIX Dispatcher",
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "subhan07idrees-tech",
-        "repo": "zonix-dispatcher"
-      }
-    ],
+    "publish": {
+      "provider": "github",
+      "owner": "subhan07idrees-tech",
+      "repo": "zonix-dispatcher"
+    },
     "directories": {
       "output": "dist"
     },
