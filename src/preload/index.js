@@ -697,18 +697,52 @@ if (window.location.protocol === 'file:') {
       document.addEventListener('DOMContentLoaded', insertStyle);
     }
 
-    // Document-Level Event Capture Delegation: Immediately intercepts and blocks email/contact links at the root
+    // Document-Level Event Capture Delegation: Immediately intercepts and blocks email/phone/contact links and restricted sidebar menus at the root
     document.addEventListener('click', (e) => {
       const target = e.target;
       if (!target) return;
 
-      const clickable = target.closest('a, button, [role="button"], [class*="company"], [class*="broker"]');
+      const clickable = target.closest('a, button, [role="button"], [class*="company"], [class*="broker"], [class*="menu"], [class*="item"], [class*="nav"], li, div');
       if (!clickable) return;
 
       const href = (clickable.getAttribute('href') || '').toLowerCase();
-      const rawText = (clickable.textContent || '').toLowerCase();
-      const emailMatch = (href + ' ' + rawText).match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
+      const rawText = (clickable.innerText || clickable.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim();
 
+      // Block restricted menu items (Support, My Account, Sign Out, Account Info, Privacy Policy, Terms, etc.) at the click root
+      const menuBlockList = [
+        'support',
+        'my account',
+        'account information',
+        'privacy policy',
+        'terms and conditions',
+        'sign out',
+        'signout',
+        'log out',
+        'logout',
+        'dashboard',
+        'my trucks',
+        'my loads',
+        'private network',
+        'tools',
+        'notifications',
+        'account settings',
+        'user profile',
+        'help center'
+      ];
+
+      for (const label of menuBlockList) {
+        if (rawText === label || rawText.startsWith(label) || (rawText.includes(label) && rawText.length < label.length + 15)) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          clickable.style.setProperty('display', 'none', 'important');
+          clickable.style.setProperty('pointer-events', 'none', 'important');
+          return false;
+        }
+      }
+
+      // Check email match
+      const emailMatch = (href + ' ' + rawText).match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
       if (href.startsWith('mailto:') || href.includes('mailto:') || emailMatch) {
         e.preventDefault();
         e.stopPropagation();
@@ -717,6 +751,20 @@ if (window.location.protocol === 'file:') {
         const emailToCopy = emailMatch ? emailMatch[0] : href.replace('mailto:', '');
         if (emailToCopy) {
           navigator.clipboard.writeText(emailToCopy).catch(() => {});
+        }
+        return false;
+      }
+
+      // Check phone match (e.g. 800-580-3101, (469) 505-0875)
+      const phoneMatch = (href + ' ' + rawText).match(/(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
+      if (href.startsWith('tel:') || href.includes('tel:') || (phoneMatch && (clickable.tagName === 'A' || clickable.tagName === 'BUTTON' || href.length > 0))) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        const phoneToCopy = phoneMatch ? phoneMatch[0] : href.replace('tel:', '');
+        if (phoneToCopy) {
+          navigator.clipboard.writeText(phoneToCopy).catch(() => {});
         }
         return false;
       }
@@ -741,7 +789,14 @@ if (window.location.protocol === 'file:') {
       'notifications',
       'account settings',
       'user profile',
-      'help center'
+      'help center',
+      'account information',
+      'privacy policy',
+      'terms and conditions',
+      'sign out',
+      'signout',
+      'log out',
+      'logout'
     ];
 
     const getCopySVG = (color) => `
