@@ -37,10 +37,15 @@ jobs:
       - name: Build Renderer Frontend
         run: npm run build --prefix src/renderer
 
-      - name: Build Electron App
+      - name: Build Electron App (Windows)
+        if: matrix.os == 'windows-latest'
+        run: npx electron-builder --win --config.publish=never
+
+      - name: Build Electron App (macOS)
+        if: matrix.os == 'macos-latest'
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: npx electron-builder --config.publish=never
+        run: npx electron-builder --mac --config.publish=never
 
       - name: Publish Release Assets to GitHub Releases
         uses: softprops/action-gh-release@v2
