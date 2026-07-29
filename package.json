@@ -1,6 +1,6 @@
 {
   "name": "zonix",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "description": "ZONIX - Multi-Tenant Secure Dispatcher System",
   "main": "src/main/index.js",
   "scripts": {
@@ -71,23 +71,11 @@
     },
     "mac": {
       "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        },
-        {
-          "target": "zip",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        }
+        "dmg",
+        "zip"
       ],
       "category": "public.app-category.business",
-      "artifactName": "ZONIX-Dispatcher-Setup-Mac-${version}-${arch}.${ext}"
+      "artifactName": "ZONIX-Dispatcher-Setup-Mac-${version}.${ext}"
     },
     "linux": {
       "target": "AppImage"
