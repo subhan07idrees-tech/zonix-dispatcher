@@ -1583,6 +1583,7 @@ app.on('login', (event, webContents, request, authInfo, callback) => {
 });
 
 let isUpdateGateActive = false;
+let startupLaunchTimeout = null;
 
 function setupAutoUpdater() {
   autoUpdater.logger = console;
@@ -1595,10 +1596,21 @@ function setupAutoUpdater() {
     if (updateWindow) return;
 
     isUpdateGateActive = true;
-    // Destroy auth window if it was somehow created
+
+    // Clear any startup launch timeout
+    if (startupLaunchTimeout) {
+      clearTimeout(startupLaunchTimeout);
+      startupLaunchTimeout = null;
+    }
+
+    // Force destroy authWindow and mainWindow so NO login window can exist alongside update
     if (authWindow && !authWindow.isDestroyed()) {
-      authWindow.destroy();
+      try { authWindow.destroy(); } catch (e) {}
       authWindow = null;
+    }
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      try { mainWindow.destroy(); } catch (e) {}
+      mainWindow = null;
     }
  
     updateWindow = new BrowserWindow({
@@ -1740,15 +1752,15 @@ app.whenReady().then(async () => {
   store.delete('maxTabs');
 
   // Check for updates at startup. If an update exists, updateWindow opens and gates launch.
-  // If no update exists (or check times out in 4s), launch createAuthWindow().
+  // If no update exists (or check times out in 3.5s), launch createAuthWindow().
   let hasChecked = false;
-  const launchTimeout = setTimeout(() => {
+  startupLaunchTimeout = setTimeout(() => {
     if (!hasChecked && !isUpdateGateActive && !authWindow) {
       hasChecked = true;
       console.log('[ZONIX] Startup update check timeout. Proceeding to auth window...');
       createAuthWindow();
     }
-  }, 4000);
+  }, 3500);
 
   autoUpdater.checkForUpdates().then(() => {
     hasChecked = true;
