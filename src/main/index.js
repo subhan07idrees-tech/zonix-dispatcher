@@ -1582,6 +1582,8 @@ app.on('login', (event, webContents, request, authInfo, callback) => {
   }
 });
 
+let isUpdateGateActive = false;
+
 function setupAutoUpdater() {
   autoUpdater.logger = console;
   autoUpdater.autoDownload = false;
@@ -1591,6 +1593,13 @@ function setupAutoUpdater() {
 
   function createUpdateWindow(newVersion) {
     if (updateWindow) return;
+
+    isUpdateGateActive = true;
+    // Destroy auth window if it was somehow created
+    if (authWindow && !authWindow.isDestroyed()) {
+      authWindow.destroy();
+      authWindow = null;
+    }
  
     updateWindow = new BrowserWindow({
       width: 460,
@@ -1601,14 +1610,14 @@ function setupAutoUpdater() {
       alwaysOnTop: true,
       center: true,
       show: false,
-      title: 'ZONIX Update',
+      title: 'ZONIX Mandatory Update',
       webPreferences: {
         preload: path.join(__dirname, '..', 'preload', 'index.js'),
         contextIsolation: true,
         nodeIntegration: false,
         sandbox: false
       },
-      backgroundColor: '#0b0f1e'
+      backgroundColor: '#090A0F'
     });
  
     updateWindow.loadFile(path.join(__dirname, '..', 'renderer', 'dist', 'update.html'));
@@ -1620,9 +1629,19 @@ function setupAutoUpdater() {
         newVersion,
         currentVersion: app.getVersion()
       });
+
+      // Auto-start download immediately upon launch gate activation
+      autoUpdater.downloadUpdate().catch(err => {
+        console.error('[Updater] Auto-download error:', err.message);
+      });
     });
  
-    updateWindow.on('closed', () => { updateWindow = null; });
+    updateWindow.on('closed', () => {
+      updateWindow = null;
+      if (isUpdateGateActive) {
+        app.quit();
+      }
+    });
   }
 
   // IPC handlers for update window buttons
@@ -1630,9 +1649,8 @@ function setupAutoUpdater() {
     try {
       console.log('[Updater] start download requested');
       await autoUpdater.downloadUpdate();
-      console.log('[Updater] downloadUpdate call initiated successfully');
     } catch (err) {
-      console.error('[Updater] downloadUpdate failed to start:', err.message);
+      console.error('[Updater] downloadUpdate failed:', err.message);
       if (updateWindow && !updateWindow.isDestroyed()) {
         updateWindow.webContents.send('update:error', err.message);
       }
@@ -1648,18 +1666,24 @@ function setupAutoUpdater() {
   });
 
   autoUpdater.on('update-available', (info) => {
-    console.log('[Updater] Update available:', info.version);
+    console.log('[Updater] Launch Gate: Update available:', info.version);
     createUpdateWindow(info.version);
   });
 
   autoUpdater.on('update-not-available', () => {
-    console.log('[Updater] Up to date.');
+    console.log('[Updater] Launch Gate: Up to date.');
+    if (!isUpdateGateActive && !authWindow && !mainWindow) {
+      createAuthWindow();
+    }
   });
 
   autoUpdater.on('error', (err) => {
     console.error('[Updater] Error:', err.message);
     if (updateWindow && !updateWindow.isDestroyed()) {
       updateWindow.webContents.send('update:error', err.message || 'Download failed');
+    } else if (!isUpdateGateActive && !authWindow && !mainWindow) {
+      // If error occurred during startup check, safely proceed to auth window
+      createAuthWindow();
     }
   });
 
@@ -1672,15 +1696,11 @@ function setupAutoUpdater() {
   });
 
   autoUpdater.on('update-downloaded', () => {
-    console.log('[Updater] Download complete. Installing...');
+    console.log('[Updater] Download complete. Installing update...');
     if (updateWindow && !updateWindow.isDestroyed()) {
       updateWindow.close();
     }
     autoUpdater.quitAndInstall();
-  });
-
-  autoUpdater.checkForUpdates().catch((err) => {
-    console.error('[Updater] Failed to check for updates:', err.message);
   });
 }
 
@@ -1719,10 +1739,29 @@ app.whenReady().then(async () => {
   store.delete('targetUrl');
   store.delete('maxTabs');
 
-  createAuthWindow();
+  // Check for updates at startup. If an update exists, updateWindow opens and gates launch.
+  // If no update exists (or check times out in 4s), launch createAuthWindow().
+  let hasChecked = false;
+  const launchTimeout = setTimeout(() => {
+    if (!hasChecked && !isUpdateGateActive && !authWindow) {
+      hasChecked = true;
+      console.log('[ZONIX] Startup update check timeout. Proceeding to auth window...');
+      createAuthWindow();
+    }
+  }, 4000);
+
+  autoUpdater.checkForUpdates().then(() => {
+    hasChecked = true;
+  }).catch((err) => {
+    hasChecked = true;
+    console.error('[ZONIX] Startup update check failed:', err.message);
+    if (!isUpdateGateActive && !authWindow) {
+      createAuthWindow();
+    }
+  });
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
+    if (BrowserWindow.getAllWindows().length === 0 && !isUpdateGateActive) {
       createAuthWindow();
     }
   });

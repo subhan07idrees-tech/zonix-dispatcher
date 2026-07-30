@@ -3,395 +3,323 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ZONIX Update</title>
+  <title>ZONIX Mandatory Update</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      background: #090A0F;
+      color: #F3F4F6;
       width: 100vw;
       height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
+      user-select: none;
+      -webkit-app-region: drag;
     }
 
     .card {
-      width: 480px;
-      background: #0f172a;
-      border: 1px solid #1e293b;
-      border-radius: 8px;
-      padding: 40px 36px 36px;
+      width: 440px;
+      background: #0D0E15;
+      border: 1px solid #1E2638;
+      border-radius: 12px;
+      padding: 36px 32px 28px;
       position: relative;
-      overflow: hidden;
-      box-shadow:
-        0 1px 3px rgba(0, 0, 0, 0.2),
-        0 20px 50px rgba(0, 0, 0, 0.5);
-      animation: cardIn 0.3s ease-out forwards;
+      box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.8), 0 0 1px 1px rgba(255, 255, 255, 0.05);
+      animation: cardIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      -webkit-app-region: no-drag;
     }
 
     @keyframes cardIn {
-      from { opacity: 0; transform: scale(0.97) translateY(8px); }
+      from { opacity: 0; transform: scale(0.96) translateY(12px); }
       to   { opacity: 1; transform: scale(1) translateY(0); }
     }
 
-    /* Minimalist App Icon */
-    .icon-wrap {
+    /* Header & Icon */
+    .icon-header {
       display: flex;
-      justify-content: center;
+      align-items: center;
+      justify-content: space-between;
       margin-bottom: 24px;
     }
 
-    .app-icon {
-      width: 64px;
-      height: 64px;
-      border-radius: 6px;
-      background: #1e293b;
+    .app-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-box {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
       border: 1px solid #334155;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
 
-    .title {
-      text-align: center;
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-size: 13px;
+    .logo-box svg {
+      width: 20px;
+      height: 20px;
+      fill: #38BDF8;
+    }
+
+    .brand-title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #F8FAFC;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: #64748B;
+      font-family: monospace;
+    }
+
+    .status-tag {
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      color: #60A5FA;
+      font-size: 10px;
       font-weight: 600;
-      letter-spacing: 2px;
-      color: #94a3b8;
-      margin-bottom: 6px;
+      letter-spacing: 0.8px;
       text-transform: uppercase;
     }
 
-    .subtitle {
+    /* Version Section */
+    .version-container {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid #1E293B;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
       text-align: center;
-      color: #475569;
-      font-family: 'Consolas', 'Courier New', monospace;
+    }
+
+    .version-heading {
       font-size: 11px;
-      margin-bottom: 32px;
+      color: #64748B;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      font-weight: 600;
     }
 
-    /* Terminal steps */
-    .steps {
-      margin-bottom: 28px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .step {
+    .version-flow {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 12px;
+      font-family: monospace;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .v-old { color: #94A3B8; }
+    .v-arrow { color: #38BDF8; }
+    .v-new { color: #38BDF8; text-shadow: 0 0 12px rgba(56, 189, 248, 0.4); }
+
+    /* Terminal Console Steps */
+    .console-box {
+      background: #050609;
+      border: 1px solid #161D2A;
+      border-radius: 6px;
+      padding: 14px;
+      margin-bottom: 24px;
       font-family: 'Consolas', 'Courier New', monospace;
       font-size: 11px;
+      height: 90px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .console-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       color: #475569;
-      opacity: 0;
-      transform: translateX(-4px);
-      transition: opacity 0.3s ease, transform 0.3s ease, color 0.3s ease;
+      transition: color 0.2s ease;
     }
 
-    .step.visible {
-      opacity: 1;
-      transform: translateX(0);
-      color: #94a3b8;
-    }
+    .console-line.active { color: #38BDF8; }
+    .console-line.done { color: #10B981; }
 
-    .step.done {
-      color: #3b82f6;
-    }
-
-    .step-dot {
+    .pulse-indicator {
       width: 6px;
       height: 6px;
       border-radius: 50%;
       background: #334155;
       flex-shrink: 0;
-      transition: background 0.3s ease;
     }
 
-    .step.visible .step-dot {
-      background: #3b82f6;
-      animation: dotPulse 1.2s ease-in-out infinite;
+    .console-line.active .pulse-indicator {
+      background: #38BDF8;
+      box-shadow: 0 0 8px #38BDF8;
+      animation: pulse 1s infinite;
     }
 
-    .step.done .step-dot {
-      background: #00ff66;
-      animation: none;
+    .console-line.done .pulse-indicator {
+      background: #10B981;
     }
 
-    @keyframes dotPulse {
+    @keyframes pulse {
       0%, 100% { opacity: 1; }
-      50%       { opacity: 0.3; }
+      50% { opacity: 0.3; }
     }
 
-    /* Progress bar */
-    .progress-section {
-      margin-top: 4px;
+    /* Progress Bar */
+    .progress-wrap {
+      margin-bottom: 24px;
     }
 
     .progress-meta {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      font-size: 11px;
+      font-family: monospace;
+      color: #94A3B8;
       margin-bottom: 8px;
     }
 
-    .progress-label {
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-size: 10px;
-      color: #3b82f6;
-      letter-spacing: 0.5px;
-    }
-
-    .progress-pct {
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-size: 10px;
-      color: #3b82f6;
-    }
-
     .progress-track {
-      height: 4px;
-      background: #1e293b;
-      border-radius: 2px;
+      height: 6px;
+      background: #161D2A;
+      border-radius: 3px;
       overflow: hidden;
       position: relative;
     }
 
     .progress-fill {
       height: 100%;
-      background: #3b82f6;
-      border-radius: 2px;
       width: 0%;
-      transition: width 0.3s ease;
+      background: linear-gradient(90deg, #2563EB 0%, #38BDF8 100%);
+      border-radius: 3px;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
     }
 
-    /* Action buttons */
+    /* Actions */
     .actions {
-      margin-top: 28px;
       display: flex;
-      gap: 12px;
-      transition: opacity 0.2s ease;
-    }
-
-    .actions.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .btn-install {
-      flex: 1;
-      padding: 10px;
-      background: #3b82f6;
-      border: 1px solid #2563eb;
-      border-radius: 4px;
-      color: #fff;
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 1px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-transform: uppercase;
-    }
-
-    .btn-install:hover {
-      background: #2563eb;
-    }
-
-    .btn-install:disabled {
-      background: #1e293b;
-      border-color: #334155;
-      color: #475569;
-      cursor: not-allowed;
+      justify-content: flex-end;
     }
 
     .btn-quit {
-      padding: 10px 20px;
+      padding: 8px 16px;
       background: transparent;
-      border: 1px solid #334155;
-      border-radius: 4px;
-      color: #64748b;
-      font-family: 'Consolas', 'Courier New', monospace;
+      border: 1px solid #1E2638;
+      border-radius: 6px;
+      color: #64748B;
       font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
       cursor: pointer;
       transition: all 0.2s ease;
-      text-transform: uppercase;
+      font-family: monospace;
     }
 
     .btn-quit:hover {
-      border-color: #475569;
-      color: #94a3b8;
-    }
-
-    .status-line {
-      text-align: center;
-      margin-top: 24px;
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-size: 10px;
-      color: #475569;
-      letter-spacing: 0.5px;
+      border-color: #334155;
+      color: #94A3B8;
+      background: rgba(255, 255, 255, 0.02);
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="icon-wrap">
-      <div class="app-icon">⚡</div>
+    <div class="icon-header">
+      <div class="app-badge">
+        <div class="logo-box">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">ZONIX DISPATCHER</div>
+          <div class="brand-sub">MANDATORY LAUNCH GATE</div>
+        </div>
+      </div>
+      <div class="status-tag">UPDATE REQUIRED</div>
     </div>
 
-    <div class="title">Update Available</div>
-    <div class="subtitle" id="versionLine">CHECKING FOR UPDATES...</div>
-
-    <div class="steps">
-      <div class="step" id="step0">
-        <div class="step-dot"></div>
-        <span>[ 01 ] RESOLVING UPDATE FEED</span>
-      </div>
-      <div class="step" id="step1">
-        <div class="step-dot"></div>
-        <span>[ 02 ] PARSING DEBIAN CHECKSUMS</span>
-      </div>
-      <div class="step" id="step2">
-        <div class="step-dot"></div>
-        <span>[ 03 ] INITIALIZING STAGED DOWNLOAD</span>
-      </div>
-      <div class="step" id="step3">
-        <div class="step-dot"></div>
-        <span>[ 04 ] DOWNLOAD COMPLETED</span>
-      </div>
-      <div class="step" id="step4">
-        <div class="step-dot"></div>
-        <span>[ 05 ] VERIFYING INTEGRITY MATCH</span>
-      </div>
-      <div class="step" id="step5">
-        <div class="step-dot"></div>
-        <span>[ 06 ] INJECTING DELTA TARGETS</span>
+    <div class="version-container">
+      <div class="version-heading">New System Release Available</div>
+      <div class="version-flow">
+        <span class="v-old" id="curVer">v1.7.3</span>
+        <span class="v-arrow">→</span>
+        <span class="v-new" id="newVer">v1.7.4</span>
       </div>
     </div>
 
-    <div class="progress-section">
+    <div class="console-box">
+      <div class="console-line active" id="line1">
+        <div class="pulse-indicator"></div>
+        <span id="line1Text">Connecting to update server...</span>
+      </div>
+      <div class="console-line" id="line2">
+        <div class="pulse-indicator"></div>
+        <span id="line2Text">Downloading system packages...</span>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
       <div class="progress-meta">
-        <span class="progress-label" id="progressLabel">READY TO DOWNLOAD</span>
-        <span class="progress-pct" id="progressPct">0%</span>
+        <span id="progText">DOWNLOADING UPDATE</span>
+        <span id="progPct">0%</span>
       </div>
       <div class="progress-track">
-        <div class="progress-fill" id="progressFill"></div>
+        <div class="progress-fill" id="progFill"></div>
       </div>
     </div>
 
-    <div class="actions" id="actions">
-      <button class="btn-install" id="btnInstall" onclick="startInstall()">⬇ INSTALL UPDATE</button>
-      <button class="btn-quit" onclick="doQuit()">QUIT</button>
+    <div class="actions">
+      <button class="btn-quit" onclick="quitApp()">QUIT APP</button>
     </div>
-
-    <div class="status-line" id="statusLine"></div>
   </div>
 
   <script>
-    let currentVersion = '';
-    let newVersion = '';
-
-    // Animate the first 3 steps on load (pre-download phase)
-    const preSteps = [0, 1, 2];
-    const delays = [200, 700, 1300];
-
-    preSteps.forEach((idx, i) => {
-      setTimeout(() => {
-        const el = document.getElementById('step' + idx);
-        el.classList.add('visible');
-        if (i < preSteps.length - 1) {
-          setTimeout(() => el.classList.replace('visible', 'done'), 500);
-        }
-      }, delays[i]);
-    });
-
-    // Receive version info from main
     window.electronAPI?.onUpdateInfo?.((info) => {
-      newVersion     = info.newVersion;
-      currentVersion = info.currentVersion;
-      document.getElementById('versionLine').textContent =
-        `v${currentVersion}  →  v${newVersion}  //  NEW VERSION AVAILABLE`;
+      if (info.currentVersion) document.getElementById('curVer').textContent = 'v' + info.currentVersion;
+      if (info.newVersion) document.getElementById('newVer').textContent = 'v' + info.newVersion;
     });
 
-    function handleProgress(p) {
-      // Hide action buttons, show active download steps
-      document.getElementById('actions').classList.add('hidden');
-      document.getElementById('progressLabel').textContent = 'DOWNLOADING...';
-      document.getElementById('progressFill').style.width = p + '%';
-      document.getElementById('progressPct').textContent  = p + '%';
-      document.getElementById('statusLine').textContent   = `[ ${p}% COMPLETE ]`;
-
-      // Reveal download steps progressively
-      if (p >= 5)  showStep(3);
-      if (p >= 50) showStep(4, false);
-      if (p >= 95) {
-        showStep(5, false);
-        document.getElementById('progressLabel').textContent = 'FINALIZING...';
-      }
-      if (p >= 100) {
-        document.getElementById('progressLabel').textContent = 'COMPLETE — RESTARTING';
-        document.getElementById('statusLine').textContent   = '[ INSTALLING... ]';
-        markAllDone();
-      }
-    }
-
-     // Receive download progress from main (real update mode)
     window.electronAPI?.onDownloadProgress?.((pct) => {
-      handleProgress(Math.round(pct));
+      const rounded = Math.round(pct);
+      document.getElementById('progFill').style.width = rounded + '%';
+      document.getElementById('progPct').textContent = rounded + '%';
+
+      if (rounded > 0 && rounded < 100) {
+        document.getElementById('line1').className = 'console-line done';
+        document.getElementById('line1Text').textContent = 'Update release package resolved.';
+        document.getElementById('line2').className = 'console-line active';
+        document.getElementById('line2Text').textContent = `Downloading package files (${rounded}%)...`;
+      } else if (rounded >= 100) {
+        document.getElementById('line2').className = 'console-line done';
+        document.getElementById('line2Text').textContent = 'Download complete. Installing & restarting...';
+        document.getElementById('progText').textContent = 'INSTALLING SYSTEM UPDATE';
+      }
     });
 
-    // Receive updater errors from main
-    window.electronAPI?.onUpdateError?.((errText) => {
-      document.getElementById('progressLabel').textContent = 'DOWNLOAD FAILED';
-      document.getElementById('statusLine').style.color = '#ef4444';
-      document.getElementById('statusLine').textContent = `[ ERROR: ${errText} ]`;
-      // Reactivate button so they can retry or quit
-      document.getElementById('btnInstall').disabled = false;
-      document.getElementById('btnInstall').textContent = 'RETRY INSTALL';
+    window.electronAPI?.onUpdateError?.((err) => {
+      document.getElementById('progText').textContent = 'UPDATE ERROR';
+      document.getElementById('progText').style.color = '#EF4444';
+      document.getElementById('line2').className = 'console-line active';
+      document.getElementById('line2Text').textContent = 'Error: ' + (err || 'Failed to download update.');
+      document.getElementById('line2Text').style.color = '#EF4444';
     });
 
-    function showStep(idx, markPrev = true) {
-      if (markPrev && idx > 0) {
-        const prev = document.getElementById('step' + (idx - 1));
-        prev.classList.remove('visible');
-        prev.classList.add('done');
-      }
-      const el = document.getElementById('step' + idx);
-      el.classList.add('visible');
-    }
-
-    // Clean all steps
-    function markAllDone() {
-      for (let i = 0; i <= 5; i++) {
-        const el = document.getElementById('step' + i);
-        el.classList.remove('visible');
-        el.classList.add('done');
-      }
-    }
-
-    function startInstall() {
-      document.getElementById('btnInstall').disabled = true;
-      document.getElementById('btnInstall').textContent = 'DOWNLOADING...';
-      document.getElementById('progressLabel').textContent = 'INITIALIZING...';
-      document.getElementById('statusLine').textContent = '[ STARTING DOWNLOAD ]';
-
-      // Mark pre-steps as done
-      [0, 1, 2].forEach(i => {
-        const el = document.getElementById('step' + i);
-        el.classList.remove('visible');
-        el.classList.add('done');
-      });
-
-      // Call startUpdate to trigger real check
-      window.electronAPI?.startUpdate?.();
-    }
-
-    function doQuit() {
+    function quitApp() {
       window.electronAPI?.quitApp?.();
     }
   </script>
