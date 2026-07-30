@@ -388,6 +388,10 @@ async function createDispatchWindow(sessionId, config) {
         proxyCredentials.set(proxyString, { username: config.proxyUsername, password: config.proxyPassword });
       }
     }
+  } else {
+    // STRICT ZERO-LEAK HARD PROXY ENFORCEMENT: Never fall back to direct connection
+    await sess.setProxy({ proxyRules: '127.0.0.1:0' });
+    console.warn(`[ZONIX Security Shield] Hard Proxy Enforcement: No proxy string provided for session ${sessionId}. Blackholing connection to prevent direct IP leak.`);
   }
 
   if (cookies && cookies.length > 0) {
@@ -881,11 +885,43 @@ async function getActiveProxyForOrg(orgId, token) {
     if (response.ok) {
       const data = await response.json();
       const activeProxy = data.proxies?.find(p => p.status === 'ACTIVE');
-      return activeProxy || null;
+      if (activeProxy) {
+        // Cache active proxy to local vault for offline resilience
+        try {
+          const vaultKey = `cached_proxy_${orgId}`;
+          const rawStr = JSON.stringify(activeProxy);
+          if (safeStorage && safeStorage.isEncryptionAvailable()) {
+            store.set(vaultKey, safeStorage.encryptString(rawStr).toString('base64'));
+          } else {
+            store.set(vaultKey, rawStr);
+          }
+        } catch (vErr) {
+          console.warn('[ZONIX Main] Failed to write proxy to local vault cache:', vErr.message);
+        }
+        return activeProxy;
+      }
     }
   } catch (err) {
-    console.error('[ZONIX Main] Failed to fetch proxy for org:', orgId, err.message);
+    console.error('[ZONIX Main] Failed to fetch proxy for org from backend:', orgId, err.message);
   }
+
+  // FALLBACK TO LOCAL ENCRYPTED VAULT CACHE IF BACKEND IS OFFLINE!
+  try {
+    const vaultKey = `cached_proxy_${orgId}`;
+    const rawVal = store.get(vaultKey);
+    if (rawVal) {
+      let decryptedStr = rawVal;
+      if (safeStorage && safeStorage.isEncryptionAvailable()) {
+        decryptedStr = safeStorage.decryptString(Buffer.from(rawVal, 'base64'));
+      }
+      const cachedProxy = JSON.parse(decryptedStr);
+      console.log(`[ZONIX Main] Vault Fallback: Successfully loaded cached proxy for org ${orgId}: ${cachedProxy.host}:${cachedProxy.port}`);
+      return cachedProxy;
+    }
+  } catch (vaultReadErr) {
+    console.error('[ZONIX Main] Failed reading local vault proxy backup:', vaultReadErr.message);
+  }
+
   return null;
 }
 
@@ -1242,8 +1278,11 @@ function registerIPC() {
         console.log(`[ZONIX Main] Proxy credentials registered for ${proxyKey}`);
       }
     } else {
-      await sess.setProxy({ proxyRules: 'direct://' });
-      console.log('[ZONIX Main] No proxy configured for org, capture window using direct connection');
+      // STRICT ZERO-LEAK HARD PROXY ENFORCEMENT:
+      // Never fall back to 'direct://' local connection under any circumstances.
+      // Blackhole traffic to prevent local IP exposure to DAT/loadboards.
+      await sess.setProxy({ proxyRules: '127.0.0.1:0' });
+      console.warn('[ZONIX Security Shield] Hard Proxy Enforcement: No active proxy node available for org. Blackholing connection to prevent direct IP leak.');
     }
 
     const captureWindow = new BrowserWindow({
