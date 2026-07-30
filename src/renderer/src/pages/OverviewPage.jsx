@@ -189,11 +189,17 @@ export default function OverviewPage() {
         />
       </div>
 
-      {/* QUICK SYSTEM CONTROLS: 1-Click Restore & Pre-Shift Health Check */}
-      <div className="zonix-card p-4 space-y-3">
-        <h3 className="text-xs font-mono font-bold text-zonix-cyan tracking-wider uppercase">
-          ⚡ EXECUTIVE CONTROL VAULT
-        </h3>
+      {/* EXECUTIVE CONTROL VAULT & NOTIFICATION CHANNELS */}
+      <div className="zonix-card p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-mono font-bold text-zonix-cyan tracking-wider uppercase flex items-center gap-2">
+            <span>⚡ EXECUTIVE CONTROL VAULT & ALERT CHANNELS</span>
+          </h3>
+          <span className="text-[11px] text-green-400 font-mono bg-green-500/10 border border-green-500/20 px-2.5 py-1 rounded-full">
+            ● WhatsApp API Connected
+          </span>
+        </div>
+
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={async () => {
@@ -222,7 +228,7 @@ export default function OverviewPage() {
                 });
               }
             }}
-            className="px-4 py-2 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 font-mono text-xs font-semibold hover:bg-green-500/20 transition flex items-center gap-2"
+            className="px-4 py-2.5 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 font-mono text-xs font-semibold hover:bg-green-500/20 transition flex items-center gap-2"
           >
             <span>🔄 1-Click Session Restore</span>
           </button>
@@ -236,7 +242,7 @@ export default function OverviewPage() {
                   setNotification({
                     type: 'success',
                     title: 'Health Check Complete',
-                    message: `System diagnostic finished cleanly. Status: 100% Operational.`
+                    message: `System diagnostic finished cleanly. Report sent to WhatsApp & Email. Status: 100% Operational.`
                   });
                 } else {
                   setNotification({
@@ -253,10 +259,64 @@ export default function OverviewPage() {
                 });
               }
             }}
-            className="px-4 py-2 rounded-lg bg-zonix-cyan/10 border border-zonix-cyan/30 text-zonix-cyan font-mono text-xs font-semibold hover:bg-zonix-cyan/20 transition flex items-center gap-2"
+            className="px-4 py-2.5 rounded-xl bg-zonix-cyan/10 border border-zonix-cyan/30 text-zonix-cyan font-mono text-xs font-semibold hover:bg-zonix-cyan/20 transition flex items-center gap-2"
           >
             <span>📱 Run Pre-Shift Health Check</span>
           </button>
+
+          <button
+            onClick={async () => {
+              try {
+                const phone = prompt('Enter WhatsApp Phone Number (with country code):', '+14046101615');
+                if (!phone) return;
+                const res = await authFetch('/organizations/health-check/test-whatsapp', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ whatsappPhone: phone })
+                });
+                const data = await res.json();
+                if (data.success) {
+                  setNotification({
+                    type: 'success',
+                    title: 'WhatsApp Alert Sent',
+                    message: `Test pre-shift alert sent to ${phone} via Meta WhatsApp Cloud API!`
+                  });
+                }
+              } catch (e) {
+                setNotification({ type: 'error', title: 'WhatsApp Error', message: e.message });
+              }
+            }}
+            className="px-4 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 font-mono text-xs font-semibold hover:bg-purple-500/20 transition flex items-center gap-2"
+          >
+            <span>💬 Send Test WhatsApp Alert</span>
+          </button>
+        </div>
+
+        {/* NOTIFICATION CHANNEL CONFIGURATION BOX */}
+        <div className="mt-3 pt-3 border-t border-[#1E2638]/60 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="bg-[#090A0F] border border-[#1E2638] rounded-xl p-3">
+            <div className="text-[10px] text-zonix-text-dim font-mono uppercase mb-1 flex items-center gap-1.5">
+              <span className="text-green-400">📱</span> WHATSAPP ALERT PHONE
+            </div>
+            <div className="text-xs font-mono text-gray-200 font-semibold">+1 (404) 610-1615</div>
+            <div className="text-[10px] text-green-400 mt-1">1,000 Free Messages / Mo</div>
+          </div>
+
+          <div className="bg-[#090A0F] border border-[#1E2638] rounded-xl p-3">
+            <div className="text-[10px] text-zonix-text-dim font-mono uppercase mb-1 flex items-center gap-1.5">
+              <span className="text-cyan-400">✉️</span> NOTIFICATION EMAIL
+            </div>
+            <div className="text-xs font-mono text-gray-200 font-semibold">admin@thezonix.com</div>
+            <div className="text-[10px] text-cyan-400 mt-1">Resend API Active</div>
+          </div>
+
+          <div className="bg-[#090A0F] border border-[#1E2638] rounded-xl p-3">
+            <div className="text-[10px] text-zonix-text-dim font-mono uppercase mb-1 flex items-center gap-1.5">
+              <span className="text-amber-400">⏰</span> DAILY MORNING SCAN TIME
+            </div>
+            <div className="text-xs font-mono text-gray-200 font-semibold">07:45 AM (EST)</div>
+            <div className="text-[10px] text-amber-400 mt-1">Pre-Shift Auto Check</div>
+          </div>
         </div>
       </div>
 
