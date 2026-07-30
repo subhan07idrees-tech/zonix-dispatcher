@@ -88,6 +88,9 @@ export default function OverviewPage() {
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [testPhone, setTestPhone] = useState('+14046101615');
+  const [sendingTest, setSendingTest] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -141,6 +144,78 @@ export default function OverviewPage() {
             >
               Done
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* WhatsApp Test Alert Custom Modal */}
+      {showWhatsAppModal && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0D0E15] border border-[#1E2638] rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 flex items-center justify-center font-bold text-base">
+                💬
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-100">Send WhatsApp Test Alert</h4>
+                <p className="text-xs text-gray-400">Meta WhatsApp Cloud API Notification</p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-mono text-gray-400 uppercase mb-1.5">WhatsApp Phone Number</label>
+              <input
+                type="text"
+                value={testPhone}
+                onChange={(e) => setTestPhone(e.target.value)}
+                placeholder="+14046101615"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#090A0F] border border-[#1E2638] text-gray-100 font-mono text-xs focus:outline-none focus:border-purple-500"
+              />
+              <p className="text-[10px] text-gray-500 mt-1">Include country code (e.g. +1 for USA)</p>
+            </div>
+
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowWhatsAppModal(false)}
+                className="flex-1 py-2.5 bg-[#161D2A] hover:bg-[#1E2638] text-gray-300 text-xs font-semibold rounded-xl transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={sendingTest}
+                onClick={async () => {
+                  setSendingTest(true);
+                  try {
+                    const res = await authFetch('/organizations/health-check/test-whatsapp', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ whatsappPhone: testPhone })
+                    });
+                    const data = await res.json();
+                    setShowWhatsAppModal(false);
+                    if (data.success) {
+                      setNotification({
+                        type: 'success',
+                        title: 'WhatsApp Alert Sent',
+                        message: `Pre-shift health alert sent to ${testPhone} via Meta WhatsApp Cloud API!`
+                      });
+                    } else {
+                      setNotification({ type: 'error', title: 'WhatsApp Error', message: data.error || 'Failed to send WhatsApp message' });
+                    }
+                  } catch (e) {
+                    setShowWhatsAppModal(false);
+                    setNotification({ type: 'error', title: 'WhatsApp Error', message: e.message });
+                  } finally {
+                    setSendingTest(false);
+                  }
+                }}
+                className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-xl transition shadow-lg shadow-purple-600/30"
+              >
+                {sendingTest ? 'Sending...' : 'Send Alert Now'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -265,27 +340,7 @@ export default function OverviewPage() {
           </button>
 
           <button
-            onClick={async () => {
-              try {
-                const phone = prompt('Enter WhatsApp Phone Number (with country code):', '+14046101615');
-                if (!phone) return;
-                const res = await authFetch('/organizations/health-check/test-whatsapp', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ whatsappPhone: phone })
-                });
-                const data = await res.json();
-                if (data.success) {
-                  setNotification({
-                    type: 'success',
-                    title: 'WhatsApp Alert Sent',
-                    message: `Test pre-shift alert sent to ${phone} via Meta WhatsApp Cloud API!`
-                  });
-                }
-              } catch (e) {
-                setNotification({ type: 'error', title: 'WhatsApp Error', message: e.message });
-              }
-            }}
+            onClick={() => setShowWhatsAppModal(true)}
             className="px-4 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 font-mono text-xs font-semibold hover:bg-purple-500/20 transition flex items-center gap-2"
           >
             <span>💬 Send Test WhatsApp Alert</span>
