@@ -87,6 +87,7 @@ export default function OverviewPage() {
   const { sessions, alerts } = useWebSocket();
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -123,6 +124,27 @@ export default function OverviewPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Custom Executive Notification Modal */}
+      {notification && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0D0E15] border border-[#1E2638] rounded-2xl p-6 w-full max-w-sm text-center shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className={`w-12 h-12 rounded-full mx-auto flex items-center justify-center text-lg font-bold ${notification.type === 'error' ? 'bg-red-500/10 border border-red-500/30 text-red-400' : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'}`}>
+              {notification.type === 'error' ? '!' : '✓'}
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-gray-100">{notification.title}</h4>
+              <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">{notification.message}</p>
+            </div>
+            <button
+              onClick={() => setNotification(null)}
+              className="w-full py-2.5 bg-[#1E2638] hover:bg-[#2B3752] text-gray-200 text-xs font-semibold rounded-xl transition"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold tracking-wide">ORGANIZATION METRICS</h2>
@@ -180,12 +202,24 @@ export default function OverviewPage() {
                 const res = await authFetch(`/organizations/${orgId}/vault/restore`, { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
-                  alert('🟢 1-Click Session Restore Successful! All dispatcher sessions updated in <0.5s.');
+                  setNotification({
+                    type: 'success',
+                    title: 'Session Restored',
+                    message: '1-Click Session Restore complete. All active dispatcher sessions updated in <0.5s.'
+                  });
                 } else {
-                  alert(data.message || data.error || 'Vault restore failed');
+                  setNotification({
+                    type: 'error',
+                    title: 'Restore Notice',
+                    message: data.message || data.error || 'Vault restore requires session re-authentication.'
+                  });
                 }
               } catch (e) {
-                alert('Error restoring session: ' + e.message);
+                setNotification({
+                  type: 'error',
+                  title: 'System Error',
+                  message: 'Error restoring session: ' + e.message
+                });
               }
             }}
             className="px-4 py-2 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 font-mono text-xs font-semibold hover:bg-green-500/20 transition flex items-center gap-2"
@@ -199,12 +233,24 @@ export default function OverviewPage() {
                 const res = await authFetch('/organizations/health-check/now', { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
-                  alert(`🟢 Pre-Shift Health Check Complete! Status: 100% Operational.`);
+                  setNotification({
+                    type: 'success',
+                    title: 'Health Check Complete',
+                    message: `System diagnostic finished cleanly. Status: 100% Operational.`
+                  });
                 } else {
-                  alert('Health check completed with warnings');
+                  setNotification({
+                    type: 'error',
+                    title: 'Health Check Alert',
+                    message: 'Health check finished with system warnings.'
+                  });
                 }
               } catch (e) {
-                alert('Error running health check: ' + e.message);
+                setNotification({
+                  type: 'error',
+                  title: 'Check Error',
+                  message: 'Error running health check: ' + e.message
+                });
               }
             }}
             className="px-4 py-2 rounded-lg bg-zonix-cyan/10 border border-zonix-cyan/30 text-zonix-cyan font-mono text-xs font-semibold hover:bg-zonix-cyan/20 transition flex items-center gap-2"

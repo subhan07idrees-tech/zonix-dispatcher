@@ -116,6 +116,7 @@ export default function OrganizationsPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingOrg, setEditingOrg] = useState(null);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => { fetchOrgs(); }, []);
 
@@ -180,6 +181,27 @@ export default function OrganizationsPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Custom Executive Notification Modal */}
+      {notification && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0D0E15] border border-[#1E2638] rounded-2xl p-6 w-full max-w-sm text-center shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className={`w-12 h-12 rounded-full mx-auto flex items-center justify-center text-lg font-bold ${notification.type === 'error' ? 'bg-red-500/10 border border-red-500/30 text-red-400' : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'}`}>
+              {notification.type === 'error' ? '!' : '✓'}
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-gray-100">{notification.title}</h4>
+              <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">{notification.message}</p>
+            </div>
+            <button
+              onClick={() => setNotification(null)}
+              className="w-full py-2.5 bg-[#1E2638] hover:bg-[#2B3752] text-gray-200 text-xs font-semibold rounded-xl transition"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold tracking-wide">ORGANIZATIONS</h2>
@@ -239,12 +261,24 @@ export default function OrganizationsPage() {
                           const res = await authFetch(`/organizations/${org.id}/vault/restore`, { method: 'POST' });
                           const data = await res.json();
                           if (data.success) {
-                            alert(`🟢 1-Click Session Restore Successful for ${org.displayName}! All sessions updated.`);
+                            setNotification({
+                              type: 'success',
+                              title: 'Session Restored',
+                              message: `1-Click Session Restore complete for ${org.displayName}. All sessions updated in <0.5s.`
+                            });
                           } else {
-                            alert(data.message || data.error || 'Restore failed');
+                            setNotification({
+                              type: 'error',
+                              title: 'Restore Notice',
+                              message: data.message || data.error || 'Vault restore requires session re-authentication.'
+                            });
                           }
                         } catch (e) {
-                          alert('Error restoring session: ' + e.message);
+                          setNotification({
+                            type: 'error',
+                            title: 'System Error',
+                            message: 'Error restoring session: ' + e.message
+                          });
                         }
                       }}
                       className="px-2 py-1 bg-green-500/10 border border-green-500/30 text-green-400 rounded text-[11px] font-mono hover:bg-green-500/20"

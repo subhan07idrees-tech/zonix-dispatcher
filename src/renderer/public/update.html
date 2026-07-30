@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ZONIX Mandatory Update</title>
+  <title>ZONIX Update</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
       background: #090A0F;
       color: #F3F4F6;
       width: 100vw;
@@ -22,174 +22,104 @@
     }
 
     .card {
-      width: 440px;
+      width: 420px;
       background: #0D0E15;
       border: 1px solid #1E2638;
-      border-radius: 12px;
-      padding: 36px 32px 28px;
+      border-radius: 16px;
+      padding: 32px 28px 28px;
       position: relative;
-      box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.8), 0 0 1px 1px rgba(255, 255, 255, 0.05);
-      animation: cardIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.7);
+      animation: cardIn 0.3s ease-out forwards;
       -webkit-app-region: no-drag;
     }
 
     @keyframes cardIn {
-      from { opacity: 0; transform: scale(0.96) translateY(12px); }
+      from { opacity: 0; transform: scale(0.97) translateY(8px); }
       to   { opacity: 1; transform: scale(1) translateY(0); }
     }
 
-    /* Header & Icon */
-    .icon-header {
+    .header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 14px;
       margin-bottom: 24px;
     }
 
-    .app-badge {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
     .logo-box {
-      width: 38px;
-      height: 38px;
-      border-radius: 8px;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
       background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
       border: 1px solid #334155;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    }
-
-    .logo-box svg {
-      width: 20px;
-      height: 20px;
-      fill: #38BDF8;
-    }
-
-    .brand-title {
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      color: #F8FAFC;
-    }
-
-    .brand-sub {
-      font-size: 11px;
-      color: #64748B;
-      font-family: monospace;
-    }
-
-    .status-tag {
-      padding: 4px 10px;
-      border-radius: 20px;
-      background: rgba(59, 130, 246, 0.1);
-      border: 1px solid rgba(59, 130, 246, 0.25);
-      color: #60A5FA;
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-    }
-
-    /* Version Section */
-    .version-container {
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid #1E293B;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 24px;
-      text-align: center;
-    }
-
-    .version-heading {
-      font-size: 11px;
-      color: #64748B;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-      font-weight: 600;
-    }
-
-    .version-flow {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      font-family: monospace;
-      font-size: 15px;
-      font-weight: 700;
-    }
-
-    .v-old { color: #94A3B8; }
-    .v-arrow { color: #38BDF8; }
-    .v-new { color: #38BDF8; text-shadow: 0 0 12px rgba(56, 189, 248, 0.4); }
-
-    /* Terminal Console Steps */
-    .console-box {
-      background: #050609;
-      border: 1px solid #161D2A;
-      border-radius: 6px;
-      padding: 14px;
-      margin-bottom: 24px;
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-size: 11px;
-      height: 90px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 6px;
-    }
-
-    .console-line {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #475569;
-      transition: color 0.2s ease;
-    }
-
-    .console-line.active { color: #38BDF8; }
-    .console-line.done { color: #10B981; }
-
-    .pulse-indicator {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #334155;
       flex-shrink: 0;
     }
 
-    .console-line.active .pulse-indicator {
-      background: #38BDF8;
-      box-shadow: 0 0 8px #38BDF8;
-      animation: pulse 1s infinite;
+    .logo-box svg {
+      width: 22px;
+      height: 22px;
+      fill: #38BDF8;
     }
 
-    .console-line.done .pulse-indicator {
-      background: #10B981;
+    .title-area {
+      flex: 1;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
+    .app-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #F8FAFC;
+      letter-spacing: -0.2px;
     }
 
-    /* Progress Bar */
-    .progress-wrap {
+    .app-subtitle {
+      font-size: 13px;
+      color: #94A3B8;
+      margin-top: 2px;
+    }
+
+    .version-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #38BDF8;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Status Section */
+    .status-card {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid #1E293B;
+      border-radius: 10px;
+      padding: 16px;
       margin-bottom: 24px;
     }
 
-    .progress-meta {
+    .status-text {
+      font-size: 13px;
+      color: #E2E8F0;
+      margin-bottom: 12px;
       display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      font-family: monospace;
-      color: #94A3B8;
-      margin-bottom: 8px;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #38BDF8;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
     }
 
     .progress-track {
@@ -205,93 +135,80 @@
       width: 0%;
       background: linear-gradient(90deg, #2563EB 0%, #38BDF8 100%);
       border-radius: 3px;
-      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+      transition: width 0.3s ease;
     }
 
-    /* Actions */
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 12px;
+      color: #64748B;
+    }
+
     .actions {
       display: flex;
       justify-content: flex-end;
     }
 
-    .btn-quit {
-      padding: 8px 16px;
-      background: transparent;
+    .btn-exit {
+      padding: 8px 18px;
+      background: rgba(255, 255, 255, 0.04);
       border: 1px solid #1E2638;
-      border-radius: 6px;
-      color: #64748B;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
+      border-radius: 8px;
+      color: #94A3B8;
+      font-size: 12px;
+      font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
-      font-family: monospace;
     }
 
-    .btn-quit:hover {
+    .btn-exit:hover {
       border-color: #334155;
-      color: #94A3B8;
-      background: rgba(255, 255, 255, 0.02);
+      color: #F8FAFC;
+      background: rgba(255, 255, 255, 0.08);
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="icon-header">
-      <div class="app-badge">
-        <div class="logo-box">
-          <svg viewBox="0 0 24 24">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-          </svg>
-        </div>
-        <div>
-          <div class="brand-title">ZONIX DISPATCHER</div>
-          <div class="brand-sub">MANDATORY LAUNCH GATE</div>
-        </div>
+    <div class="header">
+      <div class="logo-box">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
       </div>
-      <div class="status-tag">UPDATE REQUIRED</div>
+      <div class="title-area">
+        <div class="app-name">ZONIX Dispatcher</div>
+        <div class="app-subtitle">Updating system software</div>
+      </div>
+      <div class="version-badge" id="versionBadge">v1.7.8</div>
     </div>
 
-    <div class="version-container">
-      <div class="version-heading">New System Release Available</div>
-      <div class="version-flow">
-        <span class="v-old" id="curVer">v1.7.3</span>
-        <span class="v-arrow">→</span>
-        <span class="v-new" id="newVer">v1.7.4</span>
-      </div>
-    </div>
-
-    <div class="console-box">
-      <div class="console-line active" id="line1">
-        <div class="pulse-indicator"></div>
-        <span id="line1Text">Connecting to update server...</span>
-      </div>
-      <div class="console-line" id="line2">
-        <div class="pulse-indicator"></div>
-        <span id="line2Text">Downloading system packages...</span>
-      </div>
-    </div>
-
-    <div class="progress-wrap">
-      <div class="progress-meta">
-        <span id="progText">DOWNLOADING UPDATE</span>
-        <span id="progPct">0%</span>
+    <div class="status-card">
+      <div class="status-text">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusLabel">Downloading latest update...</span>
       </div>
       <div class="progress-track">
         <div class="progress-fill" id="progFill"></div>
       </div>
+      <div class="progress-meta">
+        <span id="progressMetaText">Please wait a moment</span>
+        <span id="progPct">0%</span>
+      </div>
     </div>
 
     <div class="actions">
-      <button class="btn-quit" onclick="quitApp()">QUIT APP</button>
+      <button class="btn-exit" onclick="quitApp()">Exit App</button>
     </div>
   </div>
 
   <script>
     window.electronAPI?.onUpdateInfo?.((info) => {
-      if (info.currentVersion) document.getElementById('curVer').textContent = 'v' + info.currentVersion;
-      if (info.newVersion) document.getElementById('newVer').textContent = 'v' + info.newVersion;
+      if (info.newVersion) {
+        document.getElementById('versionBadge').textContent = 'v' + info.newVersion;
+      }
     });
 
     window.electronAPI?.onDownloadProgress?.((pct) => {
@@ -300,23 +217,20 @@
       document.getElementById('progPct').textContent = rounded + '%';
 
       if (rounded > 0 && rounded < 100) {
-        document.getElementById('line1').className = 'console-line done';
-        document.getElementById('line1Text').textContent = 'Update release package resolved.';
-        document.getElementById('line2').className = 'console-line active';
-        document.getElementById('line2Text').textContent = `Downloading package files (${rounded}%)...`;
+        document.getElementById('statusLabel').textContent = `Downloading update (${rounded}%)...`;
+        document.getElementById('progressMetaText').textContent = 'Downloading package files';
       } else if (rounded >= 100) {
-        document.getElementById('line2').className = 'console-line done';
-        document.getElementById('line2Text').textContent = 'Download complete. Installing & restarting...';
-        document.getElementById('progText').textContent = 'INSTALLING SYSTEM UPDATE';
+        document.getElementById('statusLabel').textContent = 'Installing update & restarting...';
+        document.getElementById('progressMetaText').textContent = 'Finalizing installation';
+        document.getElementById('statusDot').style.background = '#10B981';
       }
     });
 
     window.electronAPI?.onUpdateError?.((err) => {
-      document.getElementById('progText').textContent = 'UPDATE ERROR';
-      document.getElementById('progText').style.color = '#EF4444';
-      document.getElementById('line2').className = 'console-line active';
-      document.getElementById('line2Text').textContent = 'Error: ' + (err || 'Failed to download update.');
-      document.getElementById('line2Text').style.color = '#EF4444';
+      document.getElementById('statusLabel').textContent = 'Unable to complete update.';
+      document.getElementById('statusLabel').style.color = '#EF4444';
+      document.getElementById('progressMetaText').textContent = err || 'Check network connection';
+      document.getElementById('statusDot').style.background = '#EF4444';
     });
 
     function quitApp() {
