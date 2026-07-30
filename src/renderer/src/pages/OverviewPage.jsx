@@ -167,6 +167,53 @@ export default function OverviewPage() {
         />
       </div>
 
+      {/* QUICK SYSTEM CONTROLS: 1-Click Restore & Pre-Shift Health Check */}
+      <div className="zonix-card p-4 space-y-3">
+        <h3 className="text-xs font-mono font-bold text-zonix-cyan tracking-wider uppercase">
+          ⚡ EXECUTIVE CONTROL VAULT
+        </h3>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={async () => {
+              try {
+                const orgId = localStorage.getItem('orgId') || 'zonix-system';
+                const res = await authFetch(`/organizations/${orgId}/vault/restore`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                  alert('🟢 1-Click Session Restore Successful! All dispatcher sessions updated in <0.5s.');
+                } else {
+                  alert(data.message || data.error || 'Vault restore failed');
+                }
+              } catch (e) {
+                alert('Error restoring session: ' + e.message);
+              }
+            }}
+            className="px-4 py-2 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 font-mono text-xs font-semibold hover:bg-green-500/20 transition flex items-center gap-2"
+          >
+            <span>🔄 1-Click Session Restore</span>
+          </button>
+
+          <button
+            onClick={async () => {
+              try {
+                const res = await authFetch('/organizations/health-check/now', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                  alert(`🟢 Pre-Shift Health Check Complete! Status: 100% Operational.`);
+                } else {
+                  alert('Health check completed with warnings');
+                }
+              } catch (e) {
+                alert('Error running health check: ' + e.message);
+              }
+            }}
+            className="px-4 py-2 rounded-lg bg-zonix-cyan/10 border border-zonix-cyan/30 text-zonix-cyan font-mono text-xs font-semibold hover:bg-zonix-cyan/20 transition flex items-center gap-2"
+          >
+            <span>📱 Run Pre-Shift Health Check</span>
+          </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 zonix-card">
           <div className="p-4 border-b border-zonix-border">

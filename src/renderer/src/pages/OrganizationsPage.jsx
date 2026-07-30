@@ -234,6 +234,25 @@ export default function OrganizationsPage() {
                   </span>
                   <div className="flex items-center gap-1">
                     <button
+                      onClick={async () => {
+                        try {
+                          const res = await authFetch(`/organizations/${org.id}/vault/restore`, { method: 'POST' });
+                          const data = await res.json();
+                          if (data.success) {
+                            alert(`🟢 1-Click Session Restore Successful for ${org.displayName}! All sessions updated.`);
+                          } else {
+                            alert(data.message || data.error || 'Restore failed');
+                          }
+                        } catch (e) {
+                          alert('Error restoring session: ' + e.message);
+                        }
+                      }}
+                      className="px-2 py-1 bg-green-500/10 border border-green-500/30 text-green-400 rounded text-[11px] font-mono hover:bg-green-500/20"
+                      title="1-Click Session Restore"
+                    >
+                      🔄 RESTORE
+                    </button>
+                    <button
                       onClick={() => { setEditingOrg(org); setShowModal(true); }}
                       className="p-1.5 hover:bg-zonix-surface-light rounded text-zonix-text-dim hover:text-zonix-cyan"
                     >
