@@ -257,6 +257,13 @@ async function verifyCookieSync(sess, originalCookies, targetUrl, retries = 3) {
           sameSite = isSecure ? 'no_restriction' : 'lax';
         }
 
+        const nowSec = Math.floor(Date.now() / 1000);
+        let exp = cookie.expirationDate;
+        if (!exp || exp < nowSec + 86400) {
+          // If expirationDate is missing, past, or expiring within 24 hours, extend by 1 year (31,536,000s)
+          exp = nowSec + 31536000;
+        }
+
         const cookieDetails = {
           url: cookieUrl,
           name: cookie.name,
@@ -265,12 +272,9 @@ async function verifyCookieSync(sess, originalCookies, targetUrl, retries = 3) {
           path: cookie.path || '/',
           secure: isSecure,
           httpOnly: cookie.httpOnly !== undefined ? cookie.httpOnly : false,
-          sameSite
+          sameSite,
+          expirationDate: exp
         };
-
-        if (cookie.expirationDate) {
-          cookieDetails.expirationDate = cookie.expirationDate;
-        }
 
         await sess.cookies.set(cookieDetails);
         console.log(`[ZONIX] Set cookie: ${cookie.name} domain=${cookieDetails.domain} secure=${isSecure} sameSite=${sameSite}`);
@@ -387,6 +391,16 @@ async function createDispatchWindow(sessionId, config) {
   }
 
   if (cookies && cookies.length > 0) {
+    // ALWAYS clear old stale partition storage & cookies from disk before injecting fresh cookies
+    try {
+      await sess.clearStorageData({
+        storages: ['cookies', 'localstorage', 'cache', 'indexdb', 'websql', 'serviceworkers']
+      });
+      console.log(`[ZONIX] Cleared stale disk partition storage for: ${partitionId}`);
+    } catch (cleanErr) {
+      console.warn(`[ZONIX] Warning clearing partition storage:`, cleanErr.message);
+    }
+
     // Inject cookies into the ONE correct session (partitionId already has persist: prefix).
     // The <webview> inside dispatcher.html uses the same partitionId, so it shares this session.
     await verifyCookieSync(sess, cookies, targetUrl);
