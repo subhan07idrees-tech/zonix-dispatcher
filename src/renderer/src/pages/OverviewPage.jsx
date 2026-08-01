@@ -88,6 +88,10 @@ export default function OverviewPage() {
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [supportSubject, setSupportSubject] = useState('');
+  const [supportMessage, setSupportMessage] = useState('');
+  const [submittingSupport, setSubmittingSupport] = useState(false);
   const [scheduledTime, setScheduledTime] = useState('07:45 AM');
   const [savingTime, setSavingTime] = useState(false);
   const [healthTelemetry, setHealthTelemetry] = useState({
@@ -305,7 +309,115 @@ export default function OverviewPage() {
           >
             <span>🔍 Run Pre-Shift Health Check Now</span>
           </button>
+
+          <button
+            onClick={() => setShowSupportModal(true)}
+            className="px-4 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 font-mono text-xs font-semibold hover:bg-purple-500/20 transition flex items-center gap-2"
+          >
+            <span>💬 Contact Support & Report Issue</span>
+          </button>
         </div>
+
+        {/* CUSTOMER SUPPORT TICKET MODAL */}
+        {showSupportModal && (
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <div className="bg-[#0D0E15] border border-[#1E2638] rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 flex items-center justify-center font-bold text-base">
+                  💬
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-100">Submit Support Ticket</h4>
+                  <p className="text-xs text-gray-400">Directly notifies support.zonix@gmail.com</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-mono text-gray-400 uppercase mb-1">Issue Subject</label>
+                  <input
+                    type="text"
+                    value={supportSubject}
+                    onChange={(e) => setSupportSubject(e.target.value)}
+                    placeholder="e.g. DAT Load Search Delay or Proxy Question"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#090A0F] border border-[#1E2638] text-gray-100 font-mono text-xs focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-mono text-gray-400 uppercase mb-1">Description / Details</label>
+                  <textarea
+                    rows={4}
+                    value={supportMessage}
+                    onChange={(e) => setSupportMessage(e.target.value)}
+                    placeholder="Describe what happened or what help you need..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#090A0F] border border-[#1E2638] text-gray-100 font-mono text-xs focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+                <div className="p-2.5 rounded-xl bg-[#090A0F] border border-[#1E2638] text-[10px] font-mono text-cyan-400">
+                  ⚡ Auto-attaching App Version v1.8.2, User Role, and System Health Telemetry.
+                </div>
+              </div>
+
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSupportModal(false)}
+                  className="flex-1 py-2.5 bg-[#161D2A] hover:bg-[#1E2638] text-gray-300 text-xs font-semibold rounded-xl transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={submittingSupport}
+                  onClick={async () => {
+                    if (!supportSubject || !supportMessage) {
+                      alert('Please enter a subject and message.');
+                      return;
+                    }
+                    setSubmittingSupport(true);
+                    try {
+                      const res = await authFetch('/support/ticket', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          subject: supportSubject,
+                          message: supportMessage,
+                          telemetry: {
+                            appVersion: 'v1.8.2',
+                            os: 'Windows 10/11',
+                            latency: `${healthTelemetry.latencyMs}ms`,
+                            cookieStatus: healthTelemetry.cookieStatus
+                          }
+                        })
+                      });
+                      const data = await res.json();
+                      setShowSupportModal(false);
+                      setSupportSubject('');
+                      setSupportMessage('');
+                      if (data.success) {
+                        setNotification({
+                          type: 'success',
+                          title: 'Ticket Submitted',
+                          message: 'Your support request was delivered to support.zonix@gmail.com. We will respond shortly!'
+                        });
+                      } else {
+                        setNotification({ type: 'error', title: 'Support Error', message: data.error || 'Failed to send ticket' });
+                      }
+                    } catch (e) {
+                      setShowSupportModal(false);
+                      setNotification({ type: 'error', title: 'Error', message: e.message });
+                    } finally {
+                      setSubmittingSupport(false);
+                    }
+                  }}
+                  className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-xl transition shadow-lg shadow-purple-600/30"
+                >
+                  {submittingSupport ? 'Submitting...' : 'Send Ticket Now'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* SYSTEM HEALTH AUDIT TELEMETRY & SCAN SCHEDULE BOX */}
         <div className="mt-3 pt-3 border-t border-[#1E2638]/60 grid grid-cols-1 sm:grid-cols-4 gap-3">
