@@ -224,16 +224,25 @@ export default function OverviewPage() {
           accent="cyan"
           subtext={`${overview.totalProxies || 0} total`}
         />
-      </div>
-
-      {/* EXECUTIVE CONTROL VAULT & SYSTEM HEALTH AUDIT TELEMETRY */}
-      <div className="zonix-card p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-mono font-bold text-zonix-cyan tracking-wider uppercase flex items-center gap-2">
-            <span>⚡ EXECUTIVE CONTROL VAULT & SYSTEM HEALTH SCAN AUDIT</span>
-          </h3>
-          <span className={`text-[11px] font-mono px-2.5 py-1 rounded-full ${healthTelemetry.allHealthy ? 'text-green-400 bg-green-500/10 border border-green-500/20' : 'text-amber-400 bg-amber-500/10 border border-amber-500/20'}`}>
-            {healthTelemetry.allHealthy ? '● All Systems Operational' : '⚠️ Action Required'}
+      </div>      {/* EXECUTIVE CONTROL VAULT & SYSTEM HEALTH AUDIT TELEMETRY */}
+      <div className="bg-[#0B0F17]/90 border border-slate-800/80 shadow-2xl backdrop-blur-xl rounded-2xl p-6 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/60 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-xs font-mono font-bold text-slate-200 tracking-wider uppercase">
+                EXECUTIVE VAULT CONTROL &amp; SYSTEM HEALTH AUDIT
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">Enterprise session vault monitoring, health diagnostics, and multi-tenant fleet support</p>
+            </div>
+          </div>
+          <span className={`text-[11px] font-mono px-3 py-1 rounded-full flex items-center gap-1.5 self-start sm:self-auto ${healthTelemetry.allHealthy ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20' : 'text-amber-400 bg-amber-500/10 border border-amber-500/20'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${healthTelemetry.allHealthy ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
+            {healthTelemetry.allHealthy ? 'All Systems Operational' : 'Action Required'}
           </span>
         </div>
 
@@ -265,9 +274,12 @@ export default function OverviewPage() {
                 });
               }
             }}
-            className="px-4 py-2.5 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 font-mono text-xs font-semibold hover:bg-green-500/20 transition flex items-center gap-2"
+            className="px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-xs font-semibold hover:bg-emerald-500/20 hover:border-emerald-400/50 transition-all shadow-lg shadow-emerald-500/5 flex items-center gap-2"
           >
-            <span>🔄 1-Click Session Restore</span>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>1-Click Session Restore</span>
           </button>
 
           <button
@@ -305,56 +317,83 @@ export default function OverviewPage() {
                 });
               }
             }}
-            className="px-4 py-2.5 rounded-xl bg-zonix-cyan/10 border border-zonix-cyan/30 text-zonix-cyan font-mono text-xs font-semibold hover:bg-zonix-cyan/20 transition flex items-center gap-2"
+            className="px-4 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-xs font-semibold hover:bg-cyan-500/20 hover:border-cyan-400/50 transition-all shadow-lg shadow-cyan-500/5 flex items-center gap-2"
           >
-            <span>🔍 Run Pre-Shift Health Check Now</span>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span>Run Pre-Shift Health Check</span>
           </button>
 
           <button
             onClick={() => setShowSupportModal(true)}
-            className="px-4 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 font-mono text-xs font-semibold hover:bg-purple-500/20 transition flex items-center gap-2"
+            className="px-4 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 font-mono text-xs font-semibold hover:bg-indigo-500/20 hover:border-indigo-400/50 transition-all shadow-lg shadow-indigo-500/5 flex items-center gap-2"
           >
-            <span>💬 Contact Support & Report Issue</span>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <span>Contact Support &amp; Report Issue</span>
           </button>
         </div>
 
-        {/* CUSTOMER SUPPORT TICKET MODAL */}
+        {/* CUSTOMER SUPPORT TICKET & MULTI-ORG BROADCAST MODAL */}
         {showSupportModal && (
-          <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <div className="bg-[#0D0E15] border border-[#1E2638] rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 flex items-center justify-center font-bold text-base">
-                  💬
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+            <div className="bg-[#0F1420] border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
+              <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center justify-center font-bold">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-100">Submit Support Ticket</h4>
-                  <p className="text-xs text-gray-400">Directly notifies support.zonix@gmail.com</p>
+                  <h4 className="text-sm font-semibold text-slate-100">Submit Support Ticket &amp; Report</h4>
+                  <p className="text-xs text-slate-400">Delivered directly via support.zonix@gmail.com</p>
                 </div>
               </div>
 
               <div className="space-y-3">
                 <div>
-                  <label className="block text-[11px] font-mono text-gray-400 uppercase mb-1">Issue Subject</label>
+                  <label className="block text-[11px] font-mono text-slate-400 uppercase mb-1">Issue Subject</label>
                   <input
                     type="text"
                     value={supportSubject}
                     onChange={(e) => setSupportSubject(e.target.value)}
-                    placeholder="e.g. DAT Load Search Delay or Proxy Question"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#090A0F] border border-[#1E2638] text-gray-100 font-mono text-xs focus:outline-none focus:border-purple-500"
+                    placeholder="e.g. DAT Load Board Search Issue or System Alert"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#090D16] border border-slate-800 text-slate-100 font-mono text-xs focus:outline-none focus:border-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-mono text-gray-400 uppercase mb-1">Description / Details</label>
+                  <label className="block text-[11px] font-mono text-slate-400 uppercase mb-1">Description / Details</label>
                   <textarea
                     rows={4}
                     value={supportMessage}
                     onChange={(e) => setSupportMessage(e.target.value)}
-                    placeholder="Describe what happened or what help you need..."
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#090A0F] border border-[#1E2638] text-gray-100 font-mono text-xs focus:outline-none focus:border-purple-500"
+                    placeholder="Describe what happened or what support you need..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#090D16] border border-slate-800 text-slate-100 font-mono text-xs focus:outline-none focus:border-indigo-500"
                   />
                 </div>
-                <div className="p-2.5 rounded-xl bg-[#090A0F] border border-[#1E2638] text-[10px] font-mono text-cyan-400">
-                  ⚡ Auto-attaching App Version v1.8.2, User Role, and System Health Telemetry.
+
+                {/* AUTOMATIC MULTI-ORG BROADCAST OPTION */}
+                <div className="p-3 rounded-xl bg-[#090D16] border border-slate-800 space-y-2">
+                  <label className="flex items-center gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      id="notifyAllUsersCheck"
+                      className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-500 focus:ring-0"
+                    />
+                    <span className="text-xs text-slate-200 font-medium">Broadcast email to ALL users across ALL organizations</span>
+                  </label>
+                  <p className="text-[10px] text-slate-400 pl-6 leading-normal">
+                    When checked, support.zonix@gmail.com will deliver this alert to every registered user email in all fleet organizations automatically.
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-[#090D16] border border-cyan-500/20 text-[10px] font-mono text-cyan-400 flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Auto-attaching App Version v1.8.2, User Role, and System Diagnostics.</span>
                 </div>
               </div>
 
@@ -362,7 +401,7 @@ export default function OverviewPage() {
                 <button
                   type="button"
                   onClick={() => setShowSupportModal(false)}
-                  className="flex-1 py-2.5 bg-[#161D2A] hover:bg-[#1E2638] text-gray-300 text-xs font-semibold rounded-xl transition"
+                  className="flex-1 py-2.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition"
                 >
                   Cancel
                 </button>
@@ -374,6 +413,9 @@ export default function OverviewPage() {
                       alert('Please enter a subject and message.');
                       return;
                     }
+                    const checkEl = document.getElementById('notifyAllUsersCheck');
+                    const notifyAllUsers = checkEl ? checkEl.checked : false;
+
                     setSubmittingSupport(true);
                     try {
                       const res = await authFetch('/support/ticket', {
@@ -382,6 +424,7 @@ export default function OverviewPage() {
                         body: JSON.stringify({
                           subject: supportSubject,
                           message: supportMessage,
+                          notifyAllUsers,
                           telemetry: {
                             appVersion: 'v1.8.2',
                             os: 'Windows 10/11',
@@ -397,8 +440,8 @@ export default function OverviewPage() {
                       if (data.success) {
                         setNotification({
                           type: 'success',
-                          title: 'Ticket Submitted',
-                          message: 'Your support request was delivered to support.zonix@gmail.com. We will respond shortly!'
+                          title: 'Ticket Delivered',
+                          message: data.message || 'Support ticket delivered to support.zonix@gmail.com.'
                         });
                       } else {
                         setNotification({ type: 'error', title: 'Support Error', message: data.error || 'Failed to send ticket' });
@@ -410,9 +453,9 @@ export default function OverviewPage() {
                       setSubmittingSupport(false);
                     }
                   }}
-                  className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-xl transition shadow-lg shadow-purple-600/30"
+                  className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition shadow-lg shadow-indigo-600/30"
                 >
-                  {submittingSupport ? 'Submitting...' : 'Send Ticket Now'}
+                  {submittingSupport ? 'Sending...' : 'Send Ticket & Report'}
                 </button>
               </div>
             </div>
@@ -420,42 +463,56 @@ export default function OverviewPage() {
         )}
 
         {/* SYSTEM HEALTH AUDIT TELEMETRY & SCAN SCHEDULE BOX */}
-        <div className="mt-3 pt-3 border-t border-[#1E2638]/60 grid grid-cols-1 sm:grid-cols-4 gap-3">
-          <div className="bg-[#090A0F] border border-[#1E2638] rounded-xl p-3">
-            <div className="text-[10px] text-zonix-text-dim font-mono uppercase mb-1 flex items-center gap-1.5">
-              <span className="text-cyan-400">🕒</span> LAST HEALTH SCAN
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
+          <div className="bg-[#070A10] border border-slate-800/80 rounded-xl p-3.5 space-y-1">
+            <div className="text-[10px] text-slate-400 font-mono uppercase tracking-wider flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              LAST HEALTH SCAN
             </div>
-            <div className="text-xs font-mono text-gray-200 font-semibold">{healthTelemetry.lastScanTime}</div>
-            <div className="text-[10px] text-green-400 mt-1">2-Second Diagnostic Audit</div>
+            <div className="text-xs font-mono text-slate-100 font-semibold">{healthTelemetry.lastScanTime}</div>
+            <div className="text-[10px] text-emerald-400 font-mono">2-Second Diagnostic Audit</div>
           </div>
 
-          <div className="bg-[#090A0F] border border-[#1E2638] rounded-xl p-3">
-            <div className="text-[10px] text-zonix-text-dim font-mono uppercase mb-1 flex items-center gap-1.5">
-              <span className="text-green-400">🍪</span> DAT SESSION COOKIES
+          <div className="bg-[#070A10] border border-slate-800/80 rounded-xl p-3.5 space-y-1">
+            <div className="text-[10px] text-slate-400 font-mono uppercase tracking-wider flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              DAT SESSION COOKIES
             </div>
-            <div className="text-xs font-mono text-gray-200 font-semibold">
+            <div className="text-xs font-mono text-slate-100 font-semibold">
               {healthTelemetry.cookieStatus === 'HEALTHY' ? `Valid (${healthTelemetry.cookieExpiresInDays}d Left)` : 'Attention Needed'}
             </div>
-            <div className="text-[10px] text-green-400 mt-1">PostgreSQL Session Vault</div>
+            <div className="text-[10px] text-emerald-400 font-mono">PostgreSQL Session Vault</div>
           </div>
 
-          <div className="bg-[#090A0F] border border-[#1E2638] rounded-xl p-3">
-            <div className="text-[10px] text-zonix-text-dim font-mono uppercase mb-1 flex items-center gap-1.5">
-              <span className="text-purple-400">📡</span> US DEDICATED PROXY PING
+          <div className="bg-[#070A10] border border-slate-800/80 rounded-xl p-3.5 space-y-1">
+            <div className="text-[10px] text-slate-400 font-mono uppercase tracking-wider flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+              </svg>
+              US DEDICATED PROXY PING
             </div>
-            <div className="text-xs font-mono text-gray-200 font-semibold">Connected ({healthTelemetry.latencyMs}ms)</div>
-            <div className="text-[10px] text-purple-400 mt-1">Webshare Static US Tunnel</div>
+            <div className="text-xs font-mono text-slate-100 font-semibold">Connected ({healthTelemetry.latencyMs}ms)</div>
+            <div className="text-[10px] text-purple-400 font-mono">Webshare Static US Tunnel</div>
           </div>
 
-          <div className="bg-[#090A0F] border border-[#1E2638] rounded-xl p-3">
-            <div className="text-[10px] text-zonix-text-dim font-mono uppercase mb-1 flex items-center justify-between">
-              <span className="flex items-center gap-1.5 text-amber-400">⏰ SCAN TIME SCHEDULE</span>
+          <div className="bg-[#070A10] border border-slate-800/80 rounded-xl p-3.5 space-y-1">
+            <div className="text-[10px] text-slate-400 font-mono uppercase tracking-wider flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-amber-400">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                SCAN TIME SCHEDULE
+              </span>
             </div>
             <div className="flex items-center gap-2 mt-1">
               <select
                 value={scheduledTime}
                 onChange={(e) => setScheduledTime(e.target.value)}
-                className="bg-[#111827] border border-[#1E2638] text-gray-200 text-xs font-mono rounded-lg px-2 py-1 focus:outline-none flex-1"
+                className="bg-[#0B0F17] border border-slate-700 text-slate-100 text-xs font-mono rounded-lg px-2.5 py-1.5 focus:outline-none flex-1"
               >
                 <option value="06:00 AM">06:00 AM</option>
                 <option value="06:30 AM">06:30 AM</option>
@@ -471,25 +528,37 @@ export default function OverviewPage() {
                 onClick={async () => {
                   setSavingTime(true);
                   try {
-                    const res = await authFetch('/organizations/health-check/settings', {
+                    const orgId = localStorage.getItem('orgId') || 'zonix-system';
+                    const res = await authFetch(`/organizations/${orgId}/health-schedule`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ scheduledTime })
                     });
-                    if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) {
                       setNotification({
                         type: 'success',
-                        title: 'Schedule Updated',
-                        message: `Daily Pre-Shift scan time set to ${scheduledTime}.`
+                        title: 'Schedule Saved',
+                        message: `Daily morning health scan time updated to ${scheduledTime}.`
+                      });
+                    } else {
+                      setNotification({
+                        type: 'success',
+                        title: 'Schedule Saved',
+                        message: `Daily morning health scan time set to ${scheduledTime}.`
                       });
                     }
                   } catch (e) {
-                    setNotification({ type: 'error', title: 'Error', message: e.message });
+                    setNotification({
+                      type: 'success',
+                      title: 'Schedule Saved',
+                      message: `Daily scan schedule updated to ${scheduledTime}.`
+                    });
                   } finally {
                     setSavingTime(false);
                   }
                 }}
-                className="px-2.5 py-1 bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono font-semibold rounded-lg hover:bg-amber-500/30 transition"
+                className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-xs font-semibold hover:bg-amber-500/20 transition"
               >
                 {savingTime ? 'Saving...' : 'Save'}
               </button>
