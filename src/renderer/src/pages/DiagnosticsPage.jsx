@@ -1,37 +1,37 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  Wifi, WifiOff, Cookie, RefreshCw,
-  CheckCircle2, XCircle, AlertCircle, Clock, User
+  Wifi, WifiOff, RefreshCw,
+  CheckCircle2, XCircle, AlertCircle, User
 } from 'lucide-react';
 
 function StatusBadge({ ok, label }) {
   if (ok === null || ok === undefined) {
     return (
-      <span className="flex items-center gap-1 text-xs font-mono text-zonix-text-dim">
-        <AlertCircle className="w-3.5 h-3.5 text-yellow-400" />
-        {label || 'UNKNOWN'}
+      <span className="flex items-center gap-1.5 text-xs text-amber-400 font-normal">
+        <AlertCircle className="w-3.5 h-3.5" />
+        {label || 'Unknown'}
       </span>
     );
   }
   return ok ? (
-    <span className="flex items-center gap-1 text-xs font-mono text-green-400">
+    <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-normal">
       <CheckCircle2 className="w-3.5 h-3.5" />
-      {label || 'OK'}
+      {label || 'Operational'}
     </span>
   ) : (
-    <span className="flex items-center gap-1 text-xs font-mono text-red-400">
+    <span className="flex items-center gap-1.5 text-xs text-red-400 font-normal">
       <XCircle className="w-3.5 h-3.5" />
-      {label || 'FAIL'}
+      {label || 'Needs authentication'}
     </span>
   );
 }
 
-function DiagRow({ label, value, valueClass = 'text-zonix-text' }) {
+function DiagRow({ label, value, valueClass = 'text-slate-200' }) {
   return (
-    <div className="flex items-center justify-between py-1.5 border-b border-zonix-border/30">
-      <span className="text-xs font-mono text-zonix-text-dim">{label}</span>
-      <span className={`text-xs font-mono ${valueClass}`}>{value ?? '—'}</span>
+    <div className="flex items-center justify-between py-2 border-b border-slate-800/40 text-xs">
+      <span className="text-slate-400 font-normal">{label}</span>
+      <span className={`font-mono ${valueClass}`}>{value ?? '—'}</span>
     </div>
   );
 }
@@ -63,7 +63,6 @@ export default function DiagnosticsPage() {
     if (!selectedOrg) return;
     setLoading(true);
     try {
-      // Org details
       let currentOrgData = orgData;
       const orgRes = await authFetch(`/organizations/${selectedOrg}`);
       if (orgRes.ok) {
@@ -72,7 +71,6 @@ export default function DiagnosticsPage() {
         setOrgData(currentOrgData);
       }
 
-      // Users
       let dispatchers = [];
       const usersRes = await authFetch(`/users/${selectedOrg}`);
       if (usersRes.ok) {
@@ -82,14 +80,12 @@ export default function DiagnosticsPage() {
         dispatchers = all.filter(u => u.role === 'DISPATCHER');
       }
 
-      // Proxies
       const proxiesRes = await authFetch(`/proxies/${selectedOrg}`);
       if (proxiesRes.ok) {
         const d = await proxiesRes.json();
         setProxies(d.proxies || []);
       }
 
-      // Cookie status per dispatcher
       let targetDomain = '';
       try {
         if (currentOrgData?.targetUrl) {
@@ -98,127 +94,126 @@ export default function DiagnosticsPage() {
       } catch {}
 
       const statusMap = {};
-      await Promise.all(dispatchers.map(async (u) => {
-        try {
-          const res = await authFetch(`/cookies/retrieve/${selectedOrg}/${u.id}/${targetDomain || 'unknown'}`);
-          if (res.ok) {
-            const data = await res.json();
-            statusMap[u.id] = {
-              hasData: true,
-              cookieCount: (data.cookies || []).length,
-              hasLocalStorage: !!(data.localStorage && data.localStorage !== '{}'),
-              capturedAt: data.capturedAt,
-              domain: targetDomain,
-            };
-          } else {
-            statusMap[u.id] = { hasData: false, cookieCount: 0, domain: targetDomain };
+      await Promise.all(
+        dispatchers.map(async (disp) => {
+          try {
+            const url = targetDomain
+              ? `/cookies/${selectedOrg}/${disp.id}?domain=${encodeURIComponent(targetDomain)}`
+              : `/cookies/${selectedOrg}/${disp.id}`;
+            const cRes = await authFetch(url);
+            if (cRes.ok) {
+              const cData = await cRes.json();
+              statusMap[disp.id] = {
+                cookieCount: cData.cookies?.length || 0,
+                hasLocalStorage: !!(cData.localStorage && cData.localStorage !== '{}'),
+                capturedAt: cData.updatedAt || cData.createdAt,
+                hasData: true
+              };
+            } else {
+              statusMap[disp.id] = { hasData: false, cookieCount: 0 };
+            }
+          } catch {
+            statusMap[disp.id] = { hasData: false, cookieCount: 0 };
           }
-        } catch {
-          statusMap[u.id] = { hasData: false, cookieCount: 0, domain: targetDomain };
-        }
-      }));
-
+        })
+      );
       setCookieStatus(statusMap);
       setLastRefresh(new Date());
+    } catch (e) {
+      console.error('[Diagnostics] Fetch error:', e);
     } finally {
       setLoading(false);
     }
   }, [selectedOrg, authFetch]);
 
   useEffect(() => {
-    if (currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'ADMIN') {
-      fetchOrgs();
-    } else if (currentUser?.orgId) {
-      setSelectedOrg(currentUser.orgId);
-    }
-  }, []);
+    fetchOrgs();
+  }, [fetchOrgs]);
 
   useEffect(() => {
     if (selectedOrg) fetchDiagnostics();
-  }, [selectedOrg]);
+  }, [selectedOrg, fetchDiagnostics]);
 
   const dispatchers = users.filter(u => u.role === 'DISPATCHER');
-  const activeProxy = proxies.find(p => p.status === 'ACTIVE');
-  const targetDomain = (() => {
-    try { return orgData?.targetUrl ? new URL(orgData.targetUrl).hostname : '—'; }
-    catch { return orgData?.targetUrl || '—'; }
-  })();
+  let targetDomain = '—';
+  try {
+    if (orgData?.targetUrl) targetDomain = new URL(orgData.targetUrl).hostname;
+  } catch {}
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      {/* Header section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-sm font-semibold tracking-widest text-zonix-cyan font-mono">SESSION DIAGNOSTICS</h2>
-          <p className="text-xs text-zonix-text-dim mt-1 font-mono">Cookie sync · Proxy assignment · Dispatcher health</p>
+          <h2 className="text-base font-semibold text-slate-100 tracking-normal">Diagnostics &amp; telemetry</h2>
+          <p className="text-xs text-slate-400 mt-0.5">Real-time session vault, cookie sync, and network proxy health audit</p>
         </div>
         <div className="flex items-center gap-3">
-          {lastRefresh && (
-            <span className="text-xs font-mono text-zonix-text-dim flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {lastRefresh.toLocaleTimeString()}
-            </span>
+          {currentUser?.role === 'SUPER_ADMIN' && orgs.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400">Org:</span>
+              <select
+                value={selectedOrg}
+                onChange={(e) => setSelectedOrg(e.target.value)}
+                className="bg-[#0D121F] border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-1.5 focus:outline-none"
+              >
+                {orgs.map((org) => (
+                  <option key={org.id} value={org.id}>
+                    {org.displayName} ({org.name})
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
-          <button onClick={fetchDiagnostics} disabled={loading}
-            className="zonix-btn-ghost text-xs flex items-center gap-1.5 px-3 py-1.5">
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            REFRESH
+
+          <button
+            onClick={fetchDiagnostics}
+            disabled={loading}
+            className="px-3.5 py-2 rounded-lg bg-slate-800 border border-slate-700/60 text-slate-200 text-xs font-medium hover:bg-slate-700/60 transition flex items-center gap-1.5"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-slate-400 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh diagnostics</span>
           </button>
         </div>
       </div>
 
-      {/* Org Selector */}
-      {orgs.length > 1 && (
-        <div className="zonix-card p-4">
-          <label className="block text-xs font-mono text-zonix-text-dim mb-2">ORGANIZATION</label>
-          <select value={selectedOrg} onChange={e => setSelectedOrg(e.target.value)}
-            className="zonix-input w-full max-w-xs font-mono text-xs">
-            {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-          </select>
-        </div>
-      )}
-
-      {/* Org Overview */}
-      <div className="zonix-card p-4 space-y-1">
-        <h3 className="text-xs font-semibold tracking-widest font-mono text-zonix-text-dim mb-3">ORGANIZATION OVERVIEW</h3>
-        <DiagRow label="Target URL" value={orgData?.targetUrl || '—'} valueClass="text-zonix-cyan" />
-        <DiagRow label="Target Domain" value={targetDomain} />
-        <DiagRow label="Max Tabs Per Dispatcher" value={orgData?.maxTabs ?? '—'} />
-        <DiagRow label="Total Dispatchers" value={dispatchers.length} />
-        <div className="flex items-center justify-between py-1.5 border-b border-zonix-border/30">
-          <span className="text-xs font-mono text-zonix-text-dim">Active Proxy Node</span>
-          {activeProxy ? (
-            <div className="flex items-center gap-2">
-              <Wifi className="w-3 h-3 text-green-400" />
-              <span className="text-xs font-mono text-green-400">{activeProxy.host}:{activeProxy.port}</span>
-              {activeProxy.username && (
-                <span className="text-xs font-mono text-zonix-text-dim">({activeProxy.username})</span>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-1">
-              <WifiOff className="w-3 h-3 text-red-400" />
-              <span className="text-xs font-mono text-red-400">NO ACTIVE PROXY</span>
-            </div>
+      {/* Organization overview card */}
+      <div className="bg-[#0D121F] border border-slate-800/80 rounded-xl p-5 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-100">{orgData?.displayName || selectedOrg}</h3>
+            <p className="text-xs text-slate-400 font-mono mt-0.5">{orgData?.name} // {selectedOrg}</p>
+          </div>
+          {lastRefresh && (
+            <span className="text-[11px] font-mono text-slate-400">
+              Refreshed: {lastRefresh.toLocaleTimeString()}
+            </span>
           )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <DiagRow label="Target load board URL" value={targetDomain} valueClass="text-slate-200 font-mono" />
+          <DiagRow label="Max sessions quota" value={`${orgData?.maxSessions || '—'} sessions`} valueClass="text-slate-200" />
+          <DiagRow label="Max tab seats per user" value={`${orgData?.maxTabs || 5} tabs`} valueClass="text-slate-200" />
+          <DiagRow label="Active dispatchers count" value={`${dispatchers.length} dispatchers`} valueClass="text-slate-200" />
         </div>
       </div>
 
-      {/* Dispatcher Cookie Status */}
-      <div className="zonix-card p-4">
-        <h3 className="text-xs font-semibold tracking-widest font-mono text-zonix-text-dim mb-4">
-          DISPATCHER COOKIE STATUS
-          {targetDomain !== '—' && (
-            <span className="ml-2 text-zonix-text-muted normal-case font-normal">for {targetDomain}</span>
-          )}
-        </h3>
+      {/* Dispatcher cookie status */}
+      <div className="bg-[#0D121F] border border-slate-800/80 rounded-xl p-5 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <h3 className="text-xs font-semibold text-slate-100">
+            Dispatcher cookie status <span className="text-slate-400 font-normal">for {targetDomain}</span>
+          </h3>
+        </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="w-5 h-5 border-2 border-zonix-cyan border-t-transparent rounded-full animate-spin" />
+          <div className="text-center py-8 text-xs text-slate-400">
+            <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+            Auditing dispatcher session vaults...
           </div>
         ) : dispatchers.length === 0 ? (
-          <p className="text-xs font-mono text-zonix-text-muted text-center py-4">NO DISPATCHERS FOUND</p>
+          <p className="text-xs text-slate-400 text-center py-4">No dispatchers registered in this organization.</p>
         ) : (
           <div className="space-y-3">
             {dispatchers.map(u => {
@@ -226,48 +221,45 @@ export default function DiagnosticsPage() {
               const hasCookies = cs?.hasData && cs.cookieCount > 0;
 
               return (
-                <div key={u.id}
-                  className={`rounded-lg border p-3 ${hasCookies
-                    ? 'border-green-500/20 bg-green-500/5'
-                    : 'border-red-500/20 bg-red-500/5'}`}>
-                  <div className="flex items-center justify-between mb-2">
+                <div key={u.id} className="bg-[#070A10] border border-slate-800/80 rounded-lg p-3.5 space-y-3">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <User className="w-3.5 h-3.5 text-zonix-text-dim" />
-                      <span className="text-xs font-mono font-semibold text-zonix-text">{u.username}</span>
-                      <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${
-                        u.status === 'ACTIVE' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-                        {u.status}
+                      <User className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="text-xs font-mono text-slate-200 font-medium">{u.username}</span>
+                      <span className={`text-[11px] px-2 py-0.5 rounded font-medium ${
+                        u.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-400'
+                      }`}>
+                        {u.status === 'ACTIVE' ? 'Active' : u.status}
                       </span>
                     </div>
-                    <StatusBadge ok={hasCookies}
-                      label={hasCookies ? `${cs.cookieCount} COOKIES SYNCED` : 'NO COOKIES — NEEDS AUTH'} />
+                    <StatusBadge ok={hasCookies} label={hasCookies ? `${cs.cookieCount} cookies synced` : 'Needs authentication'} />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 mt-2">
-                    <div className="bg-zonix-surface/60 rounded p-2">
-                      <div className="text-xs font-mono text-zonix-text-dim mb-0.5">COOKIES</div>
-                      <div className={`text-sm font-bold font-mono ${hasCookies ? 'text-green-400' : 'text-red-400'}`}>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-[#0D121F] rounded-md p-2.5 space-y-0.5">
+                      <div className="text-[11px] text-slate-400 font-normal">Cookies</div>
+                      <div className={`text-sm font-mono font-medium ${hasCookies ? 'text-emerald-400' : 'text-red-400'}`}>
                         {cs ? cs.cookieCount : '—'}
                       </div>
                     </div>
-                    <div className="bg-zonix-surface/60 rounded p-2">
-                      <div className="text-xs font-mono text-zonix-text-dim mb-0.5">LOCAL STORAGE</div>
-                      <div className={`text-sm font-bold font-mono ${cs?.hasLocalStorage ? 'text-green-400' : 'text-zonix-text-muted'}`}>
-                        {cs?.hasLocalStorage ? 'YES' : 'NO'}
+                    <div className="bg-[#0D121F] rounded-md p-2.5 space-y-0.5">
+                      <div className="text-[11px] text-slate-400 font-normal">Local storage</div>
+                      <div className={`text-sm font-mono font-medium ${cs?.hasLocalStorage ? 'text-emerald-400' : 'text-slate-400'}`}>
+                        {cs?.hasLocalStorage ? 'Synced' : 'None'}
                       </div>
                     </div>
-                    <div className="bg-zonix-surface/60 rounded p-2">
-                      <div className="text-xs font-mono text-zonix-text-dim mb-0.5">CAPTURED</div>
-                      <div className="text-xs font-mono text-zonix-text">
+                    <div className="bg-[#0D121F] rounded-md p-2.5 space-y-0.5">
+                      <div className="text-[11px] text-slate-400 font-normal">Captured</div>
+                      <div className="text-xs font-mono text-slate-200">
                         {cs?.capturedAt ? new Date(cs.capturedAt).toLocaleDateString() : '—'}
                       </div>
                     </div>
                   </div>
 
                   {!hasCookies && (
-                    <div className="mt-2 flex items-center gap-1.5 text-xs font-mono text-yellow-400">
+                    <div className="flex items-center gap-1.5 text-xs text-amber-400 pt-1">
                       <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                      Go to User Registry → click the 🔑 key icon next to this dispatcher to capture a fresh session.
+                      <span>Go to User Registry ➔ click the key icon next to this dispatcher to capture a fresh session.</span>
                     </div>
                   )}
                 </div>
@@ -277,36 +269,31 @@ export default function DiagnosticsPage() {
         )}
       </div>
 
-      {/* Proxy Nodes */}
-      <div className="zonix-card p-4">
-        <h3 className="text-xs font-semibold tracking-widest font-mono text-zonix-text-dim mb-4">PROXY NODES</h3>
+      {/* Proxy nodes list */}
+      <div className="bg-[#0D121F] border border-slate-800/80 rounded-xl p-5 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <h3 className="text-xs font-semibold text-slate-100">Proxy node connectivity</h3>
+        </div>
         {proxies.length === 0 ? (
-          <p className="text-xs font-mono text-zonix-text-muted text-center py-4">NO PROXY NODES CONFIGURED</p>
+          <p className="text-xs text-slate-400 text-center py-4">No proxy nodes configured.</p>
         ) : (
           <div className="space-y-2">
             {proxies.map(p => (
-              <div key={p.id} className={`rounded border p-3 flex items-center justify-between ${
-                p.status === 'ACTIVE' ? 'border-green-500/20 bg-green-500/5' : 'border-zonix-border bg-zonix-surface/30'}`}>
+              <div key={p.id} className="bg-[#070A10] border border-slate-800/80 rounded-lg p-3 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-3">
                   {p.status === 'ACTIVE'
-                    ? <Wifi className="w-3.5 h-3.5 text-green-400" />
-                    : <WifiOff className="w-3.5 h-3.5 text-zonix-text-dim" />}
+                    ? <Wifi className="w-3.5 h-3.5 text-emerald-400" />
+                    : <WifiOff className="w-3.5 h-3.5 text-slate-400" />}
                   <div>
-                    <div className="text-xs font-mono font-semibold text-zonix-text">{p.host}:{p.port}</div>
+                    <div className="font-mono text-slate-200">{p.host}:{p.port}</div>
                     {p.username && (
-                      <div className="text-xs font-mono text-zonix-text-dim">Auth: {p.username}</div>
+                      <div className="font-mono text-slate-400 text-[11px]">Auth: {p.username}</div>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-mono px-2 py-0.5 rounded border ${
-                    p.status === 'ACTIVE'
-                      ? 'text-green-400 bg-green-500/10 border-green-500/20'
-                      : 'text-zonix-text-dim border-zonix-border/30'}`}>
-                    {p.status}
-                  </span>
-                  {p.type && <span className="text-xs font-mono text-zonix-text-muted">{p.type}</span>}
-                </div>
+                <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  {p.status === 'ACTIVE' ? 'Active' : p.status}
+                </span>
               </div>
             ))}
           </div>

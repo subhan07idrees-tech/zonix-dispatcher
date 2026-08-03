@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Building2, Plus, Edit2, Trash2, X, Users, Radio, Wifi, Layers } from 'lucide-react';
+import { Building2, Plus, Edit2, Trash2, X, Users, Radio, Wifi, Layers, RefreshCw } from 'lucide-react';
 
 function OrgModal({ org, onClose, onSave }) {
   const [form, setForm] = useState({
@@ -21,87 +21,91 @@ function OrgModal({ org, onClose, onSave }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="zonix-card w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-sm font-semibold tracking-wide">
-            {org ? 'EDIT ORGANIZATION' : 'NEW ORGANIZATION'}
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-[#0D121F] border border-slate-800/80 rounded-xl w-full max-w-md p-6 shadow-2xl space-y-5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <h3 className="text-sm font-semibold text-slate-100">
+            {org ? 'Edit organization' : 'New organization'}
           </h3>
-          <button onClick={onClose} className="text-zonix-text-dim hover:text-zonix-text">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-200 p-1">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs text-zonix-text-dim mb-1 font-mono">NAME</label>
+            <label className="block text-xs text-slate-400 mb-1">Organization identifier</label>
             <input
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="zonix-input w-full font-mono"
+              className="w-full bg-[#070A10] border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:border-slate-600 focus:outline-none"
               required
               disabled={!!org}
             />
           </div>
+
           <div>
-            <label className="block text-xs text-zonix-text-dim mb-1 font-mono">DISPLAY NAME</label>
+            <label className="block text-xs text-slate-400 mb-1">Display name</label>
             <input
               type="text"
               value={form.displayName}
               onChange={(e) => setForm({ ...form, displayName: e.target.value })}
-              className="zonix-input w-full"
+              className="w-full bg-[#070A10] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:border-slate-600 focus:outline-none"
               required
             />
           </div>
-          <div className="grid grid-cols-3 gap-2.5">
+
+          <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-[10px] text-zonix-text-dim mb-1 font-mono">MAX USERS</label>
+              <label className="block text-xs text-slate-400 mb-1">Max users</label>
               <input
                 type="number"
                 value={form.maxUsers}
                 onChange={(e) => setForm({ ...form, maxUsers: parseInt(e.target.value) })}
-                className="zonix-input w-full font-mono text-xs"
+                className="w-full bg-[#070A10] border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:border-slate-600 focus:outline-none"
                 min="1"
               />
             </div>
             <div>
-              <label className="block text-[10px] text-zonix-text-dim mb-1 font-mono">MAX SESSIONS</label>
+              <label className="block text-xs text-slate-400 mb-1">Max sessions</label>
               <input
                 type="number"
                 value={form.maxSessions}
                 onChange={(e) => setForm({ ...form, maxSessions: parseInt(e.target.value) })}
-                className="zonix-input w-full font-mono text-xs"
+                className="w-full bg-[#070A10] border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:border-slate-600 focus:outline-none"
                 min="1"
               />
             </div>
             <div>
-              <label className="block text-[10px] text-zonix-text-dim mb-1 font-mono">MAX TABS</label>
+              <label className="block text-xs text-slate-400 mb-1">Max tabs</label>
               <input
                 type="number"
                 value={form.maxTabs}
                 onChange={(e) => setForm({ ...form, maxTabs: parseInt(e.target.value) })}
-                className="zonix-input w-full font-mono text-xs"
+                className="w-full bg-[#070A10] border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:border-slate-600 focus:outline-none"
                 min="1"
               />
             </div>
           </div>
+
           <div>
-            <label className="block text-xs text-zonix-text-dim mb-1 font-mono">TARGET URL</label>
+            <label className="block text-xs text-slate-400 mb-1">Target URL</label>
             <input
               type="url"
               value={form.targetUrl}
               onChange={(e) => setForm({ ...form, targetUrl: e.target.value })}
-              className="zonix-input w-full font-mono"
-              placeholder="https://app.example.com"
+              className="w-full bg-[#070A10] border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:border-slate-600 focus:outline-none"
+              placeholder="https://one.dat.com/search/loads"
             />
           </div>
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="zonix-btn-ghost flex-1">
+
+          <div className="flex gap-3 pt-3">
+            <button type="button" onClick={onClose} className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition">
               Cancel
             </button>
-            <button type="submit" disabled={loading} className="zonix-btn-primary flex-1">
-              {loading ? 'SAVING...' : 'SAVE'}
+            <button type="submit" disabled={loading} className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg transition">
+              {loading ? 'Saving...' : 'Save organization'}
             </button>
           </div>
         </form>
@@ -149,7 +153,7 @@ export default function OrganizationsPage() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        showAlert(errorData.error || 'Failed to save organization', 'ERROR', 'error');
+        showAlert(errorData.error || 'Failed to save organization', 'Error', 'error');
         return;
       }
 
@@ -158,12 +162,12 @@ export default function OrganizationsPage() {
       fetchOrgs();
     } catch (err) {
       console.error(err);
-      showAlert(err.message || 'An error occurred', 'ERROR', 'error');
+      showAlert(err.message || 'An error occurred', 'Error', 'error');
     }
   };
 
   const handleDelete = async (orgId) => {
-    const confirmed = await showConfirm('Delete this organization? This is irreversible.', 'DELETE ORGANIZATION', 'error');
+    const confirmed = await showConfirm('Delete this organization? This is irreversible.', 'Delete organization', 'error');
     if (!confirmed) return;
     try {
       await authFetch(`/organizations/${orgId}`, { method: 'DELETE' });
@@ -173,28 +177,22 @@ export default function OrganizationsPage() {
     }
   };
 
-  const statusColors = {
-    ACTIVE: 'zonix-badge-active',
-    SUSPENDED: 'zonix-badge-warning',
-    DEACTIVATED: 'zonix-badge-error'
-  };
-
   return (
-    <div className="p-6 space-y-6">
-      {/* Custom Executive Notification Modal */}
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      {/* Toast notification modal */}
       {notification && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0D0E15] border border-[#1E2638] rounded-2xl p-6 w-full max-w-sm text-center shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className={`w-12 h-12 rounded-full mx-auto flex items-center justify-center text-lg font-bold ${notification.type === 'error' ? 'bg-red-500/10 border border-red-500/30 text-red-400' : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'}`}>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0D121F] border border-slate-800 rounded-xl p-6 w-full max-w-sm text-center shadow-2xl space-y-4">
+            <div className={`w-10 h-10 rounded-full mx-auto flex items-center justify-center text-base font-semibold ${notification.type === 'error' ? 'bg-red-500/10 border border-red-500/30 text-red-400' : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'}`}>
               {notification.type === 'error' ? '!' : '✓'}
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-gray-100">{notification.title}</h4>
-              <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">{notification.message}</p>
+              <h4 className="text-sm font-semibold text-slate-100">{notification.title}</h4>
+              <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">{notification.message}</p>
             </div>
             <button
               onClick={() => setNotification(null)}
-              className="w-full py-2.5 bg-[#1E2638] hover:bg-[#2B3752] text-gray-200 text-xs font-semibold rounded-xl transition"
+              className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg transition"
             >
               Done
             </button>
@@ -202,59 +200,65 @@ export default function OrganizationsPage() {
         </div>
       )}
 
+      {/* Header section */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold tracking-wide">ORGANIZATIONS</h2>
-          <p className="text-xs text-zonix-text-dim mt-0.5">Manage multi-tenant organization boundaries</p>
+          <h2 className="text-base font-semibold text-slate-100 tracking-normal">Organizations</h2>
+          <p className="text-xs text-slate-400 mt-0.5">Manage company boundaries and seat quotas</p>
         </div>
         {user?.role === 'SUPER_ADMIN' && (
-          <button onClick={() => { setEditingOrg(null); setShowModal(true); }} className="zonix-btn-primary">
-            <Plus className="w-4 h-4 mr-1.5 inline" /> NEW ORG
+          <button 
+            onClick={() => { setEditingOrg(null); setShowModal(true); }} 
+            className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition flex items-center gap-1.5"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New organization</span>
           </button>
         )}
       </div>
 
       {loading ? (
         <div className="text-center py-12">
-          <div className="w-6 h-6 border-2 border-zonix-cyan border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-          <p className="text-xs text-zonix-text-dim font-mono">LOADING...</p>
+          <div className="w-5 h-5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-xs text-slate-400">Loading organizations...</p>
         </div>
       ) : (
         <div className="space-y-3">
           {orgs.map((org) => (
-            <div key={org.id} className="zonix-card-hover p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-zonix-purple/10 border border-zonix-purple/30 flex items-center justify-center">
-                    <Building2 className="w-5 h-5 text-zonix-purple" />
+            <div key={org.id} className="bg-[#0D121F] border border-slate-800/80 rounded-xl p-4 hover:border-slate-700/80 transition-colors">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700/60 flex items-center justify-center text-slate-300">
+                    <Building2 className="w-4 h-4 text-slate-300" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold">{org.displayName}</h3>
-                    <p className="text-xs text-zonix-text-dim font-mono">{org.name} // {org.id?.substring(0, 8)}</p>
+                    <h3 className="text-sm font-semibold text-slate-100">{org.displayName}</h3>
+                    <p className="text-xs text-slate-400 font-mono mt-0.5">{org.name} // {org.id?.substring(0, 8)}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6 text-xs font-mono text-zonix-text-dim">
+                <div className="flex flex-wrap items-center gap-5 text-xs text-slate-400">
                   <div className="flex items-center gap-1.5">
-                    <Users className="w-3 h-3" />
-                    <span>{org._count?.users || 0}/{org.maxUsers}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Radio className="w-3 h-3" />
-                    <span>{org._count?.sessions || 0}/{org.maxSessions}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5" title="Max Tabs Per User">
-                    <Layers className="w-3 h-3" />
-                    <span>{org.maxTabs || 5} TABS</span>
+                    <Users className="w-3.5 h-3.5 text-slate-400" />
+                    <span><strong className="text-slate-200 font-mono">{org._count?.users || 0}</strong>/{org.maxUsers} users</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Wifi className="w-3 h-3" />
-                    <span>{org._count?.proxyNodes || 0}</span>
+                    <Radio className="w-3.5 h-3.5 text-slate-400" />
+                    <span><strong className="text-slate-200 font-mono">{org._count?.sessions || 0}</strong>/{org.maxSessions} sessions</span>
                   </div>
-                  <span className={statusColors[org.status] || 'zonix-badge'}>
-                    {org.status}
+                  <div className="flex items-center gap-1.5" title="Max tabs per user">
+                    <Layers className="w-3.5 h-3.5 text-slate-400" />
+                    <span><strong className="text-slate-200 font-mono">{org.maxTabs || 5}</strong> tabs</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Wifi className="w-3.5 h-3.5 text-slate-400" />
+                    <span><strong className="text-slate-200 font-mono">{org._count?.proxyNodes || 0}</strong> proxies</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    {org.status === 'ACTIVE' ? 'Active' : org.status}
                   </span>
-                  <div className="flex items-center gap-1">
+                  
+                  <div className="flex items-center gap-1.5">
                     <button
                       onClick={async () => {
                         try {
@@ -263,39 +267,44 @@ export default function OrganizationsPage() {
                           if (data.success) {
                             setNotification({
                               type: 'success',
-                              title: 'Session Restored',
-                              message: `1-Click Session Restore complete for ${org.displayName}. All sessions updated in <0.5s.`
+                              title: 'Session restored',
+                              message: `1-Click Session Restore complete for ${org.displayName}.`
                             });
                           } else {
                             setNotification({
                               type: 'error',
-                              title: 'Restore Notice',
+                              title: 'Restore notice',
                               message: data.message || data.error || 'Vault restore requires session re-authentication.'
                             });
                           }
                         } catch (e) {
                           setNotification({
                             type: 'error',
-                            title: 'System Error',
+                            title: 'System error',
                             message: 'Error restoring session: ' + e.message
                           });
                         }
                       }}
-                      className="px-2 py-1 bg-green-500/10 border border-green-500/30 text-green-400 rounded text-[11px] font-mono hover:bg-green-500/20"
-                      title="1-Click Session Restore"
+                      className="px-2.5 py-1 bg-slate-800 border border-slate-700/60 text-slate-300 rounded-md text-xs font-medium hover:bg-slate-700/60 transition flex items-center gap-1"
+                      title="1-Click session restore"
                     >
-                      🔄 RESTORE
+                      <RefreshCw className="w-3 h-3 text-slate-400" />
+                      <span>Restore</span>
                     </button>
+
                     <button
                       onClick={() => { setEditingOrg(org); setShowModal(true); }}
-                      className="p-1.5 hover:bg-zonix-surface-light rounded text-zonix-text-dim hover:text-zonix-cyan"
+                      className="p-1.5 hover:bg-slate-800 rounded-md text-slate-400 hover:text-slate-200 transition"
+                      title="Edit organization"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
+
                     {user?.role === 'SUPER_ADMIN' && (
                       <button
                         onClick={() => handleDelete(org.id)}
-                        className="p-1.5 hover:bg-zonix-surface-light rounded text-zonix-text-dim hover:text-zonix-crimson"
+                        className="p-1.5 hover:bg-slate-800 rounded-md text-slate-400 hover:text-red-400 transition"
+                        title="Delete organization"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

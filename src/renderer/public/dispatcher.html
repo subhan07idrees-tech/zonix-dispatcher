@@ -45,24 +45,33 @@
     }
     .title-text {
       font-size: 13px;
-      font-weight: 700;
-      color: #38BDF8;
-      letter-spacing: 1px;
+      font-weight: 600;
+      color: #f3f4f6;
+      letter-spacing: 0.5px;
     }
     .divider {
-      color: #1E2638;
+      color: #334155;
       font-size: 13px;
     }
     .session-badge {
-      font-size: 10px;
-      font-family: monospace;
-      color: #38BDF8;
-      background: rgba(56, 189, 248, 0.08);
-      border: 1px solid rgba(56, 189, 248, 0.2);
+      font-size: 11px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+      color: #10B981;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.2);
       padding: 3px 10px;
-      border-radius: 12px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
+      border-radius: 6px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #10B981;
+      display: inline-block;
     }
     .control-section {
       display: flex;
@@ -71,11 +80,11 @@
       -webkit-app-region: no-drag;
     }
     .signout-btn {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.25);
-      color: #f87171;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #94a3b8;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 500;
       padding: 5px 12px;
       border-radius: 6px;
       cursor: pointer;
@@ -86,14 +95,13 @@
       background: #ef4444;
       border-color: #ef4444;
       color: #ffffff;
-      box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);
     }
     .refresh-btn {
-      background: rgba(59, 130, 246, 0.08);
-      border: 1px solid rgba(59, 130, 246, 0.2);
-      color: #60a5fa;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #cbd5e1;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 500;
       padding: 5px 12px;
       border-radius: 6px;
       cursor: pointer;
@@ -104,10 +112,8 @@
       transition: all 0.2s;
     }
     .refresh-btn:hover {
-      background: #3b82f6;
-      border-color: #3b82f6;
+      background: #334155;
       color: #ffffff;
-      box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
     }
     .tab-bar {
       display: flex;
@@ -406,8 +412,8 @@
     <div class="brand-section">
       <img src="./logo.png" alt="ZONIX" class="logo-img">
       <span class="title-text">ZONIX</span>
-      <span class="divider">//</span>
-      <span class="session-badge" id="sessionBadge">🟢 Connection Secured</span>
+      <span class="divider">/</span>
+      <span class="session-badge" id="sessionBadge"><span class="badge-dot"></span> Connection secured</span>
     </div>
 
     <div class="control-section">
@@ -417,7 +423,7 @@
         </svg>
         Refresh
       </button>
-      <button class="signout-btn" id="signOutBtn">Sign Out</button>
+      <button class="signout-btn" id="signOutBtn">Sign out</button>
       
       <div class="win-btn-container">
         <button class="win-btn" onclick="window.zonixAPI.minimizeWindow()" title="Minimize">
