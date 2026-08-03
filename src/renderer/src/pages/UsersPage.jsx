@@ -357,6 +357,7 @@ export default function UsersPage() {
     try {
       await authFetch(`/users/${userId}/status`, {
         method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
       });
       fetchUsers();

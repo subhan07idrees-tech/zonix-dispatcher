@@ -97,9 +97,8 @@ export default function DiagnosticsPage() {
       await Promise.all(
         dispatchers.map(async (disp) => {
           try {
-            const url = targetDomain
-              ? `/cookies/${selectedOrg}/${disp.id}?domain=${encodeURIComponent(targetDomain)}`
-              : `/cookies/${selectedOrg}/${disp.id}`;
+            const domToFetch = (targetDomain && targetDomain !== '—') ? targetDomain : 'one.dat.com';
+            const url = `/cookies/retrieve/${selectedOrg}/${disp.id}/${encodeURIComponent(domToFetch)}`;
             const cRes = await authFetch(url);
             if (cRes.ok) {
               const cData = await cRes.json();

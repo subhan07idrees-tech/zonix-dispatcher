@@ -167,7 +167,7 @@ export default function ProxiesPage() {
     try {
       const res = await authFetch(`/proxies/${selectedOrg}`);
       const data = await res.json();
-      setProxies(data.proxyNodes || []);
+      setProxies(data.proxies || data.proxyNodes || []);
     } catch (err) {
       console.error(err);
     } finally {
