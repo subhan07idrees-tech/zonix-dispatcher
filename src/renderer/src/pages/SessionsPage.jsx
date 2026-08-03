@@ -1,14 +1,14 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useWebSocket } from '../contexts/WebSocketContext';
-import { Radio, Circle, Square, RotateCcw, ExternalLink } from 'lucide-react';
+import { Radio, RotateCcw, Square } from 'lucide-react';
 
 export default function SessionsPage() {
   const { authFetch, showConfirm } = useAuth();
   const { sessions, sendCommand, connected } = useWebSocket();
 
   const handleKillSession = async (sessionId) => {
-    const confirmed = await showConfirm(`Kill session #${sessionId.substring(0, 8)}?`, 'TERMINATE SESSION', 'error');
+    const confirmed = await showConfirm(`Kill session #${sessionId.substring(0, 8)}?`, 'Terminate session', 'error');
     if (!confirmed) return;
     try {
       sendCommand('command:kill', { sessionId });
@@ -27,13 +27,6 @@ export default function SessionsPage() {
     }
   };
 
-  const statusConfig = {
-    ACTIVE: { color: 'zonix-badge-active', dot: 'text-zonix-cyan', label: 'ACTIVE' },
-    IDLE: { color: 'zonix-badge-warning', dot: 'text-yellow-400', label: 'IDLE' },
-    ERROR: { color: 'zonix-badge-error', dot: 'text-zonix-crimson', label: 'ERROR' },
-    DISCONNECTED: { color: 'zonix-badge', dot: 'text-zonix-text-muted', label: 'OFFLINE' }
-  };
-
   const formatUptime = (startedAt) => {
     if (!startedAt) return '—';
     const diff = Date.now() - new Date(startedAt).getTime();
@@ -44,85 +37,86 @@ export default function SessionsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold tracking-wide">ACTIVE SESSIONS</h2>
-          <p className="text-xs text-zonix-text-dim mt-0.5">
+          <h2 className="text-base font-semibold text-slate-100 tracking-normal">Active sessions</h2>
+          <p className="text-xs text-slate-400 mt-0.5">
             Real-time dispatch session monitoring
-            <span className={`ml-2 ${connected ? 'text-zonix-cyan' : 'text-zonix-crimson'}`}>
-              {connected ? '● LIVE' : '○ OFFLINE'}
+            <span className={`ml-2 text-[11px] font-medium ${connected ? 'text-emerald-400' : 'text-red-400'}`}>
+              {connected ? '● Live' : '○ Offline'}
             </span>
           </p>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-zonix-border text-xs text-zonix-text-dim font-mono">
-              <th className="py-2 px-3 text-left">SESSION ID</th>
-              <th className="py-2 px-3 text-left">ORG</th>
-              <th className="py-2 px-3 text-left">OPERATOR</th>
-              <th className="py-2 px-3 text-left">PROXY NODE</th>
-              <th className="py-2 px-3 text-left">STATUS</th>
-              <th className="py-2 px-3 text-left">UPTIME</th>
-              <th className="py-2 px-3 text-right">ACTIONS</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sessions.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="py-12 text-center">
-                  <Radio className="w-8 h-8 text-zonix-text-muted mx-auto mb-3" />
-                  <p className="text-xs text-zonix-text-muted font-mono">NO ACTIVE DISPATCH SESSIONS</p>
-                  <p className="text-[10px] text-zonix-text-muted mt-1">Sessions will appear here when dispatchers connect</p>
-                </td>
+      <div className="bg-[#0D121F] border border-slate-800/80 rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-800/80 text-xs text-slate-400 font-normal">
+                <th className="py-2.5 px-3 text-left">Session ID</th>
+                <th className="py-2.5 px-3 text-left">Organization</th>
+                <th className="py-2.5 px-3 text-left">Operator</th>
+                <th className="py-2.5 px-3 text-left">Proxy node</th>
+                <th className="py-2.5 px-3 text-left">Status</th>
+                <th className="py-2.5 px-3 text-left">Uptime</th>
+                <th className="py-2.5 px-3 text-right">Actions</th>
               </tr>
-            ) : (
-              sessions.map((session) => {
-                const sc = statusConfig[session.status] || statusConfig.ACTIVE;
-                return (
-                  <tr key={session.sessionId} className="border-b border-zonix-border/50 hover:bg-zonix-surface-light/30">
-                    <td className="py-3 px-3 text-xs font-mono text-zonix-cyan">
-                      #{session.sessionId?.substring(0, 8)}
-                    </td>
-                    <td className="py-3 px-3 text-xs text-zonix-text">{session.org || session.orgId?.substring(0, 8)}</td>
-                    <td className="py-3 px-3 text-xs text-zonix-text-dim font-mono">{session.operator}</td>
-                    <td className="py-3 px-3 text-xs text-zonix-text-dim font-mono">{session.proxyNode}</td>
-                    <td className="py-3 px-3">
-                      <span className={`zonix-badge ${sc.color}`}>
-                        <Circle className={`w-2 h-2 fill-current mr-1 ${sc.dot}`} />
-                        {sc.label}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3 text-xs font-mono text-zonix-text-dim">
-                      {formatUptime(session.startedAt)}
-                    </td>
-                    <td className="py-3 px-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleRestartSession(session.sessionId)}
-                          className="p-1.5 hover:bg-zonix-surface-light rounded text-zonix-text-dim hover:text-yellow-400"
-                          title="Restart session"
-                        >
-                          <RotateCcw className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleKillSession(session.sessionId)}
-                          className="p-1.5 hover:bg-zonix-surface-light rounded text-zonix-text-dim hover:text-zonix-crimson"
-                          title="Kill session"
-                        >
-                          <Square className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {sessions.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-xs text-slate-400">
+                    <Radio className="w-6 h-6 text-slate-500 mx-auto mb-2" />
+                    <p className="font-normal text-slate-300">No active dispatch sessions</p>
+                    <p className="text-[11px] text-slate-400 mt-1">Sessions will appear here when dispatchers connect</p>
+                  </td>
+                </tr>
+              ) : (
+                sessions.map((session) => {
+                  return (
+                    <tr key={session.sessionId} className="border-b border-slate-800/40 hover:bg-slate-800/20 transition-colors">
+                      <td className="py-2.5 px-3 text-xs font-mono text-slate-200">
+                        #{session.sessionId?.substring(0, 8)}
+                      </td>
+                      <td className="py-2.5 px-3 text-xs text-slate-200">{session.org || session.orgId?.substring(0, 8)}</td>
+                      <td className="py-2.5 px-3 text-xs text-slate-400 font-mono">{session.operator}</td>
+                      <td className="py-2.5 px-3 text-xs text-slate-400 font-mono">{session.proxyNode}</td>
+                      <td className="py-2.5 px-3">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                          {session.status === 'ACTIVE' ? 'Active' : session.status}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-xs font-mono text-slate-400">
+                        {formatUptime(session.startedAt)}
+                      </td>
+                      <td className="py-2.5 px-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleRestartSession(session.sessionId)}
+                            className="p-1.5 hover:bg-slate-800 rounded-md text-slate-400 hover:text-amber-400 transition"
+                            title="Restart session"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleKillSession(session.sessionId)}
+                            className="p-1.5 hover:bg-slate-800 rounded-md text-slate-400 hover:text-red-400 transition"
+                            title="Kill session"
+                          >
+                            <Square className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

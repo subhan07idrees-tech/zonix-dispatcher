@@ -355,14 +355,20 @@ export default function UsersPage() {
   const handleToggleStatus = async (userId, currentStatus) => {
     const newStatus = currentStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
     try {
-      await authFetch(`/users/${userId}/status`, {
-        method: 'PATCH',
+      const res = await authFetch(`/users/${selectedOrg}/${userId}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
       });
-      fetchUsers();
+      if (res.ok) {
+        fetchUsers();
+      } else {
+        const data = await res.json();
+        showAlert(data.error || 'Failed to update user status', 'Status Error', 'error');
+      }
     } catch (err) {
       console.error(err);
+      showAlert(err.message || 'An error occurred', 'Status Error', 'error');
     }
   };
 
