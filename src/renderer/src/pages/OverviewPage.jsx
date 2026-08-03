@@ -120,7 +120,7 @@ export default function OverviewPage() {
 
   const fetchMetrics = async () => {
     try {
-      const res = await authFetch('/organizations/metrics/overview');
+      const res = await authFetch('/dashboard');
       if (res.ok) {
         const data = await res.json();
         setMetrics(data);
