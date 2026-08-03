@@ -9,31 +9,32 @@ const TARGET_DIRS = [
   path.join(__dirname, '..', 'src', 'renderer', 'dist')
 ];
 
-// Security obfuscation settings
+// Security obfuscation settings tuned for Electron compatibility
 const OBFUSCATION_OPTIONS = {
   compact: true,
-  controlFlowFlattening: true,
-  controlFlowFlatteningThreshold: 0.5,
-  deadCodeInjection: true,
-  deadCodeInjectionThreshold: 0.3,
+  controlFlowFlattening: false,
+  deadCodeInjection: false,
   debugProtection: false,
   disableConsoleOutput: false,
   identifierNamesGenerator: 'hexadecimal',
   log: false,
-  numbersToExpressions: true,
-  renameGlobals: false, // Keep false for IPC/module compatibility
-  selfDefending: true,
+  numbersToExpressions: false,
+  renameGlobals: false,
+  selfDefending: false,
   simplify: true,
-  splitStrings: true,
-  splitStringsChunkLength: 8,
+  splitStrings: false,
   stringArray: true,
-  stringArrayCallsTransform: true,
-  stringArrayCallsTransformThreshold: 0.5,
-  stringArrayEncoding: ['base64'],
-  stringArrayIndexesType: ['hexadecimal-number'],
-  stringArrayThreshold: 0.75,
-  transformObjectKeys: true,
-  unicodeEscapeSequence: false
+  stringArrayCallsTransform: false,
+  stringArrayEncoding: [],
+  stringArrayThreshold: 0.5,
+  transformObjectKeys: false,
+  unicodeEscapeSequence: false,
+  reservedNames: [
+    'require', 'exports', 'module', 'electron', 'electron-store', 
+    'crypto-js', 'electron-updater', 'node-fetch', 'ws', 'ipcMain', 
+    'ipcRenderer', 'contextBridge', 'app', 'BrowserWindow', 'session', 
+    'safeStorage', 'path', 'fs', 'child_process', 'os'
+  ]
 };
 
 function getAllFiles(dirPath, arrayOfFiles = []) {
@@ -59,8 +60,7 @@ function obfuscate() {
   console.log('[Obfuscation] Starting source code obfuscation...');
   
   if (fs.existsSync(BACKUP_DIR)) {
-    console.log('[Obfuscation] Backup already exists. Please run restore first or delete .obfuscation-backup.');
-    process.exit(1);
+    fs.rmSync(BACKUP_DIR, { recursive: true, force: true });
   }
 
   fs.mkdirSync(BACKUP_DIR, { recursive: true });
@@ -70,18 +70,13 @@ function obfuscate() {
   TARGET_DIRS.forEach((dir) => {
     const files = getAllFiles(dir);
     files.forEach((file) => {
-      // Calculate relative path to construct backup path
       const relativePath = path.relative(rootDir, file);
       const backupPath = path.join(BACKUP_DIR, relativePath);
       
-      // Ensure backup subdirectory exists
       fs.mkdirSync(path.dirname(backupPath), { recursive: true });
-      
-      // Backup original file
       fs.copyFileSync(file, backupPath);
       console.log(`[Backup] Saved original: ${relativePath}`);
 
-      // Read, obfuscate, and overwrite
       const code = fs.readFileSync(file, 'utf8');
       try {
         const obfuscatedResult = JavaScriptObfuscator.obfuscate(code, OBFUSCATION_OPTIONS);
@@ -89,7 +84,7 @@ function obfuscate() {
         console.log(`[Obfuscate] Scrambled: ${relativePath}`);
       } catch (err) {
         console.error(`[Obfuscation] Failed on file: ${file}`, err);
-        restore(); // Rollback if something breaks
+        restore();
         process.exit(1);
       }
     });
@@ -118,12 +113,10 @@ function restore() {
     }
   });
 
-  // Recursive delete backup folder
   fs.rmSync(BACKUP_DIR, { recursive: true, force: true });
   console.log('[Obfuscation] Backup successfully restored and cleaned up.');
 }
 
-// CLI handler
 const mode = process.argv[2];
 if (mode === '--obfuscate') {
   obfuscate();
