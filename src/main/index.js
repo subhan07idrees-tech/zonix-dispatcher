@@ -1327,109 +1327,99 @@ function registerIPC() {
     }
 
     let lastCapturedLocalStorage = '{}';
-
     let saveDebounceTimer = null;
+
+    const performCookieSync = async () => {
+      try {
+        if (!sess) return;
+        const allCookies = await sess.cookies.get({});
+        const serializedCookies = allCookies.map(c => {
+          const scheme = c.secure ? 'https://' : 'http://';
+          const cleanDomain = c.domain.startsWith('.') ? c.domain.substring(1) : c.domain;
+          const cookieUrl = `${scheme}${cleanDomain}${c.path || '/'}`;
+          return {
+            name: c.name,
+            value: c.value,
+            domain: c.domain,
+            path: c.path,
+            secure: c.secure,
+            httpOnly: c.httpOnly,
+            sameSite: c.sameSite,
+            expirationDate: c.expirationDate,
+            url: cookieUrl
+          };
+        });
+
+        let localStorageData = '{}';
+        try {
+          if (captureWindow && !captureWindow.isDestroyed()) {
+            localStorageData = await captureWindow.webContents.executeJavaScript(`
+              (function() {
+                try {
+                  return JSON.stringify(window.localStorage);
+                } catch (err) {
+                  return '{}';
+                }
+              })()
+            `);
+            if (localStorageData && localStorageData !== '{}') {
+              lastCapturedLocalStorage = localStorageData;
+            }
+          }
+        } catch (lsErr) {
+          console.error('[ZONIX Main] Live localStorage capture failed:', lsErr.message);
+        }
+
+        const finalLs = (localStorageData && localStorageData !== '{}') ? localStorageData : lastCapturedLocalStorage;
+        const targetDomain = new URL(targetUrl).hostname;
+
+        await zonixFetch(`${CONFIG.BACKEND_URL}/api/cookies/store`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            orgId: targetOrgId,
+            userId: targetUserId,
+            targetDomain,
+            cookies: serializedCookies,
+            localStorage: finalLs
+          })
+        });
+        console.log(`[ZONIX Main] Successfully persisted ${serializedCookies.length} cookies & device tokens for user ${targetUserId}`);
+      } catch (err) {
+        console.error('[ZONIX Main] Cookie/storage sync failed:', err.message);
+      }
+    };
 
     const handleCookieChange = (event, cookie, cause, removed) => {
       if (saveDebounceTimer) clearTimeout(saveDebounceTimer);
-      saveDebounceTimer = setTimeout(async () => {
-        try {
-          if (!sess) return;
-          const allCookies = await sess.cookies.get({});
-          const serializedCookies = allCookies.map(c => {
-            const scheme = c.secure ? 'https://' : 'http://';
-            const cleanDomain = c.domain.startsWith('.') ? c.domain.substring(1) : c.domain;
-            const cookieUrl = `${scheme}${cleanDomain}${c.path || '/'}`;
-            return {
-              name: c.name,
-              value: c.value,
-              domain: c.domain,
-              path: c.path,
-              secure: c.secure,
-              httpOnly: c.httpOnly,
-              sameSite: c.sameSite,
-              expirationDate: c.expirationDate,
-              url: cookieUrl
-            };
-          });
-
-          let localStorageData = '{}';
-          try {
-            if (captureWindow && !captureWindow.isDestroyed()) {
-              localStorageData = await captureWindow.webContents.executeJavaScript(`
-                (function() {
-                  try {
-                    return JSON.stringify(window.localStorage);
-                  } catch (err) {
-                    return '{}';
-                  }
-                })()
-              `);
-              if (localStorageData && localStorageData !== '{}') {
-                lastCapturedLocalStorage = localStorageData;
-              }
-            }
-          } catch (lsErr) {
-            console.error('[ZONIX Main] Live localStorage capture failed:', lsErr.message);
-          }
-
-          const targetDomain = new URL(targetUrl).hostname;
-          await zonixFetch(`${CONFIG.BACKEND_URL}/api/cookies/store`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              orgId: targetOrgId,
-              userId: targetUserId,
-              targetDomain,
-              cookies: serializedCookies,
-              localStorage: lastCapturedLocalStorage
-            })
-          });
-          console.log(`[ZONIX Main] Debounced live synced ${serializedCookies.length} cookies & localStorage for user ${targetUserId}`);
-        } catch (err) {
-          console.error('[ZONIX Main] Live cookie/storage sync failed:', err.message);
-        }
-      }, 3000); // 3-second debounce to send 1 clean payload instead of 40 rapid requests
+      saveDebounceTimer = setTimeout(() => {
+        performCookieSync();
+      }, 1000); // 1-second smooth debounce
     };
 
     sess.cookies.on('changed', handleCookieChange);
 
     let isCaptured = false;
-    let localStorageData = '{}';
     captureWindow.on('close', async (e) => {
       if (isCaptured) return;
       e.preventDefault();
-      try {
-        if (captureWindow && !captureWindow.isDestroyed()) {
-          localStorageData = await captureWindow.webContents.executeJavaScript(`
-            (function() {
-              try {
-                return JSON.stringify(window.localStorage);
-              } catch (err) {
-                return '{}';
-              }
-            })()
-          `);
-        }
-      } catch (err) {
-        console.error('[ZONIX Main] Final localStorage capture failed:', err.message);
-      }
-
-      if (!localStorageData || localStorageData === '{}') {
-        localStorageData = lastCapturedLocalStorage;
-      }
       isCaptured = true;
-      captureWindow.close();
+      if (saveDebounceTimer) clearTimeout(saveDebounceTimer);
+      
+      console.log('[ZONIX Main] Capture window closing — executing instant final session & device token sync...');
+      await performCookieSync();
+      captureWindow.destroy();
     });
 
-    // Wait until the admin logs in and manually closes the window
+    // Wait until the admin logs in and closes the window
     await new Promise((resolve) => {
       captureWindow.on('closed', () => {
         sess.cookies.removeListener('changed', handleCookieChange);
         sessionLocalStorageMap.delete(partitionId);
+        console.log(`[ZONIX Main] Capture window closed. Cleaned up event listeners.`);
         resolve();
       });
     });
