@@ -642,16 +642,6 @@
 
       function injectEmailBlocker(webviewInstance) {
         try {
-          webviewInstance.insertCSS(`
-            a[href^="mailto:"],
-            button[aria-label*="email" i],
-            button[title*="email" i],
-            div[class*="email-modal"],
-            div[class*="one-click"] {
-              display: none !important;
-            }
-          `);
-
           const blockerScript = `
             (function() {
               if (window.__zonixBlockerInjected) return;
@@ -662,16 +652,24 @@
                 while (target && target !== document.body) {
                   var text = (target.innerText || target.textContent || '').toUpperCase();
                   var href = (target.getAttribute && target.getAttribute('href')) || '';
+                  var tagName = (target.tagName || '').toLowerCase();
+                  var svgHtml = target.innerHTML || '';
                   
-                  if (text.includes('SIGN IN WITH GOOGLE') || 
+                  var isEnvelopeBtn = (target.matches && (
+                    target.matches('button[aria-label*="email" i]') ||
+                    target.matches('button[title*="email" i]') ||
+                    target.matches('[aria-label*="mail" i]')
+                  )) || (tagName === 'button' && (svgHtml.includes('path') || svgHtml.includes('svg')));
+
+                  if (isEnvelopeBtn ||
+                      text.includes('SIGN IN WITH GOOGLE') || 
                       text.includes('SIGN IN WITH MICROSOFT') || 
                       text.includes('SEND EMAILS FASTER WITH 1-CLICK') ||
-                      href.startsWith('mailto:') ||
                       href.includes('accounts.google.com') ||
                       href.includes('login.microsoftonline.com')) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.warn('[ZONIX Guard] Email sign-in / external link blocked.');
+                    console.warn('[ZONIX Guard] Envelope icon button click intercepted.');
                     return false;
                   }
                   target = target.parentElement;
