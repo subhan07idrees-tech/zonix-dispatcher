@@ -123,7 +123,7 @@ export default function OverviewPage() {
       const res = await authFetch('/dashboard');
       if (res.ok) {
         const data = await res.json();
-        setMetrics(data);
+        setMetrics(data.overview || data);
       }
     } catch (err) {
       console.error(err);
@@ -132,7 +132,7 @@ export default function OverviewPage() {
     }
   };
 
-  const overview = metrics || {};
+  const overview = metrics?.overview || metrics || {};
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">

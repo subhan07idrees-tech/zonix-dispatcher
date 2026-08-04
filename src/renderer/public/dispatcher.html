@@ -721,6 +721,8 @@
             button[aria-label*="mail" i],
             button[title*="email" i],
             button[title*="mail" i],
+            button[class*="email" i],
+            button[class*="mail" i],
             [data-testid*="email"],
             [data-testid*="mail"],
             a[href^="mailto:"] {
@@ -731,7 +733,12 @@
             div[dialog*="email" i],
             div[class*="1-click" i],
             div[class*="one-click" i],
-            [class*="Send-Emails-Faster"] {
+            div[class*="Send-Emails" i],
+            div[class*="send-emails" i],
+            [aria-label*="Send Emails" i],
+            [class*="Send-Emails-Faster"],
+            .modal-backdrop,
+            .dat-modal {
               display: none !important;
               visibility: hidden !important;
               opacity: 0 !important;
@@ -744,41 +751,57 @@
               if (window.__zonixLetterboxInjected) return;
               window.__zonixLetterboxInjected = true;
 
-              function disableEnvelopeButtons() {
-                var buttons = document.querySelectorAll('button, a, [role="button"]');
-                for (var i = 0; i < buttons.length; i++) {
-                  var btn = buttons[i];
-                  var aria = (btn.getAttribute('aria-label') || btn.getAttribute('title') || '').toLowerCase();
-                  var svgHtml = btn.innerHTML || '';
-                  if (aria.includes('email') || aria.includes('mail') || svgHtml.includes('envelope') || svgHtml.includes('path')) {
-                    if (!btn.innerText || btn.innerText.trim() === '' || btn.querySelector('svg')) {
-                      btn.style.pointerEvents = 'none';
+              function purgeOneClickModal() {
+                // 1. Purge any element or modal dialog containing 'Send Emails Faster' or OAuth buttons
+                var allElems = document.querySelectorAll('div, section, article, dialog, modal-container, [role="dialog"]');
+                for (var i = 0; i < allElems.length; i++) {
+                  var el = allElems[i];
+                  var text = (el.textContent || '').toUpperCase();
+                  if (text.includes('SEND EMAILS FASTER') || (text.includes('SIGN IN WITH GOOGLE') && text.includes('SIGN IN WITH MICROSOFT'))) {
+                    el.style.setProperty('display', 'none', 'important');
+                    el.style.setProperty('visibility', 'hidden', 'important');
+                    if (el.parentNode) {
+                      try { el.parentNode.removeChild(el); } catch(e) {}
+                    }
+                  }
+                }
+
+                // 2. Disable envelope icon buttons
+                var clickableElems = document.querySelectorAll('button, a, [role="button"], svg, path');
+                for (var j = 0; j < clickableElems.length; j++) {
+                  var item = clickableElems[j];
+                  var aria = (item.getAttribute('aria-label') || item.getAttribute('title') || '').toLowerCase();
+                  var outer = (item.outerHTML || '').toLowerCase();
+                  if (aria.includes('email') || aria.includes('mail') || outer.includes('envelope')) {
+                    var btn = item.closest ? item.closest('button, a, [role="button"]') : item;
+                    if (btn) {
+                      btn.style.setProperty('pointer-events', 'none', 'important');
+                      btn.style.setProperty('cursor', 'default', 'important');
                       btn.onclick = function(e) { e.preventDefault(); e.stopPropagation(); return false; };
                     }
                   }
                 }
               }
 
-              disableEnvelopeButtons();
-              var observer = new MutationObserver(disableEnvelopeButtons);
-              if (document.body) {
-                observer.observe(document.body, { childList: true, subtree: true });
-              }
+              purgeOneClickModal();
+              setInterval(purgeOneClickModal, 150);
 
               window.addEventListener('click', function(e) {
                 var target = e.target;
                 while (target && target !== document.body) {
-                  var text = (target.innerText || target.textContent || '').toUpperCase();
+                  var text = (target.textContent || '').toUpperCase();
                   var aria = (target.getAttribute && (target.getAttribute('aria-label') || target.getAttribute('title') || '')) .toLowerCase();
+                  var outer = (target.outerHTML || '').toLowerCase();
                   
                   if (aria.includes('email') || 
                       aria.includes('mail') || 
+                      outer.includes('envelope') ||
                       text.includes('SIGN IN WITH GOOGLE') || 
                       text.includes('SIGN IN WITH MICROSOFT') || 
-                      text.includes('SEND EMAILS FASTER WITH 1-CLICK')) {
+                      text.includes('SEND EMAILS FASTER')) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('[ZONIX Guard] Letterbox button click intercepted silently.');
+                    purgeOneClickModal();
                     return false;
                   }
                   target = target.parentElement;
