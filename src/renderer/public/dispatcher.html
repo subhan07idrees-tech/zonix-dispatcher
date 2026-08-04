@@ -634,6 +634,127 @@
       }
       wv.setAttribute('src', initialUrl);
 
+      function handleExternalNavigation(targetUrl) {
+        const newTab = createTab('about:blank');
+        switchTab(newTab.id);
+        updateCloseButtonsVisibility();
+
+        newTab.webview.addEventListener('dom-ready', () => {
+          const html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <style>
+                body {
+                  background: #070a10;
+                  color: #f8fafc;
+                  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  height: 100vh;
+                  margin: 0;
+                  text-align: center;
+                }
+                .card {
+                  background: #0d121f;
+                  border: 1px solid #1e2638;
+                  border-radius: 12px;
+                  padding: 32px 40px;
+                  max-width: 440px;
+                  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+                }
+                .icon {
+                  width: 48px;
+                  height: 48px;
+                  margin-bottom: 16px;
+                  color: #ef4444;
+                }
+                h2 {
+                  font-size: 16px;
+                  font-weight: 600;
+                  letter-spacing: 0.5px;
+                  color: #f8fafc;
+                  margin: 0 0 8px 0;
+                }
+                p {
+                  font-size: 13px;
+                  color: #94a3b8;
+                  line-height: 1.5;
+                  margin: 0 0 20px 0;
+                }
+                .url {
+                  font-family: monospace;
+                  font-size: 11px;
+                  background: #070a10;
+                  border: 1px solid #1e2638;
+                  padding: 6px 12px;
+                  border-radius: 6px;
+                  color: #ef4444;
+                  word-break: break-all;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="card">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <h2>ACCESS DENIED</h2>
+                <p>External link navigation is restricted by system policy. Access to non-DAT websites is disabled.</p>
+                <div class="url">${targetUrl || 'External Link'}</div>
+              </div>
+            </body>
+            </html>
+          `;
+          newTab.webview.executeJavaScript(`document.open(); document.write(\`${html.replace(/`/g, '\\`')}\`); document.close();`).catch(() => {});
+        }, { once: true });
+      }
+
+      function attachLetterboxBlocker(wvInstance) {
+        try {
+          const blockerScript = `
+            (function() {
+              if (window.__zonixLetterboxInjected) return;
+              window.__zonixLetterboxInjected = true;
+
+              document.addEventListener('click', function(e) {
+                var target = e.target;
+                while (target && target !== document.body) {
+                  var text = (target.innerText || target.textContent || '').toUpperCase();
+                  var href = (target.getAttribute && target.getAttribute('href')) || '';
+                  var tagName = (target.tagName || '').toLowerCase();
+                  var svgHtml = target.innerHTML || '';
+
+                  var isEnvelopeBtn = (target.matches && (
+                    target.matches('button[aria-label*="email" i]') ||
+                    target.matches('button[title*="email" i]') ||
+                    target.matches('[aria-label*="mail" i]')
+                  )) || (tagName === 'button' && (svgHtml.includes('path') || svgHtml.includes('svg')));
+
+                  if (isEnvelopeBtn ||
+                      text.includes('SIGN IN WITH GOOGLE') || 
+                      text.includes('SIGN IN WITH MICROSOFT') || 
+                      text.includes('SEND EMAILS FASTER WITH 1-CLICK') ||
+                      href.includes('accounts.google.com') ||
+                      href.includes('login.microsoftonline.com')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('[ZONIX Guard] Letterbox button click intercepted silently.');
+                    return false;
+                  }
+                  target = target.parentElement;
+                }
+              }, true);
+            })();
+          `;
+          wvInstance.executeJavaScript(blockerScript).catch(() => {});
+        } catch(e) {}
+      }
+
       // Lock down navigation and window popups
       wv.addEventListener('will-navigate', (e) => {
         const urlString = e.url;
@@ -645,7 +766,18 @@
           return;
         }
 
-        // 2. Block navigation away from search-loads on DAT One
+        // 2. Intercept external non-DAT domains (e.g. Google OAuth, Microsoft OAuth, non-DAT links)
+        if (urlString.includes('accounts.google.com') || 
+            urlString.includes('login.microsoftonline.com') || 
+            (urlString.includes('oauth') && !urlString.includes('one.dat.com')) ||
+            (!urlString.includes('dat.com') && !urlString.includes('thezonix.com'))) {
+          e.preventDefault();
+          console.warn(`[webview] External navigation intercepted: ${urlString}`);
+          handleExternalNavigation(urlString);
+          return;
+        }
+
+        // 3. Block navigation away from search-loads on DAT One
         if (urlString.includes('one.dat.com') && 
             !urlString.includes('/search-loads') && 
             !urlString.includes('/loads') && 
@@ -654,7 +786,6 @@
             !urlString.includes('/callback') && 
             !urlString.includes('/oidc')) {
           const currentUrl = wv.getURL();
-          // Only block if we are already inside the authenticated session (not during login flow redirects)
           if (currentUrl && currentUrl.includes('one.dat.com') && !currentUrl.includes('/login') && !currentUrl.includes('/auth')) {
             e.preventDefault();
             console.warn(`[webview] Navigation blocked to preserve search-loads lockdown: ${urlString}`);
@@ -665,7 +796,12 @@
       // Block all secondary popups / target="_blank" window creations
       wv.addEventListener('new-window', (e) => {
         e.preventDefault();
-        console.warn(`[webview] Blocked opening new window: ${e.url}`);
+        console.warn(`[webview] Opening external link in duplicate tab: ${e.url}`);
+        handleExternalNavigation(e.url);
+      });
+
+      wv.addEventListener('dom-ready', () => {
+        attachLetterboxBlocker(wv);
       });
 
       const tabObj = { id, webview: wv, tabEl, isLoading: true, isInitiallyLoaded: false };
@@ -681,6 +817,7 @@
       });
 
       wv.addEventListener('did-finish-load', () => {
+        attachLetterboxBlocker(wv);
         tabObj.isLoading = false;
         tabObj.isInitiallyLoaded = true;
         if (id === activeTabId) {

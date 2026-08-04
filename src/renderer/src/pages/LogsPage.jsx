@@ -38,6 +38,31 @@ export default function LogsPage() {
     return 'text-slate-300';
   };
 
+  const formatLocation = (details) => {
+    if (!details) return '—';
+    let d = details;
+    if (typeof d === 'string') {
+      try { d = JSON.parse(d); } catch(e) { return '—'; }
+    }
+    const parts = [];
+    if (d.city) parts.push(d.city);
+    if (d.state) parts.push(d.state);
+    if (d.country) parts.push(d.country);
+    return parts.length > 0 ? parts.join(', ') : (d.location || '—');
+  };
+
+  const formatDetails = (details) => {
+    if (!details) return '—';
+    let d = details;
+    if (typeof d === 'string') {
+      try { d = JSON.parse(d); } catch(e) { return details; }
+    }
+    if (d.error) return `Error: ${d.error}`;
+    if (d.message) return d.message;
+    if (d.status) return `Status: ${d.status}`;
+    return JSON.stringify(d).substring(0, 50);
+  };
+
   const totalPages = Math.ceil(total / limit);
 
   return (
@@ -91,9 +116,9 @@ export default function LogsPage() {
                 <th className="py-2.5 px-3 text-left">User</th>
                 <th className="py-2.5 px-3 text-left">Organization</th>
                 <th className="py-2.5 px-3 text-left">Action</th>
-                <th className="py-2.5 px-3 text-left">Resource</th>
-                <th className="py-2.5 px-3 text-left">Details</th>
+                <th className="py-2.5 px-3 text-left">Location</th>
                 <th className="py-2.5 px-3 text-left">IP address</th>
+                <th className="py-2.5 px-3 text-left">Details</th>
               </tr>
             </thead>
             <tbody>
@@ -125,15 +150,14 @@ export default function LogsPage() {
                     <td className={`py-2.5 px-3 text-xs font-mono ${getActionColor(log.action)}`}>
                       {log.action}
                     </td>
-                    <td className="py-2.5 px-3 text-xs text-slate-400 font-mono">
-                      {log.resource}
-                      {log.resourceId && <span className="text-slate-400"> #{log.resourceId.substring(0, 6)}</span>}
-                    </td>
-                    <td className="py-2.5 px-3 text-xs text-slate-400 font-mono max-w-xs truncate">
-                      {log.details ? JSON.stringify(log.details).substring(0, 60) : '—'}
+                    <td className="py-2.5 px-3 text-xs font-mono text-emerald-400/90 whitespace-nowrap">
+                      {formatLocation(log.details)}
                     </td>
                     <td className="py-2.5 px-3 text-xs font-mono text-slate-400">
-                      {log.ipAddress || '—'}
+                      {log.ipAddress || log.details?.ip || '—'}
+                    </td>
+                    <td className="py-2.5 px-3 text-xs text-slate-400 font-mono max-w-xs truncate">
+                      {formatDetails(log.details)}
                     </td>
                   </tr>
                 ))

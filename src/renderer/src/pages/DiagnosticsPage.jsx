@@ -105,7 +105,7 @@ export default function DiagnosticsPage() {
               statusMap[disp.id] = {
                 cookieCount: cData.cookies?.length || 0,
                 hasLocalStorage: !!(cData.localStorage && cData.localStorage !== '{}'),
-                capturedAt: cData.updatedAt || cData.createdAt,
+                capturedAt: cData.capturedAt || cData.updatedAt || cData.createdAt,
                 hasData: true
               };
             } else {
@@ -250,7 +250,7 @@ export default function DiagnosticsPage() {
                     <div className="bg-[#0D121F] rounded-md p-2.5 space-y-0.5">
                       <div className="text-[11px] text-slate-400 font-normal">Captured</div>
                       <div className="text-xs font-mono text-slate-200">
-                        {cs?.capturedAt ? new Date(cs.capturedAt).toLocaleDateString() : '—'}
+                        {cs?.capturedAt ? new Date(cs.capturedAt).toLocaleString() : '—'}
                       </div>
                     </div>
                   </div>
