@@ -770,15 +770,24 @@
                   }
                 }
 
-                // 2. Hide email address text (e.g. dispatch.tltransport@gmail.com or bold email text in modal/header popups)
-                var emailNodes = shadow.querySelectorAll ? shadow.querySelectorAll('b, strong, span, p, div') : [];
-                for (var e = 0; e < emailNodes.length; e++) {
-                  var el = emailNodes[e];
-                  var elText = (el.textContent || '').trim().toLowerCase();
-                  if (elText.includes('@gmail.com') || elText.includes('@tltransport') || elText.includes('dispatch.') || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(elText)) {
-                    if (el.closest && el.closest('[class*="1-click" i], [class*="one-click" i], dialog, modal-container, [role="dialog"], [class*="Send-Emails" i]')) {
-                      el.style.setProperty('display', 'none', 'important');
-                      el.style.setProperty('visibility', 'hidden', 'important');
+                // 2. Black out and redact account email address text (e.g. dispatch.tltransport@gmail.com)
+                var allNodes = shadow.querySelectorAll ? shadow.querySelectorAll('b, strong, span, p, div, a') : [];
+                for (var e = 0; e < allNodes.length; e++) {
+                  var el = allNodes[e];
+                  var elText = (el.textContent || '').trim();
+                  var lower = elText.toLowerCase();
+
+                  if (lower.includes('dispatch.tltransport@gmail.com') || 
+                      lower.includes('tltransport') || 
+                      (lower.includes('@gmail.com') && (lower.includes('dispatch') || lower.includes('connect')))) {
+                    
+                    if (el.children.length === 0 || el.tagName === 'STRONG' || el.tagName === 'B' || el.tagName === 'SPAN') {
+                      el.style.setProperty('color', 'transparent', 'important');
+                      el.style.setProperty('background-color', '#1e293b', 'important');
+                      el.style.setProperty('user-select', 'none', 'important');
+                      el.style.setProperty('border-radius', '4px', 'important');
+                      el.style.setProperty('display', 'inline-block', 'important');
+                      el.textContent = '••••••••••••••••••••••••';
                     }
                   }
                 }
