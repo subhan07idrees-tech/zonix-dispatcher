@@ -760,16 +760,30 @@
                 for (var i = 0; i < modals.length; i++) {
                   var m = modals[i];
                   var text = (m.textContent || '').toUpperCase();
-                  if (text.includes('SEND EMAILS FASTER') || (text.includes('SIGN IN WITH GOOGLE') && text.includes('SIGN IN WITH MICROSOFT'))) {
+                  if (text.includes('SEND EMAILS FASTER') || text.includes('CONNECT YOUR') || (text.includes('SIGN IN WITH GOOGLE') && text.includes('SIGN IN WITH MICROSOFT'))) {
                     m.style.setProperty('display', 'none', 'important');
                     m.style.setProperty('visibility', 'hidden', 'important');
+                    m.style.setProperty('opacity', '0', 'important');
                     if (m.parentNode) {
                       try { m.parentNode.removeChild(m); } catch(e) {}
                     }
                   }
                 }
 
-                // 2. Disable buttons inside shadow root
+                // 2. Hide email address text (e.g. dispatch.tltransport@gmail.com or bold email text in modal/header popups)
+                var emailNodes = shadow.querySelectorAll ? shadow.querySelectorAll('b, strong, span, p, div') : [];
+                for (var e = 0; e < emailNodes.length; e++) {
+                  var el = emailNodes[e];
+                  var elText = (el.textContent || '').trim().toLowerCase();
+                  if (elText.includes('@gmail.com') || elText.includes('@tltransport') || elText.includes('dispatch.') || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(elText)) {
+                    if (el.closest && el.closest('[class*="1-click" i], [class*="one-click" i], dialog, modal-container, [role="dialog"], [class*="Send-Emails" i]')) {
+                      el.style.setProperty('display', 'none', 'important');
+                      el.style.setProperty('visibility', 'hidden', 'important');
+                    }
+                  }
+                }
+
+                // 3. Disable envelope icon buttons
                 var items = shadow.querySelectorAll ? shadow.querySelectorAll('button, a, [role="button"], svg, path') : [];
                 for (var j = 0; j < items.length; j++) {
                   var item = items[j];
@@ -785,7 +799,7 @@
                   }
                 }
 
-                // 3. Recurse into children with shadowRoots
+                // 4. Recurse into children with shadowRoots
                 var children = shadow.querySelectorAll ? shadow.querySelectorAll('*') : [];
                 for (var k = 0; k < children.length; k++) {
                   if (children[k].shadowRoot) {
