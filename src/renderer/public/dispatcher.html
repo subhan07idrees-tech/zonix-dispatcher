@@ -634,53 +634,6 @@
       }
       wv.setAttribute('src', initialUrl);
 
-      function showAccessRestrictedAlert(targetUrl) {
-        document.getElementById('alertModalTitle').textContent = 'ACCESS RESTRICTED';
-        document.getElementById('alertModalDesc').textContent = 'Link is not allowed or access restricted. External email sign-in is disabled by system policy.';
-        document.getElementById('alertModal').classList.add('show');
-      }
-
-      function injectEmailBlocker(webviewInstance) {
-        try {
-          const blockerScript = `
-            (function() {
-              if (window.__zonixBlockerInjected) return;
-              window.__zonixBlockerInjected = true;
-
-              document.addEventListener('click', function(e) {
-                var target = e.target;
-                while (target && target !== document.body) {
-                  var text = (target.innerText || target.textContent || '').toUpperCase();
-                  var href = (target.getAttribute && target.getAttribute('href')) || '';
-                  var tagName = (target.tagName || '').toLowerCase();
-                  var svgHtml = target.innerHTML || '';
-                  
-                  var isEnvelopeBtn = (target.matches && (
-                    target.matches('button[aria-label*="email" i]') ||
-                    target.matches('button[title*="email" i]') ||
-                    target.matches('[aria-label*="mail" i]')
-                  )) || (tagName === 'button' && (svgHtml.includes('path') || svgHtml.includes('svg')));
-
-                  if (isEnvelopeBtn ||
-                      text.includes('SIGN IN WITH GOOGLE') || 
-                      text.includes('SIGN IN WITH MICROSOFT') || 
-                      text.includes('SEND EMAILS FASTER WITH 1-CLICK') ||
-                      href.includes('accounts.google.com') ||
-                      href.includes('login.microsoftonline.com')) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.warn('[ZONIX Guard] Envelope icon button click intercepted.');
-                    return false;
-                  }
-                  target = target.parentElement;
-                }
-              }, true);
-            })();
-          `;
-          webviewInstance.executeJavaScript(blockerScript).catch(() => {});
-        } catch (e) {}
-      }
-
       // Lock down navigation and window popups
       wv.addEventListener('will-navigate', (e) => {
         const urlString = e.url;
@@ -689,22 +642,10 @@
         // 1. Block mailto:, tel:, and other non-http protocols from opening apps on system
         if (!urlString.startsWith('http://') && !urlString.startsWith('https://')) {
           e.preventDefault();
-          showAccessRestrictedAlert(urlString);
           return;
         }
 
-        // 2. Block external sign-in providers (Google/Microsoft OAuth) or non-DAT external links
-        if (urlString.includes('accounts.google.com') || 
-            urlString.includes('login.microsoftonline.com') || 
-            (urlString.includes('oauth') && !urlString.includes('one.dat.com')) ||
-            (!urlString.includes('dat.com') && !urlString.includes('thezonix.com'))) {
-          e.preventDefault();
-          console.warn(`[webview] Blocked external navigation: ${urlString}`);
-          showAccessRestrictedAlert(urlString);
-          return;
-        }
-
-        // 3. Block navigation away from search-loads on DAT One
+        // 2. Block navigation away from search-loads on DAT One
         if (urlString.includes('one.dat.com') && 
             !urlString.includes('/search-loads') && 
             !urlString.includes('/loads') && 
@@ -713,10 +654,10 @@
             !urlString.includes('/callback') && 
             !urlString.includes('/oidc')) {
           const currentUrl = wv.getURL();
+          // Only block if we are already inside the authenticated session (not during login flow redirects)
           if (currentUrl && currentUrl.includes('one.dat.com') && !currentUrl.includes('/login') && !currentUrl.includes('/auth')) {
             e.preventDefault();
             console.warn(`[webview] Navigation blocked to preserve search-loads lockdown: ${urlString}`);
-            showAccessRestrictedAlert(urlString);
           }
         }
       });
@@ -725,11 +666,6 @@
       wv.addEventListener('new-window', (e) => {
         e.preventDefault();
         console.warn(`[webview] Blocked opening new window: ${e.url}`);
-        showAccessRestrictedAlert(e.url);
-      });
-
-      wv.addEventListener('dom-ready', () => {
-        injectEmailBlocker(wv);
       });
 
       const tabObj = { id, webview: wv, tabEl, isLoading: true, isInitiallyLoaded: false };
@@ -745,7 +681,6 @@
       });
 
       wv.addEventListener('did-finish-load', () => {
-        injectEmailBlocker(wv);
         tabObj.isLoading = false;
         tabObj.isInitiallyLoaded = true;
         if (id === activeTabId) {
