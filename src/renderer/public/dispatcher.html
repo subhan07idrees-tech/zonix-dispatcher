@@ -716,31 +716,66 @@
 
       function attachLetterboxBlocker(wvInstance) {
         try {
+          wvInstance.insertCSS(`
+            button[aria-label*="email" i],
+            button[aria-label*="mail" i],
+            button[title*="email" i],
+            button[title*="mail" i],
+            [data-testid*="email"],
+            [data-testid*="mail"],
+            a[href^="mailto:"] {
+              pointer-events: none !important;
+              cursor: default !important;
+            }
+
+            div[dialog*="email" i],
+            div[class*="1-click" i],
+            div[class*="one-click" i],
+            [class*="Send-Emails-Faster"] {
+              display: none !important;
+              visibility: hidden !important;
+              opacity: 0 !important;
+              pointer-events: none !important;
+            }
+          `);
+
           const blockerScript = `
             (function() {
               if (window.__zonixLetterboxInjected) return;
               window.__zonixLetterboxInjected = true;
 
-              document.addEventListener('click', function(e) {
+              function disableEnvelopeButtons() {
+                var buttons = document.querySelectorAll('button, a, [role="button"]');
+                for (var i = 0; i < buttons.length; i++) {
+                  var btn = buttons[i];
+                  var aria = (btn.getAttribute('aria-label') || btn.getAttribute('title') || '').toLowerCase();
+                  var svgHtml = btn.innerHTML || '';
+                  if (aria.includes('email') || aria.includes('mail') || svgHtml.includes('envelope') || svgHtml.includes('path')) {
+                    if (!btn.innerText || btn.innerText.trim() === '' || btn.querySelector('svg')) {
+                      btn.style.pointerEvents = 'none';
+                      btn.onclick = function(e) { e.preventDefault(); e.stopPropagation(); return false; };
+                    }
+                  }
+                }
+              }
+
+              disableEnvelopeButtons();
+              var observer = new MutationObserver(disableEnvelopeButtons);
+              if (document.body) {
+                observer.observe(document.body, { childList: true, subtree: true });
+              }
+
+              window.addEventListener('click', function(e) {
                 var target = e.target;
                 while (target && target !== document.body) {
                   var text = (target.innerText || target.textContent || '').toUpperCase();
-                  var href = (target.getAttribute && target.getAttribute('href')) || '';
-                  var tagName = (target.tagName || '').toLowerCase();
-                  var svgHtml = target.innerHTML || '';
-
-                  var isEnvelopeBtn = (target.matches && (
-                    target.matches('button[aria-label*="email" i]') ||
-                    target.matches('button[title*="email" i]') ||
-                    target.matches('[aria-label*="mail" i]')
-                  )) || (tagName === 'button' && (svgHtml.includes('path') || svgHtml.includes('svg')));
-
-                  if (isEnvelopeBtn ||
+                  var aria = (target.getAttribute && (target.getAttribute('aria-label') || target.getAttribute('title') || '')) .toLowerCase();
+                  
+                  if (aria.includes('email') || 
+                      aria.includes('mail') || 
                       text.includes('SIGN IN WITH GOOGLE') || 
                       text.includes('SIGN IN WITH MICROSOFT') || 
-                      text.includes('SEND EMAILS FASTER WITH 1-CLICK') ||
-                      href.includes('accounts.google.com') ||
-                      href.includes('login.microsoftonline.com')) {
+                      text.includes('SEND EMAILS FASTER WITH 1-CLICK')) {
                     e.preventDefault();
                     e.stopPropagation();
                     console.log('[ZONIX Guard] Letterbox button click intercepted silently.');
