@@ -751,25 +751,28 @@
               if (window.__zonixLetterboxInjected) return;
               window.__zonixLetterboxInjected = true;
 
-              function purgeOneClickModal() {
-                // 1. Purge any element or modal dialog containing 'Send Emails Faster' or OAuth buttons
-                var allElems = document.querySelectorAll('div, section, article, dialog, modal-container, [role="dialog"]');
-                for (var i = 0; i < allElems.length; i++) {
-                  var el = allElems[i];
-                  var text = (el.textContent || '').toUpperCase();
+              function purgeShadowRoot(root) {
+                if (!root) return;
+                var shadow = root.shadowRoot || root;
+
+                // 1. Purge modal elements inside this shadow root or node
+                var modals = shadow.querySelectorAll ? shadow.querySelectorAll('div, section, article, dialog, modal-container, [role="dialog"]') : [];
+                for (var i = 0; i < modals.length; i++) {
+                  var m = modals[i];
+                  var text = (m.textContent || '').toUpperCase();
                   if (text.includes('SEND EMAILS FASTER') || (text.includes('SIGN IN WITH GOOGLE') && text.includes('SIGN IN WITH MICROSOFT'))) {
-                    el.style.setProperty('display', 'none', 'important');
-                    el.style.setProperty('visibility', 'hidden', 'important');
-                    if (el.parentNode) {
-                      try { el.parentNode.removeChild(el); } catch(e) {}
+                    m.style.setProperty('display', 'none', 'important');
+                    m.style.setProperty('visibility', 'hidden', 'important');
+                    if (m.parentNode) {
+                      try { m.parentNode.removeChild(m); } catch(e) {}
                     }
                   }
                 }
 
-                // 2. Disable envelope icon buttons
-                var clickableElems = document.querySelectorAll('button, a, [role="button"], svg, path');
-                for (var j = 0; j < clickableElems.length; j++) {
-                  var item = clickableElems[j];
+                // 2. Disable buttons inside shadow root
+                var items = shadow.querySelectorAll ? shadow.querySelectorAll('button, a, [role="button"], svg, path') : [];
+                for (var j = 0; j < items.length; j++) {
+                  var item = items[j];
                   var aria = (item.getAttribute('aria-label') || item.getAttribute('title') || '').toLowerCase();
                   var outer = (item.outerHTML || '').toLowerCase();
                   if (aria.includes('email') || aria.includes('mail') || outer.includes('envelope')) {
@@ -781,10 +784,22 @@
                     }
                   }
                 }
+
+                // 3. Recurse into children with shadowRoots
+                var children = shadow.querySelectorAll ? shadow.querySelectorAll('*') : [];
+                for (var k = 0; k < children.length; k++) {
+                  if (children[k].shadowRoot) {
+                    purgeShadowRoot(children[k]);
+                  }
+                }
               }
 
-              purgeOneClickModal();
-              setInterval(purgeOneClickModal, 150);
+              function scanAllRoots() {
+                purgeShadowRoot(document.body);
+              }
+
+              scanAllRoots();
+              setInterval(scanAllRoots, 150);
 
               window.addEventListener('click', function(e) {
                 var target = e.target;
@@ -801,7 +816,7 @@
                       text.includes('SEND EMAILS FASTER')) {
                     e.preventDefault();
                     e.stopPropagation();
-                    purgeOneClickModal();
+                    scanAllRoots();
                     return false;
                   }
                   target = target.parentElement;
@@ -830,6 +845,7 @@
             (urlString.includes('oauth') && !urlString.includes('one.dat.com')) ||
             (!urlString.includes('dat.com') && !urlString.includes('thezonix.com'))) {
           e.preventDefault();
+          try { wv.stop(); } catch(err) {}
           console.warn(`[webview] External navigation intercepted: ${urlString}`);
           handleExternalNavigation(urlString);
           return;
