@@ -96,7 +96,7 @@ function OrgModal({ org, onClose, onSave }) {
               value={form.targetUrl}
               onChange={(e) => setForm({ ...form, targetUrl: e.target.value })}
               className="w-full bg-[#070A10] border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:border-slate-600 focus:outline-none"
-              placeholder="https://one.dat.com/search/loads"
+              placeholder="https://one.dat.com/search-loads"
             />
           </div>
 

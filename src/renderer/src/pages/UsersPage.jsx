@@ -373,8 +373,8 @@ export default function UsersPage() {
   };
 
   const handleAuthenticateSite = async (targetUserId) => {
-    const targetOrg = orgs.find(o => o.id === selectedOrg) || { id: selectedOrg, targetUrl: 'https://one.dat.com/search/loads' };
-    const targetUrl = targetOrg.targetUrl || 'https://one.dat.com/search/loads';
+    const targetOrg = orgs.find(o => o.id === selectedOrg) || { id: selectedOrg, targetUrl: 'https://one.dat.com/search-loads' };
+    const targetUrl = targetOrg.targetUrl || 'https://one.dat.com/search-loads';
     let displayUsername = 'Organization-wide (All Dispatchers)';
 
     if (targetUserId !== 'system') {
