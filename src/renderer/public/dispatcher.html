@@ -634,6 +634,33 @@
       }
       wv.setAttribute('src', initialUrl);
 
+      wv.addEventListener('dom-ready', async () => {
+        try {
+          const api = window.zonixAPI || window.electronAPI;
+          if (api && api.getSessionLocalStorage) {
+            const rawLsData = await api.getSessionLocalStorage(partition);
+            if (rawLsData && rawLsData !== '{}') {
+              const injectScript = `
+                (function() {
+                  try {
+                    var data = ${JSON.stringify(rawLsData)};
+                    var parsed = typeof data === 'string' ? JSON.parse(data) : data;
+                    for (var k in parsed) {
+                      if (parsed.hasOwnProperty(k)) {
+                        try {
+                          window.localStorage.setItem(k, parsed[k]);
+                        } catch(e) {}
+                      }
+                    }
+                  } catch(err) {}
+                })();
+              `;
+              wv.executeJavaScript(injectScript).catch(() => {});
+            }
+          }
+        } catch (err) {}
+      });
+
       function handleExternalNavigation(targetUrl) {
         const newTab = createTab('about:blank');
         switchTab(newTab.id);

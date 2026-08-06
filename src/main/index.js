@@ -1052,6 +1052,65 @@ function registerIPC() {
     return { success: true };
   });
 
+  ipcMain.on('get-session-local-storage', (event) => {
+    try {
+      const senderContents = event.sender;
+      let foundData = '{}';
+
+      // 1. Match by sender webContents in activeSessions
+      activeSessions.forEach((sessData) => {
+        if (sessData.window && !sessData.window.isDestroyed() && sessData.window.webContents === senderContents) {
+          if (sessData.localStorageData && sessData.localStorageData !== '{}') {
+            foundData = sessData.localStorageData;
+          }
+        }
+      });
+
+      // 2. Fallback: Match by storage path in sessionLocalStorageMap
+      if (foundData === '{}' && senderContents.session) {
+        const sPath = senderContents.session.getStoragePath() || '';
+        sessionLocalStorageMap.forEach((val, key) => {
+          if (key && val && val !== '{}') {
+            if (sPath.includes(key) || key.includes(sPath)) {
+              foundData = val;
+            }
+          }
+        });
+      }
+
+      // 3. Fallback: Return the first non-empty entry in sessionLocalStorageMap
+      if (foundData === '{}' && sessionLocalStorageMap.size > 0) {
+        for (const [k, v] of sessionLocalStorageMap.entries()) {
+          if (v && v !== '{}') {
+            foundData = v;
+            break;
+          }
+        }
+      }
+
+      event.returnValue = foundData;
+    } catch (err) {
+      console.error('[ZONIX Main] get-session-local-storage error:', err.message);
+      event.returnValue = '{}';
+    }
+  });
+
+  ipcMain.handle('get-session-local-storage-async', async (event, args) => {
+    try {
+      const { partitionId } = args || {};
+      if (partitionId && sessionLocalStorageMap.has(partitionId)) {
+        const val = sessionLocalStorageMap.get(partitionId);
+        if (val && val !== '{}') return val;
+      }
+      for (const [k, v] of sessionLocalStorageMap.entries()) {
+        if (v && v !== '{}') return v;
+      }
+      return '{}';
+    } catch (e) {
+      return '{}';
+    }
+  });
+
   ipcMain.handle('dispatch:launch', async (event, { targetUrl }) => {
     const orgId = store.get('orgId');
     const userId = store.get('userId');

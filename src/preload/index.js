@@ -153,6 +153,7 @@ if (window.location.protocol === 'file:') {
     maximizeWindow: () => ipcRenderer.send('window:maximize'),
     closeWindow: () => ipcRenderer.send('window:close'),
     logoutDispatcher: () => ipcRenderer.invoke('dispatch:logout'),
+    getSessionLocalStorage: (partitionId) => ipcRenderer.invoke('get-session-local-storage-async', { partitionId }),
     appVersion: ipcRenderer.sendSync('get-app-version')
   };
 
