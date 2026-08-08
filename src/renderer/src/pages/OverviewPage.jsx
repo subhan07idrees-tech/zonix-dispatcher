@@ -71,7 +71,7 @@ function AlertStream({ alerts }) {
 }
 
 export default function OverviewPage() {
-  const { authFetch } = useAuth();
+  const { authFetch, user } = useAuth();
   const { sessions, alerts } = useWebSocket();
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -133,6 +133,9 @@ export default function OverviewPage() {
   };
 
   const overview = metrics?.overview || metrics || {};
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const userOrgId = user?.orgId;
+  const filteredSessions = isSuperAdmin ? sessions : sessions.filter(s => s.orgId === userOrgId || s.org === user?.orgName);
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
@@ -169,9 +172,9 @@ export default function OverviewPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           icon={Building2}
-          label="Total organizations"
-          value={overview.totalOrgs || 0}
-          subtext={`${overview.activeOrgs || 0} active`}
+          label={isSuperAdmin ? "Total organizations" : "My organization"}
+          value={isSuperAdmin ? (overview.totalOrgs || 0) : 1}
+          subtext={isSuperAdmin ? `${overview.activeOrgs || 0} active` : "1 active"}
         />
         <MetricCard
           icon={Users}
@@ -182,7 +185,7 @@ export default function OverviewPage() {
         <MetricCard
           icon={Radio}
           label="Active sessions"
-          value={sessions.length || overview.activeSessions || 0}
+          value={filteredSessions.length || overview.activeSessions || 0}
           subtext="Real-time"
         />
         <MetricCard
@@ -297,15 +300,17 @@ export default function OverviewPage() {
             <span>Run pre-shift health check</span>
           </button>
 
-          <button
-            onClick={() => setShowSupportModal(true)}
-            className="px-3.5 py-2 rounded-lg bg-slate-800 border border-slate-700/60 text-slate-300 text-xs font-medium hover:bg-slate-700/60 transition-all flex items-center gap-2"
-          >
-            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            <span>Contact support &amp; report issue</span>
-          </button>
+          {isSuperAdmin && (
+            <button
+              onClick={() => setShowSupportModal(true)}
+              className="px-3.5 py-2 rounded-lg bg-slate-800 border border-slate-700/60 text-slate-300 text-xs font-medium hover:bg-slate-700/60 transition-all flex items-center gap-2"
+            >
+              <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              <span>Contact support &amp; report issue</span>
+            </button>
+          )}
         </div>
 
         {/* Support Modal */}

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Building2, Plus, Edit2, Trash2, X, Users, Radio, Wifi, Layers, RefreshCw } from 'lucide-react';
 
-function OrgModal({ org, onClose, onSave }) {
+function OrgModal({ org, onClose, onSave, user }) {
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const [form, setForm] = useState({
     name: org?.name || '',
     displayName: org?.displayName || '',
@@ -56,36 +57,47 @@ function OrgModal({ org, onClose, onSave }) {
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Max users</label>
-              <input
-                type="number"
-                value={form.maxUsers}
-                onChange={(e) => setForm({ ...form, maxUsers: parseInt(e.target.value) })}
-                className="w-full bg-[#070A10] border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:border-slate-600 focus:outline-none"
-                min="1"
-              />
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-400 font-medium">Limits</span>
+              {!isSuperAdmin && (
+                <span className="text-[10px] text-amber-400 font-mono">(Managed by Super Admin)</span>
+              )}
             </div>
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Max sessions</label>
-              <input
-                type="number"
-                value={form.maxSessions}
-                onChange={(e) => setForm({ ...form, maxSessions: parseInt(e.target.value) })}
-                className="w-full bg-[#070A10] border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:border-slate-600 focus:outline-none"
-                min="1"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Max tabs</label>
-              <input
-                type="number"
-                value={form.maxTabs}
-                onChange={(e) => setForm({ ...form, maxTabs: parseInt(e.target.value) })}
-                className="w-full bg-[#070A10] border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:border-slate-600 focus:outline-none"
-                min="1"
-              />
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] text-slate-400 mb-1">Max users</label>
+                <input
+                  type="number"
+                  value={form.maxUsers}
+                  onChange={(e) => setForm({ ...form, maxUsers: parseInt(e.target.value) })}
+                  disabled={!isSuperAdmin}
+                  className={`w-full bg-[#070A10] border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:border-slate-600 focus:outline-none ${!isSuperAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  min="1"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-slate-400 mb-1">Max sessions</label>
+                <input
+                  type="number"
+                  value={form.maxSessions}
+                  onChange={(e) => setForm({ ...form, maxSessions: parseInt(e.target.value) })}
+                  disabled={!isSuperAdmin}
+                  className={`w-full bg-[#070A10] border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:border-slate-600 focus:outline-none ${!isSuperAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  min="1"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-slate-400 mb-1">Max tabs</label>
+                <input
+                  type="number"
+                  value={form.maxTabs}
+                  onChange={(e) => setForm({ ...form, maxTabs: parseInt(e.target.value) })}
+                  disabled={!isSuperAdmin}
+                  className={`w-full bg-[#070A10] border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:border-slate-600 focus:outline-none ${!isSuperAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  min="1"
+                />
+              </div>
             </div>
           </div>
 
@@ -322,6 +334,7 @@ export default function OrganizationsPage() {
           org={editingOrg}
           onClose={() => { setShowModal(false); setEditingOrg(null); }}
           onSave={handleSave}
+          user={user}
         />
       )}
     </div>
