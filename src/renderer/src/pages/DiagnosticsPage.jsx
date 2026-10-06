@@ -2,36 +2,36 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Wifi, WifiOff, RefreshCw,
-  CheckCircle2, XCircle, AlertCircle, User, Database
+  CheckCircle2, XCircle, AlertCircle, User, Database, ShieldAlert, Activity, Key
 } from 'lucide-react';
 
 function StatusBadge({ ok, label }) {
   if (ok === null || ok === undefined) {
     return (
-      <span className="zonix-badge-warning">
-        <AlertCircle className="w-3.5 h-3.5 text-[#B7791F]" />
+      <span className="zonix-badge-warning gap-1.5 font-medium">
+        <AlertCircle className="w-3.5 h-3.5 text-[#B45309]" />
         {label || 'Unknown'}
       </span>
     );
   }
   return ok ? (
-    <span className="zonix-badge-active">
-      <CheckCircle2 className="w-3.5 h-3.5 text-[#2E7D5B]" />
+    <span className="zonix-badge-active gap-1.5 font-medium">
+      <CheckCircle2 className="w-3.5 h-3.5 text-[#047857]" />
       {label || 'Operational'}
     </span>
   ) : (
-    <span className="zonix-badge-error">
-      <XCircle className="w-3.5 h-3.5 text-[#B54747]" />
+    <span className="zonix-badge-error gap-1.5 font-medium">
+      <XCircle className="w-3.5 h-3.5 text-[#B91C1C]" />
       {label || 'Needs Authentication'}
     </span>
   );
 }
 
-function DiagRow({ label, value, valueClass = 'text-[#172033]' }) {
+function DiagMetric({ label, value, valueClass = 'text-[#0F172A]' }) {
   return (
-    <div className="flex items-center justify-between py-2 border-b border-[#D9DEE7] text-xs">
-      <span className="text-[#667085] font-medium">{label}</span>
-      <span className={`font-mono ${valueClass}`}>{value ?? '—'}</span>
+    <div className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg p-3.5 space-y-1">
+      <span className="text-[11px] font-bold text-[#475569] uppercase tracking-wider block">{label}</span>
+      <span className={`text-sm font-mono font-bold block truncate ${valueClass}`}>{value ?? '—'}</span>
     </div>
   );
 }
@@ -56,7 +56,9 @@ export default function DiagnosticsPage() {
         setOrgs(list);
         if (!selectedOrg && list.length > 0) setSelectedOrg(list[0].id);
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error(e);
+    }
   }, [authFetch]);
 
   const fetchDiagnostics = useCallback(async () => {
@@ -142,22 +144,24 @@ export default function DiagnosticsPage() {
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#D9DEE7] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#CBD5E1] pb-4">
         <div>
-          <h2 className="text-xl font-semibold text-[#172033] tracking-tight flex items-center gap-2">
+          <h2 className="text-xl font-bold text-[#0F172A] tracking-tight flex items-center gap-2.5">
             System Diagnostics &amp; Health Audit
-            <span className="zonix-badge-active text-[11px]">Vault Telemetry</span>
+            <span className="zonix-badge-active text-[11px] font-mono">Vault Telemetry</span>
           </h2>
-          <p className="text-xs text-[#667085] mt-1">Real-time session vault, cookie sync integrity, and proxy infrastructure audit</p>
+          <p className="text-xs text-[#475569] mt-1 font-medium">
+            Real-time session vault integrity, cookie synchronization audit, and proxy infrastructure telemetry
+          </p>
         </div>
         <div className="flex items-center gap-3">
           {currentUser?.role === 'SUPER_ADMIN' && orgs.length > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-[#667085]">Org:</span>
+              <span className="text-xs font-bold text-[#475569]">Tenant:</span>
               <select
                 value={selectedOrg}
                 onChange={(e) => setSelectedOrg(e.target.value)}
-                className="zonix-select text-xs py-1 h-[36px]"
+                className="zonix-select text-xs py-1 h-[36px] font-medium"
               >
                 {orgs.map((org) => (
                   <option key={org.id} value={org.id}>
@@ -171,103 +175,110 @@ export default function DiagnosticsPage() {
           <button
             onClick={fetchDiagnostics}
             disabled={loading}
-            className="zonix-btn-secondary"
+            className="zonix-btn-secondary gap-1.5"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-[#667085] ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-[#475569] ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh Audit</span>
           </button>
         </div>
       </div>
 
       {/* Organization overview card */}
-      <div className="zonix-card p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-[#D9DEE7] pb-3.5">
+      <div className="zonix-card p-6 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E2E8F0] pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded bg-[#EFF4FA] border border-[#D9DEE7] text-[#245B9E] flex items-center justify-center font-bold">
-              <Database className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center font-bold">
+              <Database className="w-5 h-5 text-[#1E40AF]" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[#172033]">{orgData?.displayName || selectedOrg}</h3>
-              <p className="text-xs text-[#667085] font-mono mt-0.5">{orgData?.name} // {selectedOrg}</p>
+              <h3 className="text-sm font-bold text-[#0F172A]">{orgData?.displayName || selectedOrg}</h3>
+              <p className="text-xs text-[#64748B] font-mono mt-0.5">{orgData?.name} // {selectedOrg}</p>
             </div>
           </div>
           {lastRefresh && (
-            <span className="text-xs font-mono text-[#667085]">
+            <span className="text-xs font-mono font-medium text-[#475569] bg-[#F1F5F9] px-2.5 py-1 rounded border border-[#CBD5E1]">
               Audited: {lastRefresh.toLocaleTimeString()}
             </span>
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-1">
-          <DiagRow label="Target Load Board URL" value={targetDomain} valueClass="text-[#245B9E] font-bold" />
-          <DiagRow label="Max Sessions Quota" value={`${orgData?.maxSessions || '—'} sessions`} valueClass="text-[#172033]" />
-          <DiagRow label="Max Tab Seats per User" value={`${orgData?.maxTabs || 5} tabs`} valueClass="text-[#172033]" />
-          <DiagRow label="Active Dispatchers Count" value={`${dispatchers.length} dispatchers`} valueClass="text-[#172033] font-bold" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <DiagMetric label="Target Load Board URL" value={targetDomain} valueClass="text-[#1E40AF]" />
+          <DiagMetric label="Max Sessions Quota" value={`${orgData?.maxSessions || '—'} sessions`} />
+          <DiagMetric label="Max Tab Seats per User" value={`${orgData?.maxTabs || 5} tabs`} />
+          <DiagMetric label="Registered Dispatchers" value={`${dispatchers.length} operators`} valueClass="text-[#047857]" />
         </div>
       </div>
 
       {/* Dispatcher cookie status */}
       <div className="zonix-card p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-[#D9DEE7] pb-3.5">
-          <h3 className="text-xs font-semibold text-[#172033] uppercase font-mono tracking-wider">
-            Dispatcher Session Vault Status <span className="text-[#667085] font-normal">({targetDomain})</span>
-          </h3>
+        <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
+          <div className="flex items-center gap-2">
+            <Activity className="w-4 h-4 text-[#1E40AF]" />
+            <h3 className="text-xs font-bold text-[#0F172A] uppercase font-mono tracking-wider">
+              Dispatcher Session Vault Audit <span className="text-[#64748B] font-normal font-sans">({targetDomain})</span>
+            </h3>
+          </div>
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-xs text-[#667085]">
-            <div className="w-5 h-5 border-2 border-[#245B9E] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            Auditing dispatcher session vaults...
+          <div className="text-center py-12 text-xs text-[#475569]">
+            <div className="w-6 h-6 border-2 border-[#1E40AF] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="font-medium">Auditing dispatcher session vaults...</p>
           </div>
         ) : dispatchers.length === 0 ? (
-          <p className="text-xs text-[#667085] text-center py-8">No dispatchers registered in this organization.</p>
+          <p className="text-xs text-[#64748B] text-center py-8">No dispatchers registered in this organization.</p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3.5">
             {dispatchers.map(u => {
               const cs = cookieStatus[u.id];
               const hasCookies = cs?.hasData && cs.cookieCount > 0;
 
               return (
-                <div key={u.id} className="bg-[#F8FAFC] border border-[#D9DEE7] rounded-md p-4 space-y-3">
+                <div key={u.id} className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg p-4 space-y-3 hover:border-[#94A3B8] transition-colors">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <User className="w-4 h-4 text-[#667085]" />
-                      <span className="text-xs font-mono text-[#172033] font-bold">{u.username}</span>
+                      <div className="w-7 h-7 rounded-md bg-white border border-[#CBD5E1] flex items-center justify-center text-[#475569]">
+                        <User className="w-4 h-4 text-[#1E40AF]" />
+                      </div>
+                      <span className="text-xs font-mono text-[#0F172A] font-bold">{u.username}</span>
                       <span className={`zonix-badge ${
                         u.status === 'ACTIVE' ? 'zonix-badge-active' : 'zonix-badge-warning'
                       }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${u.status === 'ACTIVE' ? 'bg-[#2E7D5B]' : 'bg-[#B7791F]'}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${u.status === 'ACTIVE' ? 'bg-[#047857]' : 'bg-[#B45309]'}`} />
                         {u.status === 'ACTIVE' ? 'Active' : u.status}
                       </span>
                     </div>
                     <StatusBadge ok={hasCookies} label={hasCookies ? `${cs.cookieCount} Cookies Synced` : 'Needs Authentication'} />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-white rounded-md p-3 space-y-1 border border-[#D9DEE7]">
-                      <div className="text-[11px] text-[#667085] font-medium">Synced Cookies</div>
-                      <div className={`text-sm font-mono font-bold ${hasCookies ? 'text-[#2E7D5B]' : 'text-[#B54747]'}`}>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="bg-white rounded-lg p-3 space-y-1 border border-[#CBD5E1]">
+                      <div className="text-[11px] text-[#475569] font-bold">Synced Cookies</div>
+                      <div className={`text-base font-mono font-bold ${hasCookies ? 'text-[#047857]' : 'text-[#B91C1C]'}`}>
                         {cs ? cs.cookieCount : '—'}
                       </div>
                     </div>
-                    <div className="bg-white rounded-md p-3 space-y-1 border border-[#D9DEE7]">
-                      <div className="text-[11px] text-[#667085] font-medium">Local Storage Data</div>
-                      <div className={`text-sm font-mono font-bold ${cs?.hasLocalStorage ? 'text-[#245B9E]' : 'text-[#667085]'}`}>
+                    <div className="bg-white rounded-lg p-3 space-y-1 border border-[#CBD5E1]">
+                      <div className="text-[11px] text-[#475569] font-bold">Local Storage Vault</div>
+                      <div className={`text-base font-mono font-bold ${cs?.hasLocalStorage ? 'text-[#1E40AF]' : 'text-[#64748B]'}`}>
                         {cs?.hasLocalStorage ? 'Synced' : 'None'}
                       </div>
                     </div>
-                    <div className="bg-white rounded-md p-3 space-y-1 border border-[#D9DEE7]">
-                      <div className="text-[11px] text-[#667085] font-medium">Last Session Capture</div>
-                      <div className="text-xs font-mono text-[#172033] font-semibold truncate">
-                        {cs?.capturedAt ? new Date(cs.capturedAt).toLocaleString() : '—'}
+                    <div className="bg-white rounded-lg p-3 space-y-1 border border-[#CBD5E1]">
+                      <div className="text-[11px] text-[#475569] font-bold">Last Vault Capture</div>
+                      <div className="text-xs font-mono text-[#0F172A] font-semibold truncate pt-1">
+                        {cs?.capturedAt ? new Date(cs.capturedAt).toLocaleString() : 'Never Captured'}
                       </div>
                     </div>
                   </div>
 
                   {!hasCookies && (
-                    <div className="flex items-center gap-2 text-xs text-[#B7791F] pt-1 font-sans bg-[#FEF3C7] border border-[#FDE68A] p-2.5 rounded-md">
-                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                      <span>Go to <strong>User Registry</strong> ➔ click the key icon next to this dispatcher to capture fresh session cookies.</span>
+                    <div className="flex items-center gap-2.5 text-xs text-[#B45309] font-medium bg-[#FFFBEB] border border-[#FDE68A] p-3 rounded-lg">
+                      <Key className="w-4 h-4 flex-shrink-0 text-[#B45309]" />
+                      <span>
+                        Missing authentication cookies. Open <strong>User Registry</strong> and click the <strong>Authenticate (Key)</strong> button to capture fresh session cookies for this dispatcher.
+                      </span>
                     </div>
                   )}
                 </div>
@@ -279,31 +290,33 @@ export default function DiagnosticsPage() {
 
       {/* Proxy nodes list */}
       <div className="zonix-card p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-[#D9DEE7] pb-3.5">
-          <h3 className="text-xs font-semibold text-[#172033] uppercase font-mono tracking-wider">
+        <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
+          <h3 className="text-xs font-bold text-[#0F172A] uppercase font-mono tracking-wider">
             Proxy Node Infrastructure Status
           </h3>
         </div>
         {proxies.length === 0 ? (
-          <p className="text-xs text-[#667085] text-center py-6">No proxy nodes configured for this organization.</p>
+          <p className="text-xs text-[#64748B] text-center py-6">No proxy nodes configured for this organization.</p>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {proxies.map(p => (
-              <div key={p.id} className="bg-[#F8FAFC] border border-[#D9DEE7] rounded-md p-3 flex items-center justify-between text-xs">
+              <div key={p.id} className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg p-3.5 flex items-center justify-between text-xs hover:border-[#94A3B8] transition-colors">
                 <div className="flex items-center gap-3">
-                  {p.status === 'ACTIVE'
-                    ? <Wifi className="w-4 h-4 text-[#2E7D5B]" />
-                    : <WifiOff className="w-4 h-4 text-[#667085]" />}
+                  <div className="w-8 h-8 rounded-lg bg-white border border-[#CBD5E1] flex items-center justify-center">
+                    {p.status === 'ACTIVE'
+                      ? <Wifi className="w-4 h-4 text-[#047857]" />
+                      : <WifiOff className="w-4 h-4 text-[#64748B]" />}
+                  </div>
                   <div>
-                    <div className="font-mono text-[#172033] font-bold">{p.host}:{p.port}</div>
-                    {p.username && (
-                      <div className="font-mono text-[#667085] text-[11px]">User: {p.username}</div>
-                    )}
+                    <div className="font-mono text-[#0F172A] font-bold">{p.host}:{p.port}</div>
+                    <div className="font-mono text-[#475569] text-[11px] mt-0.5">
+                      {p.name} {p.username ? `• user: ${p.username}` : ''}
+                    </div>
                   </div>
                 </div>
                 <span className="zonix-badge-active">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D5B]" />
-                  {p.status === 'ACTIVE' ? 'Active Node' : p.status}
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#047857]" />
+                  {p.status === 'ACTIVE' ? 'Active' : p.status}
                 </span>
               </div>
             ))}

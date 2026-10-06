@@ -3,41 +3,45 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #F5F7FA;
+  --bg-primary: #F8FAFC;
   --bg-surface: #FFFFFF;
-  --bg-sidebar: #172033;
-  --bg-sidebar-hover: #1F2937;
-  --bg-sidebar-active: #243048;
+  --bg-sidebar: #0F172A;
+  --bg-sidebar-hover: #1E293B;
+  --bg-sidebar-active: #1E293B;
 
-  --border-color: #D9DEE7;
-  --border-subtle: #E5E9F0;
+  --border-color: #CBD5E1;
+  --border-subtle: #E2E8F0;
 
-  --text-primary: #172033;
-  --text-secondary: #667085;
-  --text-muted: #98A2B3;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
   --text-white: #FFFFFF;
 
-  --primary: #245B9E;
-  --primary-hover: #1D4B84;
-  --primary-light: #EFF4FA;
+  --primary: #1E40AF;
+  --primary-hover: #1D4ED8;
+  --primary-light: #EFF6FF;
 
-  --success: #2E7D5B;
-  --success-bg: #E8F5E9;
+  --success: #047857;
+  --success-bg: #ECFDF5;
+  --success-border: #A7F3D0;
 
-  --warning: #B7791F;
-  --warning-bg: #FEF3C7;
+  --warning: #B45309;
+  --warning-bg: #FFFBEB;
+  --warning-border: #FDE68A;
 
-  --danger: #B54747;
-  --danger-bg: #FEE2E2;
+  --danger: #B91C1C;
+  --danger-bg: #FEF2F2;
+  --danger-border: #FECACA;
 
-  --info: #2563EB;
+  --info: #1D4ED8;
   --info-bg: #EFF6FF;
+  --info-border: #BFDBFE;
 }
 
 @layer base {
   * {
     scrollbar-width: thin;
-    scrollbar-color: #CBD5E1 #F1F5F9;
+    scrollbar-color: #CBD5E1 #F8FAFC;
   }
 
   *::-webkit-scrollbar {
@@ -46,7 +50,7 @@
   }
 
   *::-webkit-scrollbar-track {
-    background: #F1F5F9;
+    background: #F8FAFC;
   }
 
   *::-webkit-scrollbar-thumb {
@@ -59,101 +63,198 @@
   }
 
   body {
-    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background-color: #F5F7FA;
-    color: #172033;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background-color: #F8FAFC;
+    color: #0F172A;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
   }
 
   ::selection {
-    background-color: rgba(36, 91, 158, 0.15);
-    color: #245B9E;
+    background-color: rgba(30, 64, 175, 0.15);
+    color: #1E40AF;
   }
 }
 
 @layer components {
-  /* Enterprise Cards & Containers */
+  /* Enterprise Cards */
   .zonix-card {
-    @apply bg-white border border-[#D9DEE7] rounded-lg shadow-sm transition-all duration-150;
+    background-color: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.05);
+    transition: all 0.15s ease-in-out;
   }
 
   .zonix-card-hover {
-    @apply zonix-card hover:border-[#B0BCCB] hover:shadow;
+    @apply zonix-card hover:border-[#94A3B8] hover:shadow-md;
   }
 
-  .zonix-glass-panel {
-    @apply bg-white border border-[#D9DEE7] rounded-lg shadow-md;
+  .zonix-card-header {
+    background-color: #F8FAFC;
+    border-bottom: 1px solid #E2E8F0;
+    padding: 12px 16px;
   }
 
-  /* Enterprise Form Elements */
+  /* Enterprise Form Inputs */
   .zonix-input {
-    @apply bg-white border border-[#D9DEE7] rounded-md px-3 py-2 text-sm text-[#172033] 
-           focus:outline-none focus:border-[#245B9E] focus:ring-2 focus:ring-[#245B9E]/20
-           placeholder:text-[#98A2B3] transition-all font-sans h-[38px];
+    background-color: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 6px;
+    padding: 0 12px;
+    font-size: 13px;
+    color: #0F172A;
+    height: 38px;
+    font-family: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .zonix-input:focus {
+    outline: none;
+    border-color: #1E40AF;
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15);
+  }
+
+  .zonix-input::placeholder {
+    color: #94A3B8;
   }
 
   .zonix-select {
-    @apply bg-white border border-[#D9DEE7] rounded-md px-3 py-2 text-sm text-[#172033] 
-           focus:outline-none focus:border-[#245B9E] focus:ring-2 focus:ring-[#245B9E]/20
-           transition-all font-sans h-[38px];
+    background-color: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 6px;
+    padding: 0 12px;
+    font-size: 13px;
+    color: #0F172A;
+    height: 38px;
+    font-family: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .zonix-select:focus {
+    outline: none;
+    border-color: #1E40AF;
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15);
   }
 
   /* Enterprise Buttons */
   .zonix-btn {
-    @apply px-4 py-2 rounded-md font-medium text-xs transition-all duration-150 
-           disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] select-none flex items-center justify-center gap-2 h-[36px];
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 14px;
+    height: 36px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    transition: all 0.15s ease-in-out;
+  }
+
+  .zonix-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
+  .zonix-btn:active:not(:disabled) {
+    transform: translateY(1px);
   }
 
   .zonix-btn-primary {
-    @apply zonix-btn bg-[#245B9E] text-white font-semibold shadow-sm
-           hover:bg-[#1D4B84];
+    @apply zonix-btn;
+    background-color: #1E40AF;
+    color: #FFFFFF;
+    border: 1px solid #1D4ED8;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  }
+
+  .zonix-btn-primary:hover:not(:disabled) {
+    background-color: #1D4ED8;
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.12);
   }
 
   .zonix-btn-secondary {
-    @apply zonix-btn bg-white text-[#172033] border border-[#D9DEE7] shadow-sm
-           hover:bg-[#F8FAFC] hover:border-[#C0C8D6];
+    @apply zonix-btn;
+    background-color: #FFFFFF;
+    color: #0F172A;
+    border: 1px solid #CBD5E1;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
   }
 
-  .zonix-btn-cyan {
-    @apply zonix-btn bg-[#245B9E] text-white font-semibold shadow-sm
-           hover:bg-[#1D4B84];
+  .zonix-btn-secondary:hover:not(:disabled) {
+    background-color: #F8FAFC;
+    border-color: #94A3B8;
   }
 
   .zonix-btn-danger {
-    @apply zonix-btn bg-[#FEE2E2] text-[#B54747] border border-[#FCA5A5]
-           hover:bg-[#FCA5A5]/25 hover:text-[#991B1B];
+    @apply zonix-btn;
+    background-color: #FEF2F2;
+    color: #B91C1C;
+    border: 1px solid #FECACA;
+  }
+
+  .zonix-btn-danger:hover:not(:disabled) {
+    background-color: #FEE2E2;
+    border-color: #FCA5A5;
   }
 
   .zonix-btn-ghost {
-    @apply zonix-btn bg-transparent text-[#667085] border border-transparent
-           hover:bg-[#F1F5F9] hover:text-[#172033];
+    @apply zonix-btn;
+    background-color: transparent;
+    color: #475569;
+    border: 1px solid transparent;
+  }
+
+  .zonix-btn-ghost:hover:not(:disabled) {
+    background-color: #F1F5F9;
+    color: #0F172A;
   }
 
   /* Enterprise Badges */
   .zonix-badge {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.4;
+    border: 1px solid transparent;
   }
 
   .zonix-badge-active {
-    @apply zonix-badge bg-[#E8F5E9] text-[#2E7D5B] border-[#C8E6C9];
-  }
-
-  .zonix-badge-error {
-    @apply zonix-badge bg-[#FEE2E2] text-[#B54747] border-[#FCA5A5];
+    background-color: #ECFDF5;
+    color: #047857;
+    border-color: #A7F3D0;
   }
 
   .zonix-badge-warning {
-    @apply zonix-badge bg-[#FEF3C7] text-[#B7791F] border-[#FDE68A];
+    background-color: #FFFBEB;
+    color: #B45309;
+    border-color: #FDE68A;
+  }
+
+  .zonix-badge-error {
+    background-color: #FEF2F2;
+    color: #B91C1C;
+    border-color: #FECACA;
   }
 
   .zonix-badge-cyan {
-    @apply zonix-badge bg-[#EFF6FF] text-[#2563EB] border-[#BFDBFE];
+    background-color: #EFF6FF;
+    color: #1D4ED8;
+    border-color: #BFDBFE;
   }
 
   .font-mono {
-    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
   }
 }
 

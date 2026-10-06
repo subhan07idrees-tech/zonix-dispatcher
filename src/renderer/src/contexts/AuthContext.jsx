@@ -188,49 +188,42 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={value}>
       {children}
       {dialog && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 select-none animate-[fadeIn_0.15s_ease-out]">
-          <div className="zonix-card max-w-md w-full border border-zonix-border/80 p-6 shadow-2xl bg-zonix-surface flex flex-col relative animate-[scaleIn_0.2s_ease-out]">
-            
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[9999] p-4 select-none animate-fadeIn">
+          <div className="bg-white border border-[#CBD5E1] rounded-lg max-w-md w-full p-6 shadow-xl flex flex-col relative animate-fadeIn">
             {/* Header / Title */}
-            <div className="flex items-start gap-3.5 mb-4">
+            <div className="flex items-start gap-3.5 mb-3">
               <div className="flex-shrink-0 mt-0.5">
-                {dialog.variant === 'success' && <CheckCircle2 className="w-5 h-5 text-green-400" />}
-                {dialog.variant === 'error' && <AlertCircle className="w-5 h-5 text-zonix-crimson" />}
-                {dialog.variant === 'warning' && <AlertTriangle className="w-5 h-5 text-yellow-500" />}
-                {dialog.variant === 'info' && <Info className="w-5 h-5 text-zonix-cyan" />}
+                {dialog.variant === 'success' && <CheckCircle2 className="w-5 h-5 text-[#047857]" />}
+                {dialog.variant === 'error' && <AlertCircle className="w-5 h-5 text-[#B91C1C]" />}
+                {dialog.variant === 'warning' && <AlertTriangle className="w-5 h-5 text-[#B45309]" />}
+                {dialog.variant === 'info' && <Info className="w-5 h-5 text-[#1E40AF]" />}
               </div>
               <div className="flex-1">
-                <h3 className="text-xs font-bold tracking-wider text-zonix-text uppercase font-mono">
+                <h3 className="text-sm font-bold text-[#0F172A]">
                   {dialog.title}
                 </h3>
-                <div className="text-xs text-zonix-text-dim mt-2 leading-relaxed font-mono whitespace-pre-line">
+                <div className="text-xs text-[#475569] mt-2 leading-relaxed whitespace-pre-line">
                   {dialog.message}
                 </div>
               </div>
             </div>
 
             {/* Actions Footer */}
-            <div className="flex justify-end gap-2.5 mt-5">
+            <div className="flex justify-end gap-2.5 mt-5 pt-3 border-t border-[#E2E8F0]">
               {dialog.type === 'confirm' && (
                 <button
                   onClick={dialog.onCancel}
-                  className="zonix-btn-ghost text-xs font-mono py-1.5 px-4"
+                  className="zonix-btn-secondary text-xs h-[34px] px-3.5"
                 >
-                  CANCEL
+                  Cancel
                 </button>
               )}
               <button
                 onClick={dialog.onConfirm}
-                className={`text-xs font-mono py-1.5 px-5 rounded font-bold border transition-all ${
-                  dialog.variant === 'error'
-                    ? 'bg-zonix-crimson/15 border-zonix-crimson/30 hover:bg-zonix-crimson/25 text-zonix-crimson shadow-[0_0_8px_rgba(239,68,68,0.2)]'
-                    : dialog.variant === 'success'
-                    ? 'bg-green-500/10 border-green-500/30 hover:bg-green-500/25 text-green-400'
-                    : 'bg-zonix-cyan/15 border-zonix-cyan/30 hover:bg-zonix-cyan/25 text-zonix-cyan shadow-[0_0_8px_rgba(0,240,255,0.15)]'
-                }`}
+                className={dialog.variant === 'error' ? 'zonix-btn-danger text-xs h-[34px] px-4' : 'zonix-btn-primary text-xs h-[34px] px-4'}
                 autoFocus
               >
-                CONFIRM
+                Confirm
               </button>
             </div>
           </div>

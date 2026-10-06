@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ZONIX</title>
+  <title>ZONIX - System Administration Gateway</title>
   <style>
     * {
       margin: 0;
@@ -11,9 +11,9 @@
       box-sizing: border-box;
     }
     body {
-      background: #090A0F;
-      color: #f3f4f6;
-      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      background: #F1F5F9;
+      color: #0F172A;
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
       height: 100vh;
       display: flex;
       align-items: center;
@@ -26,215 +26,278 @@
       top: 0;
       left: 0;
       width: 100%;
-      height: 36px;
-      background: #090A0F;
+      height: 38px;
+      background: #FFFFFF;
       display: flex;
       align-items: center;
-      padding: 0 0 0 16px;
+      padding: 0 0 0 14px;
       -webkit-app-region: drag;
       justify-content: space-between;
-      border-bottom: 1px solid #1E2638;
+      border-bottom: 1px solid #E2E8F0;
     }
-    .title-bar-logo {
-      width: 16px;
-      height: 16px;
-      object-fit: contain;
+    .title-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .title-bar-badge {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      background: #172033;
+      color: #FFFFFF;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: monospace;
     }
     .title-bar-text {
       font-size: 12px;
-      font-weight: 600;
-      color: #9ca3af;
-      font-family: system-ui, sans-serif;
+      font-weight: 700;
+      color: #1E293B;
       letter-spacing: 0.5px;
+    }
+    .title-bar-ver {
+      font-size: 10px;
+      color: #64748B;
+      background: #F1F5F9;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid #E2E8F0;
+      font-family: monospace;
     }
     .window-controls {
       display: flex;
-      margin-left: auto;
       height: 100%;
       -webkit-app-region: no-drag;
     }
     .win-btn {
-      width: 46px;
-      height: 36px;
+      width: 44px;
+      height: 38px;
       background: transparent;
       border: none;
-      color: #9ca3af;
+      color: #64748B;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: background-color 0.2s, color 0.2s;
+      transition: background-color 0.15s, color 0.15s;
     }
     .win-btn:hover {
-      background: #1b2336;
-      color: #ffffff;
+      background: #F1F5F9;
+      color: #0F172A;
     }
     .win-btn-close:hover {
-      background: #ef4444;
-      color: #ffffff;
+      background: #DC2626;
+      color: #FFFFFF;
     }
     .card {
       width: 100%;
-      max-width: 440px;
-      padding: 40px;
-      background: #0D0E15;
-      border: 1px solid #1E2638;
-      border-radius: 16px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      max-width: 420px;
+      padding: 32px 36px;
+      background: #FFFFFF;
+      border: 1px solid #D9DEE7;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 10px 25px -5px rgba(15, 23, 42, 0.08);
       text-align: center;
-      margin-top: 36px;
+      margin-top: 24px;
+    }
+    .brand-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 24px;
     }
     .logo-container {
-      width: 64px;
-      height: 64px;
-      background: #090A0F;
-      border: 1px solid #1E2638;
-      border-radius: 12px;
+      width: 48px;
+      height: 48px;
+      background: #172033;
+      border: 1px solid #0F172A;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 16px auto;
-      box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(23, 32, 51, 0.15);
     }
-    .logo-img {
-      width: 40px;
-      height: 40px;
-      object-fit: contain;
+    .logo-container span {
+      color: #FFFFFF;
+      font-size: 20px;
+      font-weight: 800;
+      font-family: monospace;
     }
     .title {
-      font-size: 24px;
-      font-weight: 700;
-      color: #ffffff;
-      margin-bottom: 6px;
+      font-size: 20px;
+      font-weight: 800;
+      color: #0F172A;
       letter-spacing: 0.5px;
+      margin-bottom: 3px;
     }
     .subtitle {
-      font-size: 13px;
-      color: #9ca3af;
-      margin-bottom: 32px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #64748B;
     }
     .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       text-align: left;
     }
     .form-group label {
-      display: block;
-      font-size: 13px;
-      font-weight: 500;
-      color: #9ca3af;
-      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 12px;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+    .form-group label .hint {
+      font-size: 11px;
+      font-weight: 400;
+      color: #94A3B8;
     }
     .form-group input {
       width: 100%;
-      padding: 12px 14px;
-      background: #1b2336;
-      border: 1px solid #222d42;
-      border-radius: 8px;
-      color: #f3f4f6;
-      font-size: 14px;
+      height: 38px;
+      padding: 0 12px;
+      background: #FFFFFF;
+      border: 1px solid #CBD5E1;
+      border-radius: 6px;
+      color: #0F172A;
+      font-size: 13px;
+      font-family: inherit;
       outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
     .form-group input:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+      border-color: #245B9E;
+      box-shadow: 0 0 0 3px rgba(36, 91, 158, 0.15);
     }
     .form-group input::placeholder {
-      color: #4b5563;
+      color: #94A3B8;
+    }
+    .password-wrapper {
+      position: relative;
+    }
+    .password-wrapper input {
+      padding-right: 38px !important;
+    }
+    .password-toggle {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      color: #64748B;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 4px;
+      transition: color 0.15s, background-color 0.15s;
+    }
+    .password-toggle:hover {
+      color: #0F172A;
+      background: #F1F5F9;
     }
     .remember-me {
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       text-align: left;
     }
     .remember-me input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      accent-color: #3b82f6;
+      width: 15px;
+      height: 15px;
+      accent-color: #245B9E;
       cursor: pointer;
     }
     .remember-me label {
-      font-size: 13px;
-      color: #9ca3af;
+      font-size: 12px;
+      color: #475569;
       cursor: pointer;
+      user-select: none;
     }
     .btn {
       width: 100%;
-      padding: 12px;
-      background: #3b82f6;
-      border: none;
-      border-radius: 8px;
-      color: #ffffff;
-      font-size: 14px;
+      height: 40px;
+      background: #245B9E;
+      border: 1px solid #1D4B84;
+      border-radius: 6px;
+      color: #FFFFFF;
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      transition: background-color 0.2s, transform 0.1s;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background-color 0.15s, box-shadow 0.15s, transform 0.05s;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
     }
     .btn:hover {
-      background: #2563eb;
+      background: #1D4B84;
     }
     .btn:active {
-      transform: scale(0.98);
+      transform: translateY(1px);
     }
     .btn:disabled {
-      opacity: 0.6;
+      opacity: 0.65;
       cursor: not-allowed;
+      transform: none;
     }
     .error {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 20px;
-      font-size: 13px;
-      color: #f87171;
+      background: #FEF2F2;
+      border: 1px solid #FCA5A5;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      color: #991B1B;
       display: none;
       text-align: left;
+      line-height: 1.4;
     }
     .error.visible {
       display: block;
     }
-    .footer {
+    .footer-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 22px;
+      padding-top: 14px;
+      border-top: 1px solid #E2E8F0;
       font-size: 11px;
-      color: #4b5563;
-      margin-top: 24px;
+      color: #64748B;
+    }
+    .security-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: #059669;
+      font-weight: 500;
+    }
+    .security-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #059669;
     }
     .spinner {
       display: inline-block;
       width: 14px;
       height: 14px;
-      border: 2px solid #ffffff;
+      border: 2px solid #FFFFFF;
       border-top-color: transparent;
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
-      vertical-align: middle;
-      margin-right: 8px;
-    }
-    .password-wrapper {
-      position: relative;
-    }
-    .password-toggle {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: transparent;
-      border: none;
-      color: #4b5563;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      padding: 4px;
-      transition: color 0.2s;
-    }
-    .password-toggle:hover {
-      color: #9ca3af;
-    }
-    .password-wrapper input {
-      padding-right: 40px !important;
     }
     @keyframes spin {
       to { transform: rotate(360deg); }
@@ -243,83 +306,105 @@
 </head>
 <body>
   <div class="title-bar">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <img src="./logo.png" alt="ZONIX" class="title-bar-logo">
+    <div class="title-bar-left">
+      <div class="title-bar-badge">Z</div>
       <span class="title-bar-text">ZONIX</span>
+      <span class="title-bar-ver" id="appVerTag">v1.8.17</span>
     </div>
     <div class="window-controls">
-      <button class="win-btn" type="button" onclick="api.minimizeWindow()">
+      <button class="win-btn" type="button" onclick="api.minimizeWindow()" title="Minimize">
         <svg viewBox="0 0 10 10" width="10" height="10"><path d="M0 5h10v1H0z" fill="currentColor"/></svg>
       </button>
-      <button class="win-btn win-btn-close" type="button" onclick="api.closeWindow()">
+      <button class="win-btn win-btn-close" type="button" onclick="api.closeWindow()" title="Close">
         <svg viewBox="0 0 10 10" width="10" height="10"><path d="M0 0l10 10M10 0L0 10" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
       </button>
     </div>
   </div>
+
   <div class="card">
-    <div class="logo-container">
-      <img src="./logo.png" alt="ZONIX" class="logo-img" />
+    <div class="brand-header">
+      <div class="logo-container">
+        <span>Z</span>
+      </div>
+      <h1 class="title">ZONIX Console</h1>
+      <p class="subtitle">System Control & Administration Gateway</p>
     </div>
-    <h1 class="title">ZONIX</h1>
-    <p class="subtitle">Secure dispatcher gateway</p>
 
     <div id="error" class="error"></div>
 
     <form id="authForm">
       <div class="form-group">
-        <label>Organization ID</label>
-        <input type="text" id="orgId" placeholder="Your organization name">
+        <label>
+          <span>Organization ID</span>
+          <span class="hint">Blank for Super Admin</span>
+        </label>
+        <input type="text" id="orgId" placeholder="e.g. alpha-team" autocomplete="organization">
       </div>
       <div class="form-group">
-        <label>Username / Email</label>
-        <input type="text" id="userId" placeholder="you@example.com" required>
+        <label>
+          <span>Username or Email</span>
+        </label>
+        <input type="text" id="userId" placeholder="admin or superadmin" required autocomplete="username">
       </div>
       <div class="form-group">
-        <label>Password</label>
+        <label>
+          <span>Password</span>
+        </label>
         <div class="password-wrapper">
-          <input type="password" id="password" placeholder="••••••••" required>
+          <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
           <button type="button" class="password-toggle" id="togglePasswordBtn" title="Show password">
-            <svg id="eyeIcon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <svg id="eyeIcon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
           </button>
         </div>
       </div>
       
       <div class="remember-me">
         <input type="checkbox" id="rememberMe">
-        <label for="rememberMe">Remember me</label>
+        <label for="rememberMe">Remember credentials on this workstation</label>
       </div>
 
-      <button type="submit" class="btn" id="submitBtn">Sign In</button>
+      <button type="submit" class="btn" id="submitBtn">
+        <span>Sign In to Console</span>
+      </button>
     </form>
 
-    <div class="footer">Secure connection over HTTPS</div>
+    <div class="footer-meta">
+      <span class="security-tag">
+        <span class="security-dot"></span>
+        Encrypted TLS Gateway
+      </span>
+      <span>Enterprise Multi-Tenant</span>
+    </div>
   </div>
 
   <script>
     const api = window.zonixAPI;
 
-    // Pre-populate remembered credentials on load
     window.addEventListener('DOMContentLoaded', async () => {
-      // Handle session expiration parameter check dynamically
+      try {
+        if (api && api.appVersion) {
+          document.getElementById('appVerTag').textContent = 'v' + api.appVersion;
+        }
+      } catch (e) {}
+
       const params = new URLSearchParams(window.location.search);
       const errorParam = params.get('error') || (window.location.hash ? window.location.hash.substring(1) : '');
       if (errorParam === 'session_expired') {
         const errorEl = document.getElementById('error');
-        errorEl.innerHTML = `
-          <div style="font-weight: 700; margin-bottom: 4px; color: #f87171; letter-spacing: 0.5px;">🛡️ SESSION EXPIRED</div>
-          You have been logged out because this account was logged into on another computer.
-        `;
+        errorEl.innerHTML = `<strong>SESSION EXPIRED:</strong> Your credentials were authenticated on another workstation. Please sign in again.`;
         errorEl.classList.add('visible');
       }
 
       try {
-        const rememberMe = await api.getConfig('rememberMe');
-        if (rememberMe) {
-          document.getElementById('rememberMe').checked = true;
-          const savedOrg = await api.getConfig('rememberedOrgId');
-          const savedUser = await api.getConfig('rememberedUserId');
-          if (savedOrg) document.getElementById('orgId').value = savedOrg;
-          if (savedUser) document.getElementById('userId').value = savedUser;
+        if (api && api.getConfig) {
+          const rememberMe = await api.getConfig('rememberMe');
+          if (rememberMe) {
+            document.getElementById('rememberMe').checked = true;
+            const savedOrg = await api.getConfig('rememberedOrgId');
+            const savedUser = await api.getConfig('rememberedUserId');
+            if (savedOrg) document.getElementById('orgId').value = savedOrg;
+            if (savedUser) document.getElementById('userId').value = savedUser;
+          }
         }
       } catch (err) {
         console.error('[Auth] Failed to load remembered credentials:', err);
@@ -338,25 +423,24 @@
       const rememberMe = document.getElementById('rememberMe').checked;
 
       if (!userId || !password) {
-        errorEl.textContent = 'User ID and Password are required';
+        errorEl.textContent = 'Username and password are required.';
         errorEl.classList.add('visible');
         return;
       }
 
       if (!orgId && userId !== 'superadmin') {
-        errorEl.textContent = 'Organization ID required for standard users';
+        errorEl.textContent = 'Organization ID is required for organization administrators and dispatchers. (Only superadmin can leave it empty).';
         errorEl.classList.add('visible');
         return;
       }
 
-      btn.innerHTML = '<span class="spinner"></span>Signing In...';
+      btn.innerHTML = '<span class="spinner"></span><span>Authenticating...</span>';
       btn.disabled = true;
       errorEl.classList.remove('visible');
 
       try {
         const result = await api.login({ orgId, userId, password });
         if (result.success) {
-          // Persist or clear credentials
           if (rememberMe) {
             await api.setConfig('rememberMe', true);
             await api.setConfig('rememberedOrgId', orgId);
@@ -370,26 +454,25 @@
           api.setConfig('orgId', result.orgId);
           api.setConfig('userId', userId);
           document.body.innerHTML = `
-            <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0b0f19;color:#3b82f6;font-family:system-ui,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.5px;">
-              <span class="spinner" style="border-color:#3b82f6;border-top-color:transparent;width:18px;height:18px;margin-right:12px;"></span>
-              SESSION ESTABLISHED // PROVISIONING...
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#F1F5F9;color:#0F172A;font-family:system-ui,sans-serif;gap:12px;">
+              <div class="spinner" style="border-color:#245B9E;border-top-color:transparent;width:24px;height:24px;"></div>
+              <div style="font-size:13px;font-weight:600;color:#1E293B;letter-spacing:0.3px;">AUTHENTICATED // PROVISIONING CONTROL NODE...</div>
             </div>
           `;
         } else {
-          errorEl.textContent = result.error || 'Authentication failed';
+          errorEl.textContent = result.error || 'Authentication failed. Please verify Organization ID, username, and password.';
           errorEl.classList.add('visible');
-          btn.innerHTML = 'Sign In';
+          btn.innerHTML = '<span>Sign In to Console</span>';
           btn.disabled = false;
         }
       } catch (err) {
-        errorEl.textContent = 'Connection error: ' + err.message;
+        errorEl.textContent = 'Connection error: ' + (err.message || 'Unable to connect to backend.');
         errorEl.classList.add('visible');
-        btn.innerHTML = 'Sign In';
+        btn.innerHTML = '<span>Sign In to Console</span>';
         btn.disabled = false;
       }
     });
 
-    // Password visibility toggle logic
     const togglePasswordBtn = document.getElementById('togglePasswordBtn');
     const passwordInput = document.getElementById('password');
     const eyeIcon = document.getElementById('eyeIcon');

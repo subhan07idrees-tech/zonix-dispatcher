@@ -6,17 +6,19 @@ import {
   ShieldCheck, RefreshCw, Activity, MessageSquare, Send, CheckCircle2, Clock, Server
 } from 'lucide-react';
 
-function MetricCard({ icon: Icon, label, value, subtext }) {
+function MetricCard({ icon: Icon, label, value, subtext, highlight = false }) {
   return (
-    <div className="zonix-card p-4.5 flex flex-col justify-between">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-[#667085] font-medium">{label}</span>
-        <Icon className="w-4 h-4 text-[#667085]" />
+    <div className={`zonix-card p-5 flex flex-col justify-between hover:border-[#94A3B8] ${highlight ? 'border-l-4 border-l-[#1E40AF]' : ''}`}>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-bold uppercase tracking-wider text-[#475569]">{label}</span>
+        <div className="w-8 h-8 rounded-lg bg-[#F1F5F9] border border-[#CBD5E1] text-[#1E40AF] flex items-center justify-center">
+          <Icon className="w-4 h-4 text-[#1E40AF]" />
+        </div>
       </div>
       <div className="flex items-baseline justify-between mt-1">
-        <p className="text-2xl font-bold text-[#172033] font-mono tracking-tight">{value}</p>
-        <span className="text-[11px] font-mono text-[#667085] flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D5B]" />
+        <p className="text-3xl font-extrabold text-[#0F172A] font-mono tracking-tight">{value}</p>
+        <span className="text-xs font-mono text-[#047857] font-semibold flex items-center gap-1.5 bg-[#ECFDF5] px-2 py-0.5 rounded border border-[#A7F3D0]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#047857]" />
           {subtext}
         </span>
       </div>
@@ -26,15 +28,17 @@ function MetricCard({ icon: Icon, label, value, subtext }) {
 
 function LiveSessionRow({ session }) {
   return (
-    <tr className="border-b border-[#D9DEE7] hover:bg-[#F8FAFC] transition-colors duration-150 h-[44px]">
-      <td className="py-2.5 px-4 text-xs font-mono text-[#172033] font-medium">
+    <tr className="border-b border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors h-[46px]">
+      <td className="py-2.5 px-4 text-xs font-mono text-[#0F172A] font-bold">
         #{session.sessionId?.substring(0, 8) || 'N/A'}
       </td>
-      <td className="py-2.5 px-4 text-xs text-[#172033]">{session.org || 'System'}</td>
-      <td className="py-2.5 px-4 text-xs text-[#667085] font-mono">{session.operator || 'Dispatcher'}</td>
-      <td className="py-2.5 px-4 text-xs text-[#667085] font-mono flex items-center gap-1.5 mt-2">
-        <Server className="w-3.5 h-3.5 text-[#667085]" />
-        {session.proxyNode || 'Direct'}
+      <td className="py-2.5 px-4 text-xs font-semibold text-[#0F172A]">{session.org || 'System'}</td>
+      <td className="py-2.5 px-4 text-xs text-[#475569] font-mono">{session.operator || 'Dispatcher'}</td>
+      <td className="py-2.5 px-4 text-xs text-[#475569] font-mono">
+        <div className="flex items-center gap-1.5">
+          <Server className="w-3.5 h-3.5 text-[#1E40AF]" />
+          <span>{session.proxyNode || 'Direct'}</span>
+        </div>
       </td>
       <td className="py-2.5 px-4">
         <span className={`zonix-badge ${
@@ -42,7 +46,7 @@ function LiveSessionRow({ session }) {
             ? 'zonix-badge-active' 
             : 'zonix-badge-warning'
         }`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${session.status === 'ACTIVE' ? 'bg-[#2E7D5B]' : 'bg-[#B7791F]'}`} />
+          <span className={`w-1.5 h-1.5 rounded-full ${session.status === 'ACTIVE' ? 'bg-[#047857]' : 'bg-[#B45309]'}`} />
           {session.status === 'ACTIVE' ? 'Active' : session.status}
         </span>
       </td>
@@ -53,23 +57,23 @@ function LiveSessionRow({ session }) {
 function AlertStream({ alerts }) {
   if (!alerts || alerts.length === 0) {
     return (
-      <div className="p-8 text-center text-xs text-[#667085] flex flex-col items-center gap-2">
-        <ShieldCheck className="w-8 h-8 text-[#98A2B3]" />
-        <span>No active system alerts. All operational nodes are nominal.</span>
+      <div className="p-10 text-center text-xs text-[#64748B] flex flex-col items-center gap-2.5">
+        <ShieldCheck className="w-9 h-9 text-[#047857]" />
+        <span className="font-medium text-[#334155]">All system telemetry events are nominal. No active alerts.</span>
       </div>
     );
   }
 
   return (
-    <div className="max-h-60 overflow-y-auto space-y-2 p-3">
+    <div className="max-h-64 overflow-y-auto space-y-2.5 p-3.5">
       {alerts.map((alert, i) => (
-        <div key={i} className="flex items-start gap-2.5 p-3 rounded-md bg-[#F8FAFC] border border-[#D9DEE7] text-xs">
-          <AlertTriangle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${alert.severity === 'critical' ? 'text-[#B54747]' : 'text-[#B7791F]'}`} />
+        <div key={i} className="flex items-start gap-2.5 p-3 rounded-lg bg-[#F8FAFC] border border-[#CBD5E1] text-xs">
+          <AlertTriangle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${alert.severity === 'critical' ? 'text-[#B91C1C]' : 'text-[#B45309]'}`} />
           <div>
-            <span className={`font-semibold ${alert.severity === 'critical' ? 'text-[#B54747]' : 'text-[#B7791F]'}`}>
-              {alert.severity === 'critical' ? 'Critical alert' : 'Warning'}:
+            <span className={`font-bold ${alert.severity === 'critical' ? 'text-[#B91C1C]' : 'text-[#B45309]'}`}>
+              {alert.severity === 'critical' ? 'Critical Alert' : 'Warning'}:
             </span>
-            <span className="text-[#172033] ml-1.5 leading-relaxed">{alert.message || alert.eventType}</span>
+            <span className="text-[#0F172A] ml-1.5 leading-relaxed font-medium">{alert.message || alert.eventType}</span>
           </div>
         </div>
       ))}
@@ -148,35 +152,39 @@ export default function OverviewPage() {
     <div className="space-y-6 animate-fadeIn">
       {/* Toast notification banner */}
       {notification && (
-        <div className={`p-4 rounded-md border flex items-center justify-between text-xs transition-all ${
-          notification.type === 'success' ? 'bg-[#E8F5E9] border-[#C8E6C9] text-[#2E7D5B]' : 'bg-[#FEE2E2] border-[#FCA5A5] text-[#B54747]'
+        <div className={`p-4 rounded-lg border flex items-center justify-between text-xs transition-all shadow-sm ${
+          notification.type === 'success' ? 'bg-[#ECFDF5] border-[#A7F3D0] text-[#047857]' : 'bg-[#FEF2F2] border-[#FECACA] text-[#B91C1C]'
         }`}>
           <div className="flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
             <div>
               <p className="font-bold uppercase tracking-wider">{notification.title}</p>
-              <p className="mt-0.5">{notification.message}</p>
+              <p className="mt-0.5 font-medium">{notification.message}</p>
             </div>
           </div>
-          <button onClick={() => setNotification(null)} className="zonix-btn-ghost text-xs py-1 px-3">
+          <button onClick={() => setNotification(null)} className="zonix-btn-secondary text-xs py-1 px-3 h-[30px]">
             Dismiss
           </button>
         </div>
       )}
 
       {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#D9DEE7] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#CBD5E1] pb-4">
         <div>
-          <h2 className="text-xl font-semibold text-[#172033] tracking-tight flex items-center gap-2">
-            System Metrics &amp; Live Telemetry
-            <span className="zonix-badge-active text-[11px]">Real-time Node</span>
-          </h2>
-          <p className="text-xs text-[#667085] mt-1">Live fleet statistics, active multi-tenant sessions, and proxy health diagnostics</p>
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-xl font-bold text-[#0F172A] tracking-tight">
+              System Metrics &amp; Live Telemetry
+            </h2>
+            <span className="zonix-badge-active text-[11px] font-bold">Real-time Node</span>
+          </div>
+          <p className="text-xs text-[#475569] mt-1 font-medium">
+            Live fleet concurrency statistics, multi-tenant session telemetry, and proxy health diagnostics
+          </p>
         </div>
-        <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-md bg-white border border-[#D9DEE7] shadow-sm">
-          <span className={`w-2 h-2 rounded-full ${overview.systemHealth >= 80 ? 'bg-[#2E7D5B]' : 'bg-[#B54747]'}`} />
-          <span className="text-xs text-[#667085] font-medium">
-            Node Health: <span className="font-mono text-[#172033] font-bold">{overview.systemHealth || 100}%</span>
+        <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-white border border-[#CBD5E1] shadow-xs">
+          <span className={`w-2.5 h-2.5 rounded-full ${overview.systemHealth >= 80 ? 'bg-[#047857]' : 'bg-[#B91C1C]'}`} />
+          <span className="text-xs text-[#475569] font-medium">
+            Fleet Health: <span className="font-mono text-[#0F172A] font-bold">{overview.systemHealth || 100}%</span>
           </span>
         </div>
       </div>
@@ -185,9 +193,10 @@ export default function OverviewPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           icon={Building2}
-          label={isSuperAdmin ? "Total Organizations" : "My Organization"}
+          label={isSuperAdmin ? "Organizations" : "My Organization"}
           value={isSuperAdmin ? (overview.totalOrgs || 0) : 1}
           subtext={isSuperAdmin ? `${overview.activeOrgs || 0} active` : "1 active"}
+          highlight={true}
         />
         <MetricCard
           icon={Users}
@@ -197,9 +206,9 @@ export default function OverviewPage() {
         />
         <MetricCard
           icon={Radio}
-          label="Active Sessions"
+          label="Live Sessions"
           value={filteredSessions.length || overview.activeSessions || 0}
-          subtext="Live telemetry"
+          subtext="Active telemetry"
         />
         <MetricCard
           icon={Wifi}
@@ -210,23 +219,23 @@ export default function OverviewPage() {
       </div>
 
       {/* Session vault and health telemetry card */}
-      <div className="zonix-card p-5 space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#D9DEE7] pb-4">
+      <div className="zonix-card p-6 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E2E8F0] pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-md bg-[#EFF4FA] border border-[#D9DEE7] text-[#245B9E] flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center font-bold">
+              <ShieldCheck className="w-5 h-5 text-[#1E40AF]" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[#172033]">
+              <h3 className="text-sm font-bold text-[#0F172A]">
                 Session Vault &amp; Health Diagnostics
               </h3>
-              <p className="text-xs text-[#667085] mt-0.5">Enterprise session vault monitoring, proxy latency diagnostics, and multi-tenant support</p>
+              <p className="text-xs text-[#64748B] mt-0.5">Enterprise session vault monitoring, proxy latency diagnostics, and multi-tenant support</p>
             </div>
           </div>
           <span className={`zonix-badge ${
             healthTelemetry.allHealthy ? 'zonix-badge-active' : 'zonix-badge-warning'
           }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${healthTelemetry.allHealthy ? 'bg-[#2E7D5B]' : 'bg-[#B7791F]'}`} />
+            <span className={`w-1.5 h-1.5 rounded-full ${healthTelemetry.allHealthy ? 'bg-[#047857]' : 'bg-[#B45309]'}`} />
             {healthTelemetry.allHealthy ? 'All Systems Operational' : 'Action Required'}
           </span>
         </div>
@@ -303,7 +312,7 @@ export default function OverviewPage() {
             }}
             className="zonix-btn-secondary"
           >
-            <Activity className="w-3.5 h-3.5 text-[#667085]" />
+            <Activity className="w-3.5 h-3.5 text-[#1E40AF]" />
             <span>Run Pre-shift Health Check</span>
           </button>
 
@@ -312,7 +321,7 @@ export default function OverviewPage() {
               onClick={() => setShowSupportModal(true)}
               className="zonix-btn-secondary"
             >
-              <MessageSquare className="w-3.5 h-3.5 text-[#667085]" />
+              <MessageSquare className="w-3.5 h-3.5 text-[#475569]" />
               <span>Contact Support &amp; Report Issue</span>
             </button>
           )}
@@ -320,21 +329,21 @@ export default function OverviewPage() {
 
         {/* Support Modal */}
         {showSupportModal && (
-          <div className="fixed inset-0 bg-[#0F172A]/50 flex items-center justify-center z-50 p-4 animate-fadeIn">
-            <div className="bg-white border border-[#D9DEE7] rounded-lg shadow-lg p-6 w-full max-w-md space-y-4">
-              <div className="flex items-center gap-3 border-b border-[#D9DEE7] pb-3">
-                <div className="w-8 h-8 rounded-md bg-[#EFF4FA] border border-[#D9DEE7] text-[#245B9E] flex items-center justify-center">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fadeIn">
+            <div className="bg-white border border-[#CBD5E1] rounded-xl shadow-2xl p-6 w-full max-w-md space-y-4">
+              <div className="flex items-center gap-3 border-b border-[#E2E8F0] pb-3">
+                <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center">
                   <MessageSquare className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-[#172033]">Submit Support Ticket</h4>
-                  <p className="text-xs text-[#667085]">Delivered directly via support.zonix@gmail.com</p>
+                  <h4 className="text-sm font-bold text-[#0F172A]">Submit Support Ticket</h4>
+                  <p className="text-xs text-[#64748B]">Delivered directly via support.zonix@gmail.com</p>
                 </div>
               </div>
 
               <div className="space-y-3.5">
                 <div>
-                  <label className="block text-xs font-medium text-[#172033] mb-1">Issue Subject</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Issue Subject</label>
                   <input
                     type="text"
                     value={supportSubject}
@@ -345,7 +354,7 @@ export default function OverviewPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-[#172033] mb-1">Detailed Description</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Detailed Description</label>
                   <textarea
                     rows={4}
                     value={supportMessage}
@@ -359,14 +368,14 @@ export default function OverviewPage() {
                   <input
                     type="checkbox"
                     id="notifyAllUsersCheck"
-                    className="rounded border-[#D9DEE7] text-[#245B9E] focus:ring-0 cursor-pointer"
+                    className="rounded border-[#CBD5E1] text-[#1E40AF] focus:ring-0 cursor-pointer"
                   />
-                  <label htmlFor="notifyAllUsersCheck" className="text-xs text-[#667085] cursor-pointer select-none">
+                  <label htmlFor="notifyAllUsersCheck" className="text-xs text-[#475569] cursor-pointer select-none">
                     Broadcast notice to all company dispatchers
                   </label>
                 </div>
 
-                <div className="flex gap-2.5 pt-2 border-t border-[#D9DEE7]">
+                <div className="flex gap-2.5 pt-2 border-t border-[#E2E8F0]">
                   <button
                     type="button"
                     onClick={() => setShowSupportModal(false)}
@@ -434,40 +443,40 @@ export default function OverviewPage() {
         )}
 
         {/* Telemetry metrics cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
-          <div className="bg-[#F8FAFC] border border-[#D9DEE7] rounded-md p-3 space-y-1">
-            <div className="text-xs text-[#667085] font-medium flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-[#667085]" />
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5 pt-1">
+          <div className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg p-3.5 space-y-1">
+            <div className="text-xs text-[#475569] font-bold flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-[#1E40AF]" />
               Last Health Scan
             </div>
-            <div className="text-xs font-mono text-[#172033] font-semibold">{healthTelemetry.lastScanTime}</div>
-            <div className="text-[11px] text-[#2E7D5B]">2-second diagnostic audit</div>
+            <div className="text-xs font-mono text-[#0F172A] font-bold">{healthTelemetry.lastScanTime}</div>
+            <div className="text-[11px] text-[#047857] font-medium">2-second diagnostic audit</div>
           </div>
 
-          <div className="bg-[#F8FAFC] border border-[#D9DEE7] rounded-md p-3 space-y-1">
-            <div className="text-xs text-[#667085] font-medium flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#667085]" />
+          <div className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg p-3.5 space-y-1">
+            <div className="text-xs text-[#475569] font-bold flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#1E40AF]" />
               DAT Session Cookies
             </div>
-            <div className="text-xs font-mono text-[#172033] font-semibold">
+            <div className="text-xs font-mono text-[#0F172A] font-bold">
               {healthTelemetry.cookieStatus === 'HEALTHY' ? `Valid (${healthTelemetry.cookieExpiresInDays}d left)` : 'Attention Needed'}
             </div>
-            <div className="text-[11px] text-[#667085]">Encrypted session vault</div>
+            <div className="text-[11px] text-[#475569] font-medium">Encrypted session vault</div>
           </div>
 
-          <div className="bg-[#F8FAFC] border border-[#D9DEE7] rounded-md p-3 space-y-1">
-            <div className="text-xs text-[#667085] font-medium flex items-center gap-1.5">
-              <Wifi className="w-3.5 h-3.5 text-[#667085]" />
+          <div className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg p-3.5 space-y-1">
+            <div className="text-xs text-[#475569] font-bold flex items-center gap-1.5">
+              <Wifi className="w-3.5 h-3.5 text-[#1E40AF]" />
               US Dedicated Proxy Ping
             </div>
-            <div className="text-xs font-mono text-[#172033] font-semibold">Connected ({healthTelemetry.latencyMs}ms)</div>
-            <div className="text-[11px] text-[#667085]">Webshare static US tunnel</div>
+            <div className="text-xs font-mono text-[#0F172A] font-bold">Connected ({healthTelemetry.latencyMs}ms)</div>
+            <div className="text-[11px] text-[#475569] font-medium">Webshare static US tunnel</div>
           </div>
 
-          <div className="bg-[#F8FAFC] border border-[#D9DEE7] rounded-md p-3 space-y-1">
-            <div className="text-xs text-[#667085] font-medium flex items-center justify-between">
-              <span className="flex items-center gap-1.5 text-[#172033]">
-                <Clock className="w-3.5 h-3.5 text-[#667085]" />
+          <div className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg p-3.5 space-y-1">
+            <div className="text-xs text-[#475569] font-bold flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-[#0F172A]">
+                <Clock className="w-3.5 h-3.5 text-[#B45309]" />
                 Scan Schedule
               </span>
             </div>
@@ -475,7 +484,7 @@ export default function OverviewPage() {
               <select
                 value={scheduledTime}
                 onChange={(e) => setScheduledTime(e.target.value)}
-                className="zonix-select flex-1 text-xs py-0.5 h-[32px]"
+                className="zonix-select flex-1 text-xs py-0.5 h-[32px] font-mono"
               >
                 <option value="06:00 AM">06:00 AM</option>
                 <option value="06:30 AM">06:30 AM</option>
@@ -513,7 +522,7 @@ export default function OverviewPage() {
                     setSavingTime(false);
                   }
                 }}
-                className="zonix-btn-secondary h-[32px] px-2.5 text-xs"
+                className="zonix-btn-secondary h-[32px] px-3 text-xs"
               >
                 {savingTime ? '...' : 'Save'}
               </button>
@@ -525,21 +534,21 @@ export default function OverviewPage() {
       {/* Tables section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 zonix-card overflow-hidden">
-          <div className="p-4 border-b border-[#D9DEE7] flex items-center justify-between bg-[#F8FAFC]">
-            <h3 className="text-xs font-semibold text-[#172033] uppercase font-mono tracking-wider">
+          <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
+            <h3 className="text-xs font-bold text-[#0F172A] uppercase font-mono tracking-wider">
               Active Dispatch Sessions
             </h3>
-            <span className="zonix-badge-cyan text-[10px]">{filteredSessions.length} Online</span>
+            <span className="zonix-badge-cyan text-[11px] font-bold">{filteredSessions.length} Online</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#D9DEE7] text-[11px] text-[#667085] uppercase bg-[#F8FAFC]">
-                  <th className="py-2.5 px-4 text-left font-semibold">Session ID</th>
-                  <th className="py-2.5 px-4 text-left font-semibold">Organization</th>
-                  <th className="py-2.5 px-4 text-left font-semibold">Operator</th>
-                  <th className="py-2.5 px-4 text-left font-semibold">Proxy Node</th>
-                  <th className="py-2.5 px-4 text-left font-semibold">Status</th>
+                <tr className="border-b border-[#CBD5E1] text-[11px] text-[#475569] uppercase bg-[#F8FAFC]">
+                  <th className="py-2.5 px-4 text-left font-bold">Session ID</th>
+                  <th className="py-2.5 px-4 text-left font-bold">Organization</th>
+                  <th className="py-2.5 px-4 text-left font-bold">Operator</th>
+                  <th className="py-2.5 px-4 text-left font-bold">Proxy Node</th>
+                  <th className="py-2.5 px-4 text-left font-bold">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -549,7 +558,7 @@ export default function OverviewPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="py-12 text-center text-xs text-[#667085] font-medium">
+                    <td colSpan={5} className="py-12 text-center text-xs text-[#64748B] font-medium">
                       No active dispatch sessions. All operators are currently offline.
                     </td>
                   </tr>
@@ -560,11 +569,11 @@ export default function OverviewPage() {
         </div>
 
         <div className="zonix-card overflow-hidden">
-          <div className="p-4 border-b border-[#D9DEE7] flex items-center justify-between bg-[#F8FAFC]">
-            <h3 className="text-xs font-semibold text-[#172033] uppercase font-mono tracking-wider">
+          <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
+            <h3 className="text-xs font-bold text-[#0F172A] uppercase font-mono tracking-wider">
               Alerts &amp; Telemetry
             </h3>
-            <span className="zonix-badge-warning text-[10px]">{alerts.length} System Events</span>
+            <span className="zonix-badge-warning text-[11px] font-bold">{alerts.length} Events</span>
           </div>
           <AlertStream alerts={alerts} />
         </div>

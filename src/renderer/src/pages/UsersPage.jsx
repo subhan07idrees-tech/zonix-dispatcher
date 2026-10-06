@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Users, Plus, Edit2, Trash2, X, Shield, ShieldOff, Mail, Send, Copy, Check, Clock } from 'lucide-react';
+import {
+  Users, Plus, Edit2, Trash2, X, Shield, ShieldOff,
+  Key, Mail, Send, Copy, Check, Clock, ExternalLink
+} from 'lucide-react';
 
 function InviteModal({ orgId, onClose, onSend }) {
   const { user: currentUser } = useAuth();
@@ -19,52 +22,52 @@ function InviteModal({ orgId, onClose, onSend }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#0F172A]/50 flex items-center justify-center z-50 p-4 animate-fadeIn" onClick={onClose}>
-      <div className="bg-white border border-[#D9DEE7] rounded-lg shadow-lg w-full max-w-md p-6 space-y-5 animate-fadeIn" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-[#D9DEE7] pb-3.5">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fadeIn" onClick={onClose}>
+      <div className="bg-white border border-[#CBD5E1] rounded-xl shadow-2xl w-full max-w-md p-6 space-y-5 animate-fadeIn" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3.5">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded bg-[#EFF4FA] border border-[#D9DEE7] text-[#245B9E] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center font-bold">
               <Mail className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[#172033]">Invite Dispatcher via Email</h3>
-              <p className="text-xs text-[#667085]">Send an invitation token link</p>
+              <h3 className="text-sm font-bold text-[#0F172A]">Invite Dispatcher via Email</h3>
+              <p className="text-xs text-[#64748B]">Send a secure invitation activation token</p>
             </div>
           </div>
-          <button onClick={onClose} className="zonix-btn-ghost p-1 h-auto">
+          <button onClick={onClose} className="p-1 hover:bg-[#F1F5F9] rounded-md text-[#64748B] hover:text-[#0F172A]">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-[#172033] mb-1">Recipient Email Address</label>
+            <label className="block text-xs font-semibold text-[#334155] mb-1">Recipient Email Address</label>
             <input
               type="email"
               placeholder="dispatcher@fleetlogistics.com"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="zonix-input w-full text-xs font-mono"
+              className="zonix-input w-full font-mono text-xs"
               required
               autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[#172033] mb-1">Max Allowed Tabs / Seats</label>
+            <label className="block text-xs font-semibold text-[#334155] mb-1">Max Allowed Tabs / Seats</label>
             <input
               type="number"
               min="1"
               max="50"
               value={form.maxTabs}
               onChange={(e) => setForm({ ...form, maxTabs: parseInt(e.target.value) || 1 })}
-              className="zonix-input w-full text-xs font-mono"
+              className="zonix-input w-full font-mono text-xs"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[#172033] mb-1">Assigned Role</label>
+            <label className="block text-xs font-semibold text-[#334155] mb-1">Assigned Role</label>
             <select
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value })}
@@ -78,12 +81,14 @@ function InviteModal({ orgId, onClose, onSend }) {
             </select>
           </div>
 
-          <div className="p-3 bg-[#F8FAFC] border border-[#D9DEE7] rounded-md text-xs text-[#667085] leading-relaxed">
-            The recipient will receive an invitation email from <span className="text-[#245B9E] font-mono font-semibold">invites@thezonix.com</span> with an activation link.
+          <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#475569] leading-relaxed">
+            The recipient will receive an activation email from <strong className="text-[#1E40AF] font-mono">invites@thezonix.com</strong> with a direct setup link.
           </div>
 
-          <div className="flex gap-3 pt-2 border-t border-[#D9DEE7]">
-            <button type="button" onClick={onClose} className="zonix-btn-secondary flex-1 py-2 text-xs">Cancel</button>
+          <div className="flex gap-3 pt-2 border-t border-[#E2E8F0]">
+            <button type="button" onClick={onClose} className="zonix-btn-secondary flex-1 py-2 text-xs">
+              Cancel
+            </button>
             <button type="submit" disabled={loading} className="zonix-btn-primary flex-1 py-2 text-xs">
               <Send className="w-3.5 h-3.5" />
               <span>{loading ? 'Sending...' : 'Send Invite'}</span>
@@ -114,66 +119,66 @@ function UserModal({ user, orgId, onClose, onSave }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#0F172A]/50 flex items-center justify-center z-50 p-4 animate-fadeIn" onClick={onClose}>
-      <div className="bg-white border border-[#D9DEE7] rounded-lg shadow-lg w-full max-w-md p-6 space-y-4 animate-fadeIn" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-[#D9DEE7] pb-3">
-          <h3 className="text-sm font-semibold text-[#172033]">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fadeIn" onClick={onClose}>
+      <div className="bg-white border border-[#CBD5E1] rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4 animate-fadeIn" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+          <h3 className="text-sm font-bold text-[#0F172A]">
             {user ? 'Edit Dispatcher Credentials' : 'New User Registration'}
           </h3>
-          <button onClick={onClose} className="zonix-btn-ghost p-1 h-auto">
+          <button onClick={onClose} className="p-1 hover:bg-[#F1F5F9] rounded-md text-[#64748B]">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
-            <label className="block text-xs font-medium text-[#172033] mb-1">Username</label>
+            <label className="block text-xs font-semibold text-[#334155] mb-1">Username</label>
             <input
               type="text"
               value={form.username}
               onChange={(e) => setForm({ ...form, username: e.target.value })}
-              className="zonix-input w-full text-xs font-mono"
+              className="zonix-input w-full font-mono text-xs"
               required
               disabled={!!user}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-[#172033] mb-1">Email</label>
+            <label className="block text-xs font-semibold text-[#334155] mb-1">Email</label>
             <input
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="zonix-input w-full text-xs font-mono"
+              className="zonix-input w-full font-mono text-xs"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-[#172033] mb-1">
+            <label className="block text-xs font-semibold text-[#334155] mb-1">
               {user ? 'New Password (leave blank to keep current)' : 'Password'}
             </label>
             <input
               type="password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="zonix-input w-full text-xs font-mono"
+              className="zonix-input w-full font-mono text-xs"
               required={!user}
               minLength={form.password ? 6 : undefined}
               placeholder={user ? "••••••••" : ""}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-[#172033] mb-1">Max Allowed Tabs / Seats</label>
+            <label className="block text-xs font-semibold text-[#334155] mb-1">Max Allowed Tabs / Seats</label>
             <input
               type="number"
               min="1"
               max="100"
               value={form.maxTabs}
               onChange={(e) => setForm({ ...form, maxTabs: parseInt(e.target.value) || 1 })}
-              className="zonix-input w-full text-xs font-mono"
+              className="zonix-input w-full font-mono text-xs"
               required
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-[#172033] mb-1">Role</label>
+            <label className="block text-xs font-semibold text-[#334155] mb-1">Role</label>
             <select
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value })}
@@ -186,8 +191,10 @@ function UserModal({ user, orgId, onClose, onSave }) {
               )}
             </select>
           </div>
-          <div className="flex gap-3 pt-2 border-t border-[#D9DEE7]">
-            <button type="button" onClick={onClose} className="zonix-btn-secondary flex-1 py-2 text-xs">Cancel</button>
+          <div className="flex gap-3 pt-2 border-t border-[#E2E8F0]">
+            <button type="button" onClick={onClose} className="zonix-btn-secondary flex-1 py-2 text-xs">
+              Cancel
+            </button>
             <button type="submit" disabled={loading} className="zonix-btn-primary flex-1 py-2 text-xs">
               {loading ? 'Saving...' : 'Save User'}
             </button>
@@ -199,7 +206,7 @@ function UserModal({ user, orgId, onClose, onSave }) {
 }
 
 export default function UsersPage() {
-  const { authFetch, user: currentUser, showAlert } = useAuth();
+  const { authFetch, user: currentUser, showAlert, showConfirm } = useAuth();
   const [users, setUsers] = useState([]);
   const [invites, setInvites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -208,7 +215,10 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState(null);
   const [selectedOrg, setSelectedOrg] = useState(currentUser?.orgId || '');
   const [orgs, setOrgs] = useState([]);
+  const [selectedDispatcherId, setSelectedDispatcherId] = useState('system');
   const [copiedInviteId, setCopiedInviteId] = useState(null);
+
+  const dispatchers = users.filter(u => u.role === 'DISPATCHER');
 
   useEffect(() => {
     if (currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'ADMIN') {
@@ -254,7 +264,7 @@ export default function UsersPage() {
       const res = await authFetch(`/invites/${selectedOrg}`);
       if (res.ok) {
         const data = await res.json();
-        setInvites(data.invitations || []);
+        setInvites(data.invites || data.invitations || []);
       }
     } catch (e) {}
   };
@@ -273,10 +283,31 @@ export default function UsersPage() {
       }
       setShowInviteModal(false);
       fetchInvites();
-      showAlert('Email invite sent successfully!', 'Invite Sent', 'info');
+      showAlert(`Email invitation sent successfully to ${form.email}!`, 'Invite Sent', 'info');
     } catch (err) {
       showAlert(err.message, 'Error', 'error');
     }
+  };
+
+  const handleCancelInvite = async (inviteId) => {
+    const confirmed = await showConfirm('Cancel this pending invitation link?', 'Cancel Invitation', 'warning');
+    if (!confirmed) return;
+    try {
+      const res = await authFetch(`/invites/${selectedOrg}/${inviteId}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchInvites();
+        showAlert('Invitation cancelled successfully.', 'Cancelled', 'info');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleCopyInviteLink = (inv) => {
+    const link = `https://thezonix.com/join.html?token=${inv.token}`;
+    navigator.clipboard.writeText(link);
+    setCopiedInviteId(inv.id);
+    setTimeout(() => setCopiedInviteId(null), 2000);
   };
 
   const handleSaveUser = async (form) => {
@@ -322,7 +353,8 @@ export default function UsersPage() {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+    const confirmed = await showConfirm('Are you sure you want to delete this user? Their active sessions will be terminated.', 'Delete User', 'error');
+    if (!confirmed) return;
     try {
       await authFetch(`/users/${selectedOrg}/${userId}`, { method: 'DELETE' });
       fetchUsers();
@@ -331,35 +363,129 @@ export default function UsersPage() {
     }
   };
 
-  const copyInviteLink = (inv) => {
-    const link = `${window.location.origin}/#/register?token=${inv.token}`;
-    navigator.clipboard.writeText(link);
-    setCopiedInviteId(inv.id);
-    setTimeout(() => setCopiedInviteId(null), 2000);
+  const handleAuthenticateSite = async (targetUserId) => {
+    const targetOrg = orgs.find(o => o.id === selectedOrg) || { id: selectedOrg, targetUrl: 'https://one.dat.com/search-loads' };
+    const targetUrl = targetOrg.targetUrl || 'https://one.dat.com/search-loads';
+    let displayUsername = 'Organization-wide (All Dispatchers)';
+
+    if (targetUserId !== 'system') {
+      const foundDispatcher = dispatchers.find(d => d.id === targetUserId);
+      if (foundDispatcher) {
+        displayUsername = foundDispatcher.username;
+      }
+    }
+
+    showAlert(
+      `Launching session authentication window for ${displayUsername}.\nTarget site: ${targetUrl}\n\nPlease log in on the window that opens, complete 2FA, then close the window to save the session vault.`,
+      'Session Provisioning',
+      'info'
+    );
+
+    try {
+      const api = window.zonixAPI || window.electronAPI;
+      let captureRes = null;
+      if (api && api.captureCookies) {
+        captureRes = await api.captureCookies({
+          targetUrl,
+          orgId: targetOrg.id,
+          userId: targetUserId
+        });
+      } else if (api && api.invoke) {
+        captureRes = await api.invoke('session:cookies:capture', {
+          targetUrl,
+          orgId: targetOrg.id,
+          userId: targetUserId
+        });
+      } else {
+        await showAlert('Session capture is only available inside the ZONIX Desktop App.', 'Desktop App Required', 'warning');
+        return;
+      }
+
+      if (captureRes && captureRes.success) {
+        await showAlert(`Successfully authenticated and saved secure login session for "${displayUsername}"!`, 'Authenticated', 'success');
+      }
+
+      fetchUsers();
+    } catch (err) {
+      console.error('[ZONIX] Authentication window launch error:', err);
+      showAlert(err.message || 'An error occurred while launching session capture window', 'Authentication Error', 'error');
+    }
   };
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#D9DEE7] pb-4">
-        <div>
-          <h2 className="text-xl font-semibold text-[#172033] tracking-tight flex items-center gap-2">
-            User &amp; Dispatcher Registry
-            <span className="zonix-badge-cyan text-[11px]">{users.length} Users</span>
-          </h2>
-          <p className="text-xs text-[#667085] mt-1">Manage dispatcher accounts, tab seat limits, role access, and email invitations</p>
-        </div>
+      {/* Session Provisioning Panel */}
+      <div className="zonix-card p-5 space-y-4">
         <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center font-bold">
+            <Key className="w-4 h-4 text-[#1E40AF]" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-[#0F172A]">
+              Locked Site Session Provisioning (DAT One &amp; Portals)
+            </h3>
+            <p className="text-xs text-[#64748B]">Capture secure 30-day credentials and cookies for dispatchers</p>
+          </div>
+        </div>
+
+        <p className="text-xs text-[#475569] max-w-3xl leading-relaxed">
+          Launching the authentication window opens the target website in an isolated browser. Log in manually and complete 2FA. Once signed in, close the window — ZONIX will automatically intercept and securely store the authenticated cookies in the Session Vault.
+        </p>
+
+        <div className="flex flex-wrap items-end gap-3.5 pt-3 border-t border-[#E2E8F0]">
+          <div className="w-80">
+            <label className="block text-xs font-semibold text-[#334155] mb-1">
+              Target Dispatcher Seat
+            </label>
+            <select
+              value={selectedDispatcherId}
+              onChange={(e) => setSelectedDispatcherId(e.target.value)}
+              className="zonix-select w-full text-xs font-mono"
+            >
+              <option value="system">Organization-wide (All Dispatchers)</option>
+              {dispatchers.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.username} [{d.email || 'no-email'}]
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            onClick={() => handleAuthenticateSite(selectedDispatcherId)}
+            className="zonix-btn-primary text-xs h-[38px] px-4"
+          >
+            <Key className="w-3.5 h-3.5" />
+            <span>Launch Authentication Window</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Header section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#CBD5E1] pb-4">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-xl font-bold text-[#0F172A] tracking-tight">
+              User &amp; Dispatcher Registry
+            </h2>
+            <span className="zonix-badge-cyan text-[11px] font-semibold">{users.length} Users</span>
+          </div>
+          <p className="text-xs text-[#475569] mt-1 font-medium">
+            Manage dispatcher accounts, tab seat limits, role access, and email invitations
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5">
           {currentUser?.role === 'SUPER_ADMIN' && orgs.length > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-[#667085]">Org:</span>
+              <span className="text-xs font-semibold text-[#475569]">Org:</span>
               <select
                 value={selectedOrg}
                 onChange={(e) => {
                   setLoading(true);
                   setSelectedOrg(e.target.value);
                 }}
-                className="zonix-select text-xs py-1 h-[36px]"
+                className="zonix-select text-xs h-[36px]"
               >
                 {orgs.map((org) => (
                   <option key={org.id} value={org.id}>
@@ -369,16 +495,18 @@ export default function UsersPage() {
               </select>
             </div>
           )}
+
           <button
             onClick={() => setShowInviteModal(true)}
-            className="zonix-btn-secondary text-xs"
+            className="zonix-btn-secondary text-xs h-[36px]"
           >
-            <Mail className="w-3.5 h-3.5 text-[#667085]" />
-            <span>Send Email Invite</span>
+            <Mail className="w-3.5 h-3.5 text-[#475569]" />
+            <span>Invite via Email</span>
           </button>
+
           <button
             onClick={() => { setEditingUser(null); setShowModal(true); }}
-            className="zonix-btn-primary"
+            className="zonix-btn-primary text-xs h-[36px]"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New Dispatcher</span>
@@ -388,79 +516,92 @@ export default function UsersPage() {
 
       {/* Users table card */}
       <div className="zonix-card overflow-hidden">
-        <div className="p-4 border-b border-[#D9DEE7] flex items-center justify-between bg-[#F8FAFC]">
-          <h3 className="text-xs font-semibold text-[#172033] uppercase font-mono tracking-wider">
+        <div className="p-3.5 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
+          <h3 className="text-xs font-bold text-[#0F172A] uppercase font-mono tracking-wider">
             Dispatcher Account Directory
           </h3>
-          <span className="text-xs text-[#667085] font-mono">Total Seats: {users.reduce((acc, u) => acc + (u.maxTabs || 5), 0)} tabs</span>
+          <span className="text-xs text-[#64748B] font-mono font-medium">
+            Total Allocated: {users.reduce((acc, u) => acc + (u.maxTabs || 5), 0)} tabs
+          </span>
         </div>
+
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[#D9DEE7] text-[11px] text-[#667085] uppercase bg-[#F8FAFC]">
-                <th className="py-2.5 px-4 text-left font-semibold">Username</th>
-                <th className="py-2.5 px-4 text-left font-semibold">Email</th>
-                <th className="py-2.5 px-4 text-left font-semibold">Role</th>
-                <th className="py-2.5 px-4 text-left font-semibold">Tab Seats</th>
-                <th className="py-2.5 px-4 text-left font-semibold">Status</th>
-                <th className="py-2.5 px-4 text-right font-semibold">Actions</th>
+              <tr className="border-b border-[#CBD5E1] text-[11px] text-[#475569] uppercase bg-[#F8FAFC]">
+                <th className="py-2.5 px-4 text-left font-bold">Username</th>
+                <th className="py-2.5 px-4 text-left font-bold">Email</th>
+                <th className="py-2.5 px-4 text-left font-bold">Role</th>
+                <th className="py-2.5 px-4 text-left font-bold">Active / Max Tabs</th>
+                <th className="py-2.5 px-4 text-left font-bold">Status</th>
+                <th className="py-2.5 px-4 text-right font-bold">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center text-xs text-[#667085]">
-                    <div className="w-5 h-5 border-2 border-[#245B9E] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                  <td colSpan={6} className="py-16 text-center text-xs text-[#64748B]">
+                    <div className="w-5 h-5 border-2 border-[#1E40AF] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                     Loading user registry...
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center text-xs text-[#667085]">
-                    <Users className="w-8 h-8 text-[#98A2B3] mx-auto mb-2" />
+                  <td colSpan={6} className="py-16 text-center text-xs text-[#64748B]">
+                    <Users className="w-8 h-8 text-[#94A3B8] mx-auto mb-2" />
                     No registered users in this organization.
                   </td>
                 </tr>
               ) : (
-                users.map((user) => (
-                  <tr key={user.id} className="border-b border-[#D9DEE7] hover:bg-[#F8FAFC] transition-colors duration-150 h-[44px]">
-                    <td className="py-2.5 px-4 text-xs font-mono text-[#172033] font-bold">
-                      {user.username}
+                users.map((u) => (
+                  <tr key={u.id} className="border-b border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors h-[46px]">
+                    <td className="py-2.5 px-4 text-xs font-mono text-[#0F172A] font-bold">
+                      {u.username}
                     </td>
-                    <td className="py-2.5 px-4 text-xs text-[#667085] font-mono">{user.email || '—'}</td>
-                    <td className="py-2.5 px-4 text-xs font-mono">
-                      <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-[#F8FAFC] text-[#172033] border border-[#D9DEE7]">
-                        {user.role}
+                    <td className="py-2.5 px-4 text-xs text-[#475569] font-mono">{u.email || '—'}</td>
+                    <td className="py-2.5 px-4 text-xs">
+                      <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#F1F5F9] text-[#1E293B] border border-[#CBD5E1]">
+                        {u.role === 'DISPATCHER' ? 'Dispatcher' : u.role === 'ADMIN' ? 'Org Admin' : u.role}
                       </span>
                     </td>
-                    <td className="py-2.5 px-4 text-xs font-mono text-[#172033]">
-                      {user.maxTabs || 5} tabs
+                    <td className="py-2.5 px-4 text-xs font-mono text-[#0F172A]">
+                      <span className="font-bold">{u._count?.sessions || 0}</span> / {u.maxTabs || 5} tabs
                     </td>
                     <td className="py-2.5 px-4">
-                      <span className={`zonix-badge ${user.status === 'ACTIVE' ? 'zonix-badge-active' : 'zonix-badge-warning'}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'ACTIVE' ? 'bg-[#2E7D5B]' : 'bg-[#B7791F]'}`} />
-                        {user.status}
+                      <span className={`zonix-badge ${u.status === 'ACTIVE' ? 'zonix-badge-active' : 'zonix-badge-warning'}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${u.status === 'ACTIVE' ? 'bg-[#047857]' : 'bg-[#B45309]'}`} />
+                        {u.status}
                       </span>
                     </td>
                     <td className="py-2.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        {u.role === 'DISPATCHER' && (
+                          <button
+                            onClick={() => handleAuthenticateSite(u.id)}
+                            className="zonix-btn-secondary py-1 px-2 text-xs h-[30px]"
+                            title="Authenticate Locked Site Cookies"
+                          >
+                            <Key className="w-3.5 h-3.5 text-[#1E40AF]" />
+                            <span className="hidden md:inline">Authenticate</span>
+                          </button>
+                        )}
                         <button
-                          onClick={() => toggleUserStatus(user)}
-                          className="zonix-btn-secondary py-1 px-2 text-xs h-[32px]"
-                          title={user.status === 'ACTIVE' ? 'Suspend User' : 'Activate User'}
+                          onClick={() => toggleUserStatus(u)}
+                          className="zonix-btn-secondary py-1 px-2 text-xs h-[30px]"
+                          title={u.status === 'ACTIVE' ? 'Suspend User' : 'Activate User'}
                         >
-                          {user.status === 'ACTIVE' ? <ShieldOff className="w-3.5 h-3.5 text-[#B7791F]" /> : <Shield className="w-3.5 h-3.5 text-[#2E7D5B]" />}
+                          {u.status === 'ACTIVE' ? <ShieldOff className="w-3.5 h-3.5 text-[#B45309]" /> : <Shield className="w-3.5 h-3.5 text-[#047857]" />}
                         </button>
                         <button
-                          onClick={() => { setEditingUser(user); setShowModal(true); }}
-                          className="zonix-btn-secondary py-1 px-2 text-xs h-[32px]"
+                          onClick={() => { setEditingUser(u); setShowModal(true); }}
+                          className="zonix-btn-secondary py-1 px-2 text-xs h-[30px]"
                           title="Edit User"
                         >
-                          <Edit2 className="w-3.5 h-3.5 text-[#667085]" />
+                          <Edit2 className="w-3.5 h-3.5 text-[#475569]" />
                         </button>
                         <button
-                          onClick={() => handleDeleteUser(user.id)}
-                          className="zonix-btn-danger py-1 px-2 text-xs h-[32px]"
+                          onClick={() => handleDeleteUser(u.id)}
+                          className="zonix-btn-danger py-1 px-2 text-xs h-[30px]"
                           title="Delete User"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -478,39 +619,49 @@ export default function UsersPage() {
       {/* Invitations Table Card */}
       {invites.length > 0 && (
         <div className="zonix-card overflow-hidden">
-          <div className="p-4 border-b border-[#D9DEE7] flex items-center justify-between bg-[#F8FAFC]">
-            <h3 className="text-xs font-semibold text-[#172033] uppercase font-mono tracking-wider flex items-center gap-2">
-              <Clock className="w-4 h-4 text-[#667085]" />
+          <div className="p-3.5 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
+            <h3 className="text-xs font-bold text-[#0F172A] uppercase font-mono tracking-wider flex items-center gap-2">
+              <Clock className="w-4 h-4 text-[#1E40AF]" />
               Pending Email Invitations
             </h3>
-            <span className="zonix-badge-cyan text-[10px]">{invites.length} Active Links</span>
+            <span className="zonix-badge-cyan text-[10px] font-bold">{invites.length} Active</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#D9DEE7] text-[11px] text-[#667085] uppercase bg-[#F8FAFC]">
-                  <th className="py-2.5 px-4 text-left font-semibold">Email Address</th>
-                  <th className="py-2.5 px-4 text-left font-semibold">Role</th>
-                  <th className="py-2.5 px-4 text-left font-semibold">Max Tabs</th>
-                  <th className="py-2.5 px-4 text-left font-semibold">Expires</th>
-                  <th className="py-2.5 px-4 text-right font-semibold">Actions</th>
+                <tr className="border-b border-[#CBD5E1] text-[11px] text-[#475569] uppercase bg-[#F8FAFC]">
+                  <th className="py-2.5 px-4 text-left font-bold">Email Address</th>
+                  <th className="py-2.5 px-4 text-left font-bold">Role</th>
+                  <th className="py-2.5 px-4 text-left font-bold">Max Tabs</th>
+                  <th className="py-2.5 px-4 text-left font-bold">Expires</th>
+                  <th className="py-2.5 px-4 text-right font-bold">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {invites.map((inv) => (
-                  <tr key={inv.id} className="border-b border-[#D9DEE7] hover:bg-[#F8FAFC] transition-colors duration-150 text-xs h-[44px]">
-                    <td className="py-2.5 px-4 font-mono text-[#172033]">{inv.email}</td>
-                    <td className="py-2.5 px-4 font-mono text-[#667085]">{inv.role}</td>
-                    <td className="py-2.5 px-4 font-mono text-[#667085]">{inv.maxTabs} tabs</td>
-                    <td className="py-2.5 px-4 font-mono text-[#667085]">{new Date(inv.expiresAt).toLocaleString()}</td>
+                  <tr key={inv.id} className="border-b border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors text-xs h-[44px]">
+                    <td className="py-2.5 px-4 font-mono text-[#0F172A] font-semibold">{inv.email}</td>
+                    <td className="py-2.5 px-4 font-mono text-[#475569]">{inv.role}</td>
+                    <td className="py-2.5 px-4 font-mono text-[#475569]">{inv.maxTabs} tabs</td>
+                    <td className="py-2.5 px-4 font-mono text-[#475569]">{new Date(inv.expiresAt).toLocaleString()}</td>
                     <td className="py-2.5 px-4 text-right">
-                      <button
-                        onClick={() => copyInviteLink(inv)}
-                        className="zonix-btn-secondary py-1 px-3 text-xs h-[32px]"
-                      >
-                        {copiedInviteId === inv.id ? <Check className="w-3.5 h-3.5 text-[#2E7D5B]" /> : <Copy className="w-3.5 h-3.5" />}
-                        <span>{copiedInviteId === inv.id ? 'Copied' : 'Copy Link'}</span>
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => handleCopyInviteLink(inv)}
+                          className="zonix-btn-secondary py-1 px-2.5 text-xs h-[30px]"
+                          title="Copy direct invite URL"
+                        >
+                          {copiedInviteId === inv.id ? <Check className="w-3.5 h-3.5 text-[#047857]" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{copiedInviteId === inv.id ? 'Copied' : 'Copy'}</span>
+                        </button>
+                        <button
+                          onClick={() => handleCancelInvite(inv.id)}
+                          className="zonix-btn-danger py-1 px-2 text-xs h-[30px]"
+                          title="Revoke invitation"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
