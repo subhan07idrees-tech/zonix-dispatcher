@@ -3,7 +3,7 @@ import { Info, CheckCircle2, AlertTriangle, AlertCircle } from 'lucide-react';
 
 const AuthContext = createContext(null);
 
-const API_BASE = window.location.protocol === 'file:' ? 'https://zonix-backend-ouhi.onrender.com/api' : '/api';
+const API_BASE = (window.zonixAPI && window.zonixAPI.backendUrl) ? `${window.zonixAPI.backendUrl}/api` : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:4000/api' : 'https://zonix-backend-0ggt.onrender.com/api');
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -81,16 +81,22 @@ export function AuthProvider({ children }) {
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
-        } else {
+        } else if (response.status === 401) {
+          // Only invalidate token if server explicitly confirms it is invalid (401)
+          console.warn('[Auth] Token invalid (401). Logging out.');
           localStorage.removeItem('zonix_token');
           setToken(null);
           setUser(null);
           if (window.zonixAPI) {
             await window.zonixAPI.setConfig('authToken', null);
           }
+        } else {
+          // Server transient error (500/502/503/504) - preserve token and retain user session context from token decode if available
+          console.warn(`[Auth] Backend verify returned status ${response.status}. Retaining session token.`);
         }
       } catch (err) {
-        console.error('[Auth] Token verification failed:', err);
+        console.error('[Auth] Token verification connection failed (network/offline):', err.message);
+        // Do not clear token on connection error
       } finally {
         setLoading(false);
       }

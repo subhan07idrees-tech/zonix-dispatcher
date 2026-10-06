@@ -1,6 +1,6 @@
 {
   "name": "zonix",
-  "version": "1.8.15",
+  "version": "1.8.16",
   "description": "ZONIX - Multi-Tenant Secure Dispatcher System",
   "main": "src/main/index.js",
   "scripts": {
@@ -9,6 +9,7 @@
     "dev:backend": "cd src/backend && npm run dev",
     "build": "node scripts/build.js",
     "build:backend": "cd src/backend && npm run build",
+    "tunnel": "node scripts/start-free-tunnel.js",
     "lint": "eslint src/",
     "migrate": "cd src/backend && npx prisma migrate dev",
     "seed": "cd src/backend && node prisma/seed.js"

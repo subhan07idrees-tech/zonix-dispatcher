@@ -2,35 +2,35 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Wifi, WifiOff, RefreshCw,
-  CheckCircle2, XCircle, AlertCircle, User
+  CheckCircle2, XCircle, AlertCircle, User, Database
 } from 'lucide-react';
 
 function StatusBadge({ ok, label }) {
   if (ok === null || ok === undefined) {
     return (
-      <span className="flex items-center gap-1.5 text-xs text-amber-400 font-normal">
-        <AlertCircle className="w-3.5 h-3.5" />
+      <span className="zonix-badge-warning">
+        <AlertCircle className="w-3.5 h-3.5 text-[#B7791F]" />
         {label || 'Unknown'}
       </span>
     );
   }
   return ok ? (
-    <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-normal">
-      <CheckCircle2 className="w-3.5 h-3.5" />
+    <span className="zonix-badge-active">
+      <CheckCircle2 className="w-3.5 h-3.5 text-[#2E7D5B]" />
       {label || 'Operational'}
     </span>
   ) : (
-    <span className="flex items-center gap-1.5 text-xs text-red-400 font-normal">
-      <XCircle className="w-3.5 h-3.5" />
-      {label || 'Needs authentication'}
+    <span className="zonix-badge-error">
+      <XCircle className="w-3.5 h-3.5 text-[#B54747]" />
+      {label || 'Needs Authentication'}
     </span>
   );
 }
 
-function DiagRow({ label, value, valueClass = 'text-slate-200' }) {
+function DiagRow({ label, value, valueClass = 'text-[#172033]' }) {
   return (
-    <div className="flex items-center justify-between py-2 border-b border-slate-800/40 text-xs">
-      <span className="text-slate-400 font-normal">{label}</span>
+    <div className="flex items-center justify-between py-2 border-b border-[#D9DEE7] text-xs">
+      <span className="text-[#667085] font-medium">{label}</span>
       <span className={`font-mono ${valueClass}`}>{value ?? '—'}</span>
     </div>
   );
@@ -140,21 +140,24 @@ export default function DiagnosticsPage() {
   } catch {}
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 animate-fadeIn">
       {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#D9DEE7] pb-4">
         <div>
-          <h2 className="text-base font-semibold text-slate-100 tracking-normal">Diagnostics &amp; telemetry</h2>
-          <p className="text-xs text-slate-400 mt-0.5">Real-time session vault, cookie sync, and network proxy health audit</p>
+          <h2 className="text-xl font-semibold text-[#172033] tracking-tight flex items-center gap-2">
+            System Diagnostics &amp; Health Audit
+            <span className="zonix-badge-active text-[11px]">Vault Telemetry</span>
+          </h2>
+          <p className="text-xs text-[#667085] mt-1">Real-time session vault, cookie sync integrity, and proxy infrastructure audit</p>
         </div>
         <div className="flex items-center gap-3">
           {currentUser?.role === 'SUPER_ADMIN' && orgs.length > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400">Org:</span>
+              <span className="text-xs font-semibold text-[#667085]">Org:</span>
               <select
                 value={selectedOrg}
                 onChange={(e) => setSelectedOrg(e.target.value)}
-                className="bg-[#0D121F] border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-1.5 focus:outline-none"
+                className="zonix-select text-xs py-1 h-[36px]"
               >
                 {orgs.map((org) => (
                   <option key={org.id} value={org.id}>
@@ -168,51 +171,56 @@ export default function DiagnosticsPage() {
           <button
             onClick={fetchDiagnostics}
             disabled={loading}
-            className="px-3.5 py-2 rounded-lg bg-slate-800 border border-slate-700/60 text-slate-200 text-xs font-medium hover:bg-slate-700/60 transition flex items-center gap-1.5"
+            className="zonix-btn-secondary"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-slate-400 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh diagnostics</span>
+            <RefreshCw className={`w-3.5 h-3.5 text-[#667085] ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh Audit</span>
           </button>
         </div>
       </div>
 
       {/* Organization overview card */}
-      <div className="bg-[#0D121F] border border-slate-800/80 rounded-xl p-5 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-          <div>
-            <h3 className="text-sm font-semibold text-slate-100">{orgData?.displayName || selectedOrg}</h3>
-            <p className="text-xs text-slate-400 font-mono mt-0.5">{orgData?.name} // {selectedOrg}</p>
+      <div className="zonix-card p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-[#D9DEE7] pb-3.5">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded bg-[#EFF4FA] border border-[#D9DEE7] text-[#245B9E] flex items-center justify-center font-bold">
+              <Database className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-[#172033]">{orgData?.displayName || selectedOrg}</h3>
+              <p className="text-xs text-[#667085] font-mono mt-0.5">{orgData?.name} // {selectedOrg}</p>
+            </div>
           </div>
           {lastRefresh && (
-            <span className="text-[11px] font-mono text-slate-400">
-              Refreshed: {lastRefresh.toLocaleTimeString()}
+            <span className="text-xs font-mono text-[#667085]">
+              Audited: {lastRefresh.toLocaleTimeString()}
             </span>
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <DiagRow label="Target load board URL" value={targetDomain} valueClass="text-slate-200 font-mono" />
-          <DiagRow label="Max sessions quota" value={`${orgData?.maxSessions || '—'} sessions`} valueClass="text-slate-200" />
-          <DiagRow label="Max tab seats per user" value={`${orgData?.maxTabs || 5} tabs`} valueClass="text-slate-200" />
-          <DiagRow label="Active dispatchers count" value={`${dispatchers.length} dispatchers`} valueClass="text-slate-200" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-1">
+          <DiagRow label="Target Load Board URL" value={targetDomain} valueClass="text-[#245B9E] font-bold" />
+          <DiagRow label="Max Sessions Quota" value={`${orgData?.maxSessions || '—'} sessions`} valueClass="text-[#172033]" />
+          <DiagRow label="Max Tab Seats per User" value={`${orgData?.maxTabs || 5} tabs`} valueClass="text-[#172033]" />
+          <DiagRow label="Active Dispatchers Count" value={`${dispatchers.length} dispatchers`} valueClass="text-[#172033] font-bold" />
         </div>
       </div>
 
       {/* Dispatcher cookie status */}
-      <div className="bg-[#0D121F] border border-slate-800/80 rounded-xl p-5 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-          <h3 className="text-xs font-semibold text-slate-100">
-            Dispatcher cookie status <span className="text-slate-400 font-normal">for {targetDomain}</span>
+      <div className="zonix-card p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-[#D9DEE7] pb-3.5">
+          <h3 className="text-xs font-semibold text-[#172033] uppercase font-mono tracking-wider">
+            Dispatcher Session Vault Status <span className="text-[#667085] font-normal">({targetDomain})</span>
           </h3>
         </div>
 
         {loading ? (
-          <div className="text-center py-8 text-xs text-slate-400">
-            <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+          <div className="text-center py-12 text-xs text-[#667085]">
+            <div className="w-5 h-5 border-2 border-[#245B9E] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             Auditing dispatcher session vaults...
           </div>
         ) : dispatchers.length === 0 ? (
-          <p className="text-xs text-slate-400 text-center py-4">No dispatchers registered in this organization.</p>
+          <p className="text-xs text-[#667085] text-center py-8">No dispatchers registered in this organization.</p>
         ) : (
           <div className="space-y-3">
             {dispatchers.map(u => {
@@ -220,45 +228,46 @@ export default function DiagnosticsPage() {
               const hasCookies = cs?.hasData && cs.cookieCount > 0;
 
               return (
-                <div key={u.id} className="bg-[#070A10] border border-slate-800/80 rounded-lg p-3.5 space-y-3">
+                <div key={u.id} className="bg-[#F8FAFC] border border-[#D9DEE7] rounded-md p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <User className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="text-xs font-mono text-slate-200 font-medium">{u.username}</span>
-                      <span className={`text-[11px] px-2 py-0.5 rounded font-medium ${
-                        u.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-400'
+                    <div className="flex items-center gap-2.5">
+                      <User className="w-4 h-4 text-[#667085]" />
+                      <span className="text-xs font-mono text-[#172033] font-bold">{u.username}</span>
+                      <span className={`zonix-badge ${
+                        u.status === 'ACTIVE' ? 'zonix-badge-active' : 'zonix-badge-warning'
                       }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${u.status === 'ACTIVE' ? 'bg-[#2E7D5B]' : 'bg-[#B7791F]'}`} />
                         {u.status === 'ACTIVE' ? 'Active' : u.status}
                       </span>
                     </div>
-                    <StatusBadge ok={hasCookies} label={hasCookies ? `${cs.cookieCount} cookies synced` : 'Needs authentication'} />
+                    <StatusBadge ok={hasCookies} label={hasCookies ? `${cs.cookieCount} Cookies Synced` : 'Needs Authentication'} />
                   </div>
 
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-[#0D121F] rounded-md p-2.5 space-y-0.5">
-                      <div className="text-[11px] text-slate-400 font-normal">Cookies</div>
-                      <div className={`text-sm font-mono font-medium ${hasCookies ? 'text-emerald-400' : 'text-red-400'}`}>
+                    <div className="bg-white rounded-md p-3 space-y-1 border border-[#D9DEE7]">
+                      <div className="text-[11px] text-[#667085] font-medium">Synced Cookies</div>
+                      <div className={`text-sm font-mono font-bold ${hasCookies ? 'text-[#2E7D5B]' : 'text-[#B54747]'}`}>
                         {cs ? cs.cookieCount : '—'}
                       </div>
                     </div>
-                    <div className="bg-[#0D121F] rounded-md p-2.5 space-y-0.5">
-                      <div className="text-[11px] text-slate-400 font-normal">Local storage</div>
-                      <div className={`text-sm font-mono font-medium ${cs?.hasLocalStorage ? 'text-emerald-400' : 'text-slate-400'}`}>
+                    <div className="bg-white rounded-md p-3 space-y-1 border border-[#D9DEE7]">
+                      <div className="text-[11px] text-[#667085] font-medium">Local Storage Data</div>
+                      <div className={`text-sm font-mono font-bold ${cs?.hasLocalStorage ? 'text-[#245B9E]' : 'text-[#667085]'}`}>
                         {cs?.hasLocalStorage ? 'Synced' : 'None'}
                       </div>
                     </div>
-                    <div className="bg-[#0D121F] rounded-md p-2.5 space-y-0.5">
-                      <div className="text-[11px] text-slate-400 font-normal">Captured</div>
-                      <div className="text-xs font-mono text-slate-200">
+                    <div className="bg-white rounded-md p-3 space-y-1 border border-[#D9DEE7]">
+                      <div className="text-[11px] text-[#667085] font-medium">Last Session Capture</div>
+                      <div className="text-xs font-mono text-[#172033] font-semibold truncate">
                         {cs?.capturedAt ? new Date(cs.capturedAt).toLocaleString() : '—'}
                       </div>
                     </div>
                   </div>
 
                   {!hasCookies && (
-                    <div className="flex items-center gap-1.5 text-xs text-amber-400 pt-1">
-                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span>Go to User Registry ➔ click the key icon next to this dispatcher to capture a fresh session.</span>
+                    <div className="flex items-center gap-2 text-xs text-[#B7791F] pt-1 font-sans bg-[#FEF3C7] border border-[#FDE68A] p-2.5 rounded-md">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <span>Go to <strong>User Registry</strong> ➔ click the key icon next to this dispatcher to capture fresh session cookies.</span>
                     </div>
                   )}
                 </div>
@@ -269,29 +278,32 @@ export default function DiagnosticsPage() {
       </div>
 
       {/* Proxy nodes list */}
-      <div className="bg-[#0D121F] border border-slate-800/80 rounded-xl p-5 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-          <h3 className="text-xs font-semibold text-slate-100">Proxy node connectivity</h3>
+      <div className="zonix-card p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-[#D9DEE7] pb-3.5">
+          <h3 className="text-xs font-semibold text-[#172033] uppercase font-mono tracking-wider">
+            Proxy Node Infrastructure Status
+          </h3>
         </div>
         {proxies.length === 0 ? (
-          <p className="text-xs text-slate-400 text-center py-4">No proxy nodes configured.</p>
+          <p className="text-xs text-[#667085] text-center py-6">No proxy nodes configured for this organization.</p>
         ) : (
           <div className="space-y-2">
             {proxies.map(p => (
-              <div key={p.id} className="bg-[#070A10] border border-slate-800/80 rounded-lg p-3 flex items-center justify-between text-xs">
+              <div key={p.id} className="bg-[#F8FAFC] border border-[#D9DEE7] rounded-md p-3 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-3">
                   {p.status === 'ACTIVE'
-                    ? <Wifi className="w-3.5 h-3.5 text-emerald-400" />
-                    : <WifiOff className="w-3.5 h-3.5 text-slate-400" />}
+                    ? <Wifi className="w-4 h-4 text-[#2E7D5B]" />
+                    : <WifiOff className="w-4 h-4 text-[#667085]" />}
                   <div>
-                    <div className="font-mono text-slate-200">{p.host}:{p.port}</div>
+                    <div className="font-mono text-[#172033] font-bold">{p.host}:{p.port}</div>
                     {p.username && (
-                      <div className="font-mono text-slate-400 text-[11px]">Auth: {p.username}</div>
+                      <div className="font-mono text-[#667085] text-[11px]">User: {p.username}</div>
                     )}
                   </div>
                 </div>
-                <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  {p.status === 'ACTIVE' ? 'Active' : p.status}
+                <span className="zonix-badge-active">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D5B]" />
+                  {p.status === 'ACTIVE' ? 'Active Node' : p.status}
                 </span>
               </div>
             ))}

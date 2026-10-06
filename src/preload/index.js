@@ -127,7 +127,7 @@ const { contextBridge, ipcRenderer } = require('electron');
   }
 })();
 
-if (window.location.protocol === 'file:') {
+try {
   const zonixBridge = {
     login: (credentials) => ipcRenderer.invoke('auth:login', credentials),
     logout: () => ipcRenderer.invoke('auth:logout'),
@@ -168,6 +168,8 @@ if (window.location.protocol === 'file:') {
     startUpdate: () => ipcRenderer.send('update:start'),
     quitApp: () => ipcRenderer.send('update:quit')
   });
+} catch (e) {
+  console.error('[Preload] Failed to expose zonixAPI:', e);
 }
 
 (function injectFingerprintOverrides() {

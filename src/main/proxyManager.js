@@ -138,7 +138,7 @@ class ProxyManager {
         }
       }
 
-      await fetch(`${process.env.ZONIX_BACKEND_URL || 'https://zonix-backend-ouhi.onrender.com'}/api/events`, {
+      await fetch(`${process.env.ZONIX_BACKEND_URL || 'https://zonix-backend-0ggt.onrender.com'}/api/events`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

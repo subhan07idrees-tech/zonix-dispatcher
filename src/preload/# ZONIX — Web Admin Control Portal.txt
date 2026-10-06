@@ -1,0 +1,26 @@
+# ZONIX — Web Admin Control Portal
+
+Manage dispatchers, monitor active sessions & access control from any browser.
+
+### Quick Dispatcher Operations
+
+### Dispatcher Registry
+Manage dispatcher accounts, tab limits, and active access status
+
+### Pending Invitations
+Track email invitations sent to dispatchers
+
+### Organization Settings
+
+### Install on Smartphone (PWA)
+Add ZONIX Web Admin to your phone's home screen as a standalone mobile app.
+1. Open https://thezonix.com/admin in Safari.
+2. Tap the Share icon (bottom toolbar).
+3. Scroll down and tap Add to Home Screen.
+1. Open https://thezonix.com/admin in Chrome.
+2. Tap the 3 dots menu (top right).
+3. Tap Install app or Add to Home Screen.
+
+### + Add New Dispatcher
+
+### ✉️ Send Email Invitation
