@@ -404,7 +404,7 @@ export default function OverviewPage() {
                             message: supportMessage,
                             notifyAllUsers,
                             telemetry: {
-                              appVersion: 'v1.8.17',
+                              appVersion: 'v1.8.18',
                               os: 'Windows 10/11',
                               latency: `${healthTelemetry.latencyMs}ms`,
                               cookieStatus: healthTelemetry.cookieStatus

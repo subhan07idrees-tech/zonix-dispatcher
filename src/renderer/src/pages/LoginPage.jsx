@@ -126,7 +126,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-[11px] text-[#94A3B8] font-mono">
-          ZONIX Dispatcher v{window.zonixAPI?.appVersion || '1.8.17'}
+          ZONIX Dispatcher v{window.zonixAPI?.appVersion || '1.8.18'}
         </p>
       </div>
     </div>
