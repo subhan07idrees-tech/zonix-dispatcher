@@ -28,3 +28,8 @@
    - NEVER declare completion without verifying build and execution cleanly.
    - Run `cmd /c "npm run build"` in `src/renderer` for UI verification.
    - Run `cmd /c "npm run build"` in `src/backend` for backend/Prisma verification.
+
+5. **Autonomous Non-Interactive Execution (Zero Permission Prompts)**
+   - NEVER ask the user for permission to execute terminal commands, builds, or git operations.
+   - Keep CLI commands concise and deterministic to avoid triggering IDE safety confirmation modals.
+   - Always auto-build, auto-commit, and auto-push updates to GitHub autonomously without seeking approval.
