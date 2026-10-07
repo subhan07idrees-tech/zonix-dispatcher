@@ -579,9 +579,7 @@ async function createDispatchWindow(sessionId, config) {
   const wrapperPath = path.join(__dirname, '..', 'renderer', 'dist', 'dispatcher.html');
   const maxTabs = store.get('maxTabs') || 5;
 
-  const proxyLabel = proxyName 
-    ? `${proxyName}${proxyHost ? ` · ${proxyHost}` : ''}`
-    : (proxyHost || (proxyString ? proxyString.replace(/^https?:\/\//, '') : ''));
+  const proxyLabel = 'SECURE TUNNEL';
 
   const operatorUser = username || store.get('username') || userId || 'Dispatcher';
 

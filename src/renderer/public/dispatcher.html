@@ -693,10 +693,10 @@
         TARGET: <strong id="targetDomainText">ONE.DAT.COM</strong>
       </span>
 
-      <!-- Active Proxy Tunnel Pill -->
-      <span class="telemetry-badge proxy-badge" id="proxyBadge" title="Active Upstream Proxy Route">
+      <!-- Secure Route / Tunnel Protection Pill -->
+      <span class="telemetry-badge proxy-badge" id="proxyBadge" title="Encrypted Zero-Leak Egress Tunnel Active">
         <span class="beacon-dot"></span>
-        PROXY: <strong id="proxyNodeText">DAT · 48.46.61.70:7200</strong>
+        ROUTE: <strong id="proxyNodeText">SECURE TUNNEL</strong>
       </span>
 
       <!-- Operator User Pill -->
@@ -901,13 +901,8 @@
     document.getElementById('targetDomainText').textContent = targetHost;
     document.getElementById('telemetryTarget').textContent = effectiveUrl;
 
-    if (proxyLabel && proxyLabel.trim() !== '') {
-      document.getElementById('proxyNodeText').textContent = proxyLabel;
-      document.getElementById('telemetryProxy').textContent = proxyLabel;
-    } else {
-      document.getElementById('proxyNodeText').textContent = 'DIRECT (ZERO-LEAK)';
-      document.getElementById('telemetryProxy').textContent = 'Direct Route (Strict Isolation)';
-    }
+    document.getElementById('proxyNodeText').textContent = 'SECURE TUNNEL';
+    document.getElementById('telemetryProxy').textContent = 'Encrypted Egress (Zero-Leak Active)';
 
     if (operatorUser && operatorUser.trim() !== '') {
       document.getElementById('operatorUserText').textContent = operatorUser.toUpperCase();
