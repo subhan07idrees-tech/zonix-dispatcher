@@ -33,61 +33,86 @@ class SecurityEngine {
     this.SINKHOLE_DATA_URI = 'data:text/javascript,window.__ZONIX_SINKHOLE=true;';
   }
 
-  applyInterceptors(targetSession, orgId) {
+  applyInterceptors(targetSession, orgId, sessionId, proxyManager) {
     if (this.interceptedSessions.has(targetSession.id)) {
       console.log(`[Security] Interceptors already applied to session ${targetSession.id}`);
       return;
     }
 
-    this.applyTelemetrySinkhole(targetSession);
+    this.applyZeroLeakMasterFilter(targetSession, sessionId, proxyManager);
     this.applyWebRTCLeakProtection(targetSession);
-    this.applyDNSLeakProtection(targetSession);
     this.applyFingerprintConsistencyHeaders(targetSession, orgId);
+    this.applyContentSecurityPolicy(targetSession);
+    this.removeBrowserDetectionHeaders(targetSession);
 
     this.interceptedSessions.set(targetSession.id, {
       orgId,
+      sessionId,
       appliedAt: Date.now()
     });
 
-    console.log(`[Security] All interceptors applied for org ${orgId}, session ${targetSession.id}`);
+    console.log(`[Security] All zero-leak security interceptors locked for org ${orgId}, session ${targetSession.id}`);
   }
 
-  applyTelemetrySinkhole(targetSession) {
-    const sinkholePattern = this.TELEMETRY_DOMAINS.map(d => {
-      const cleaned = d.replace(/^\*?:\/\//, '').replace(/\/\*$/, '');
-      return `*://${cleaned}*`;
-    });
+  applyZeroLeakMasterFilter(targetSession, sessionId, proxyManager) {
+    const dnsLeakDomains = ['dns.google', 'cloudflare-dns.com', '1.1.1.1', 'one.one.one.one'];
+    const devToolsProtocols = ['chrome-devtools:', 'devtools:', 'view-source:'];
 
     targetSession.webRequest.onBeforeRequest(
-      { urls: this.TELEMETRY_DOMAINS },
+      { urls: ['*://*/*'] },
       (details, callback) => {
-        console.debug(`[Security] Sinkholed telemetry request: ${details.url.substring(0, 80)}...`);
-        callback({ cancel: true, redirectURL: this.SINKHOLE_DATA_URI });
+        const url = details.url || '';
+
+        // 1. HARD ZERO-LEAK KILL-SWITCH GATE (Immediate in-memory block)
+        if (proxyManager && sessionId && proxyManager.isKillSwitchActive(sessionId)) {
+          // Allow internal file/data scripts, completely blackhole all outbound network egress
+          if (url.startsWith('file:') || url.startsWith('data:') || url.startsWith('chrome-extension:')) {
+            return callback({});
+          }
+          console.warn(`[Zero-Leak Hard Block] 🚨 OUTBOUND BLOCKED during proxy disconnect: ${url.substring(0, 90)}`);
+          return callback({ cancel: true });
+        }
+
+        // 2. DevTools Navigation Lockdown
+        if (devToolsProtocols.some(p => url.startsWith(p))) {
+          return callback({ cancel: true });
+        }
+
+        // 3. Native DNS Leak Probe Block
+        if (dnsLeakDomains.some(d => url.includes(d))) {
+          console.warn(`[Security] DNS leak probe blocked: ${url.substring(0, 80)}`);
+          return callback({ cancel: true });
+        }
+
+        // 4. Telemetry Domain Sinkhole
+        for (const pattern of this.TELEMETRY_DOMAINS) {
+          const domain = pattern.replace(/^\*?:\/\//, '').replace(/\/\*$/, '').replace(/\*/g, '');
+          if (url.includes(domain)) {
+            return callback({ cancel: true, redirectURL: this.SINKHOLE_DATA_URI });
+          }
+        }
+
+        // Standard proxied traffic allowed
+        callback({});
       }
     );
 
-    console.log(`[Security] Telemetry sinkhole active — blocking ${this.TELEMETRY_DOMAINS.length} tracker patterns`);
+    console.log('[Security] Unified zero-leak master request filter active');
   }
 
   applyWebRTCLeakProtection(targetSession) {
     try {
-      targetSession.setWebRTCIPHandlingPolicy('disable_non_proxied_udp_send');
-      console.log('[Security] Native WebRTC IP Handling Policy set to disable_non_proxied_udp_send');
+      // Chromium policy: strictly disables UDP when proxy is in use, routing WebRTC only through proxy
+      targetSession.setWebRTCIPHandlingPolicy('disable_non_proxied_udp');
+      console.log('[Security] Native WebRTC IP Handling Policy set to: disable_non_proxied_udp');
     } catch (e) {
-      console.error('[Security] Failed to set native WebRTC IP handling policy:', e.message);
-    }
-    console.log('[Security] WebRTC leak protection applied');
-  }
-
-  applyDNSLeakProtection(targetSession) {
-    targetSession.webRequest.onBeforeRequest(
-      { urls: ['*://dns.google/*', '*://cloudflare-dns.com/*', '*://1.1.1.1/*'] },
-      (details, callback) => {
-        callback({ cancel: true });
+      try {
+        targetSession.setWebRTCIPHandlingPolicy('default_public_interface_only');
+      } catch (e2) {
+        console.error('[Security] Failed to set native WebRTC IP handling policy:', e.message);
       }
-    );
-
-    console.log('[Security] DNS leak protection applied');
+    }
+    console.log('[Security] WebRTC leak protection active (strict zero-leak mode)');
   }
 
   applyFingerprintConsistencyHeaders(targetSession, orgId) {
@@ -135,30 +160,6 @@ class SecurityEngine {
       hash = hash & hash;
     }
     return Math.abs(hash);
-  }
-
-  applyCanvasFingerprintProtection(targetSession, orgId) {
-    const seed = this.generateOrgFingerprintSeed(orgId);
-
-    targetSession.webRequest.onBeforeRequest(
-      { urls: ['*://*/*'] },
-      (details, callback) => {
-        callback({});
-      }
-    );
-
-    console.log(`[Security] Canvas fingerprint protection queued for preload injection (seed: ${seed})`);
-  }
-
-  blockNavigationToDevTools(targetSession) {
-    targetSession.webRequest.onBeforeRequest(
-      { urls: ['chrome-devtools://*', 'devtools://*', 'view-source://*'] },
-      (details, callback) => {
-        callback({ cancel: true });
-      }
-    );
-
-    console.log('[Security] DevTools navigation blocked');
   }
 
   applyContentSecurityPolicy(targetSession) {
@@ -215,7 +216,6 @@ class SecurityEngine {
           return;
         }
 
-        // Map lowercase headers to their actual keys in a single quick pass
         const headerMap = {};
         for (const key of Object.keys(headers)) {
           headerMap[key.toLowerCase()] = key;

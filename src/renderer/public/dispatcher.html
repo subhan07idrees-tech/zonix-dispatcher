@@ -1391,11 +1391,15 @@
     window.zonixAPI?.onProxyStatus?.((statusObj) => {
       const proxyOverlay = document.getElementById('proxyOutageOverlay');
       if (statusObj.status === 'disconnected') {
-        proxyOverlay.classList.add('active');
-        console.warn('[Dispatcher] Proxy connection dropped. Displaying secure shield.');
+        if (proxyOverlay) proxyOverlay.classList.add('active');
+        // Instantly halt all guest webview activity to freeze in-flight scripts
+        tabs.forEach(t => {
+          try { if (t.webview) t.webview.stop(); } catch(e) {}
+        });
+        console.warn('[Dispatcher] 🚨 Proxy connection dropped. Immediate zero-leak lockdown active.');
       } else if (statusObj.status === 'connected') {
-        proxyOverlay.classList.remove('active');
-        console.log('[Dispatcher] Proxy connection restored. Resuming tunnel.');
+        if (proxyOverlay) proxyOverlay.classList.remove('active');
+        console.log('[Dispatcher] ✅ Proxy connection restored. Resuming secure tunnel.');
       }
     });
 

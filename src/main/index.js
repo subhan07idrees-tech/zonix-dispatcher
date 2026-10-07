@@ -474,7 +474,24 @@ async function createDispatchWindow(sessionId, config) {
     console.log(`[ZONIX] Cookies injected into partition: ${partitionId}`);
   }
 
-  securityEngine.applyInterceptors(sess, orgId);
+  securityEngine.applyInterceptors(sess, orgId, sessionId, proxyManager);
+
+  // IMMEDIATE NETWORK-LEVEL TRIPWIRE (0ms detection directly from Chromium network service):
+  sess.webRequest.onErrorOccurred({ urls: ['*://*/*'] }, (details) => {
+    const err = details.error || '';
+    if (
+      err.includes('ERR_PROXY') ||
+      err.includes('ERR_TUNNEL') ||
+      err.includes('ERR_SOCKS') ||
+      err.includes('ERR_TIMED_OUT') ||
+      err.includes('ERR_CONNECTION_RESET')
+    ) {
+      console.warn(`[ZONIX Zero-Leak Shield] 🚨 Immediate network proxy failure (${err}) for URL: ${details.url}. Activating kill-switch immediately!`);
+      if (proxyManager) {
+        proxyManager.activateKillSwitch(sessionId, dispatchWindow, partitionId);
+      }
+    }
+  });
 
   const dispatchWindow = new BrowserWindow({
     width: 1400,
@@ -497,6 +514,16 @@ async function createDispatchWindow(sessionId, config) {
   dispatchWindow.webContents.on('did-attach-webview', (event, webContents) => {
     webContents.setUserAgent(targetUserAgent);
     console.log(`[ZONIX] Inherited parent User Agent to child webview: ${targetUserAgent}`);
+
+    // Instant tripwire if guest webview encounters proxy drop
+    webContents.on('did-fail-load', (e, errorCode, errorDesc) => {
+      if (errorCode === -130 || errorCode === -111 || errorCode === -136 || errorCode === -115) {
+        console.warn(`[ZONIX Zero-Leak Shield] 🚨 Guest webview proxy error (${errorCode} ${errorDesc}). Activating kill-switch!`);
+        if (proxyManager) {
+          proxyManager.activateKillSwitch(sessionId, dispatchWindow, partitionId);
+        }
+      }
+    });
   });
 
   setupOIDCLoopDetection(dispatchWindow, sessionId);
@@ -570,7 +597,7 @@ async function createDispatchWindow(sessionId, config) {
     proxyManager.startContinuousHealthCheck(sessionId, proxyString, dispatchWindow, {
       username: proxyUsername || config.proxyUsername,
       password: proxyPassword || config.proxyPassword
-    });
+    }, partitionId);
   }
   startHeartbeatMonitor(sessionId);
   broadcastSessionUpdate();
@@ -717,7 +744,7 @@ function startHeartbeatMonitor(sessionId) {
 
       if (result.proxyStatus === 'unreachable') {
         console.warn(`[ZONIX] Proxy failure detected for session ${sessionId}. Activating kill-switch...`);
-        proxyManager.activateKillSwitch(sessionId, sessionData.window);
+        proxyManager.activateKillSwitch(sessionId, sessionData.window, sessionData.partitionId);
       }
 
       if (result.proxyStatus === 'degraded') {
@@ -730,7 +757,7 @@ function startHeartbeatMonitor(sessionId) {
       }
     } catch (err) {
       console.error(`[ZONIX] Heartbeat failed for session ${sessionId}:`, err.message);
-      proxyManager.activateKillSwitch(sessionId, sessionData.window);
+      proxyManager.activateKillSwitch(sessionId, sessionData.window, sessionData.partitionId);
     }
   }, CONFIG.HEARTBEAT_INTERVAL);
 }
