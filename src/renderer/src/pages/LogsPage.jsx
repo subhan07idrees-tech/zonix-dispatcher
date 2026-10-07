@@ -141,12 +141,12 @@ export default function LogsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-[#CBD5E1] text-[11px] text-[#475569] uppercase font-mono bg-[#F8FAFC]">
-                <th className="py-3 px-4 text-left font-bold">Timestamp</th>
-                <th className="py-3 px-4 text-left font-bold">Action</th>
-                <th className="py-3 px-4 text-left font-bold">Resource</th>
-                <th className="py-3 px-4 text-left font-bold">Operator / Subject</th>
-                <th className="py-3 px-4 text-left font-bold">Telemetry Details</th>
-                <th className="py-3 px-4 text-right font-bold">Origin Location</th>
+                <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Timestamp</th>
+                <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Action</th>
+                <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Resource</th>
+                <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Operator / Subject</th>
+                <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Telemetry Details</th>
+                <th className="py-3 px-4 text-right font-bold whitespace-nowrap">Origin Location</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E2E8F0]">

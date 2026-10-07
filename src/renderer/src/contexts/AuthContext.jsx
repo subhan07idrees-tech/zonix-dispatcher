@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Info, CheckCircle2, AlertTriangle, AlertCircle } from 'lucide-react';
 
 const AuthContext = createContext(null);
@@ -187,9 +188,9 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={value}>
       {children}
-      {dialog && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[9999] p-4 select-none animate-fadeIn">
-          <div className="bg-white border border-[#CBD5E1] rounded-lg max-w-md w-full p-6 shadow-xl flex flex-col relative animate-fadeIn">
+      {dialog && createPortal(
+        <div className="fixed inset-0 bg-[#0A0F1D]/75 backdrop-blur-xs flex items-center justify-center z-[99999] p-4 select-none animate-modal-backdrop" onClick={dialog.type === 'confirm' ? dialog.onCancel : undefined}>
+          <div className="bg-white border border-[#CBD5E1] rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col relative animate-modal-content" onClick={(e) => e.stopPropagation()}>
             {/* Header / Title */}
             <div className="flex items-start gap-3.5 mb-3">
               <div className="flex-shrink-0 mt-0.5">
@@ -202,7 +203,7 @@ export function AuthProvider({ children }) {
                 <h3 className="text-sm font-bold text-[#0F172A]">
                   {dialog.title}
                 </h3>
-                <div className="text-xs text-[#475569] mt-2 leading-relaxed whitespace-pre-line">
+                <div className="text-xs text-[#475569] mt-2 leading-relaxed whitespace-pre-line font-medium">
                   {dialog.message}
                 </div>
               </div>
@@ -212,6 +213,7 @@ export function AuthProvider({ children }) {
             <div className="flex justify-end gap-2.5 mt-5 pt-3 border-t border-[#E2E8F0]">
               {dialog.type === 'confirm' && (
                 <button
+                  type="button"
                   onClick={dialog.onCancel}
                   className="zonix-btn-secondary text-xs h-[34px] px-3.5"
                 >
@@ -219,6 +221,7 @@ export function AuthProvider({ children }) {
                 </button>
               )}
               <button
+                type="button"
                 onClick={dialog.onConfirm}
                 className={dialog.variant === 'error' ? 'zonix-btn-danger text-xs h-[34px] px-4' : 'zonix-btn-primary text-xs h-[34px] px-4'}
                 autoFocus
@@ -227,7 +230,8 @@ export function AuthProvider({ children }) {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </AuthContext.Provider>
   );

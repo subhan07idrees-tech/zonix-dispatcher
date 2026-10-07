@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Building2, Plus, Edit2, Trash2, X, ShieldAlert, ArrowUpRight, Lock, CheckCircle2 } from 'lucide-react';
+import { Building2, Plus, Edit2, Trash2, X, ShieldAlert, ArrowUpRight, Lock, CheckCircle2, Shield } from 'lucide-react';
 
 function OrgModal({ org, onClose, onSave, user }) {
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
@@ -21,12 +22,12 @@ function OrgModal({ org, onClose, onSave, user }) {
     setLoading(false);
   };
 
-  return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fadeIn" onClick={onClose}>
-      <div className="bg-white border border-[#CBD5E1] rounded-xl shadow-2xl w-full max-w-lg p-6 space-y-5 animate-fadeIn" onClick={(e) => e.stopPropagation()}>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] bg-[#0A0F1D]/75 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={onClose}>
+      <div className="relative my-auto w-full max-w-lg bg-white border border-[#CBD5E1] rounded-xl shadow-2xl p-6 space-y-5 animate-modal-content max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center font-bold">
+            <div className="w-9 h-9 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center font-bold">
               <Building2 className="w-4 h-4" />
             </div>
             <div>
@@ -34,25 +35,29 @@ function OrgModal({ org, onClose, onSave, user }) {
                 {org ? 'Edit Organization Settings' : 'Create New Tenant Organization'}
               </h3>
               <p className="text-xs text-[#64748B]">
-                {org ? `Update concurrency and parameters for ${org.displayName}` : 'Provision a new multi-tenant dispatcher organization'}
+                {org ? `Update parameters and quotas for ${org.displayName}` : 'Provision a new multi-tenant dispatcher organization'}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-[#F1F5F9] rounded-md text-[#64748B] hover:text-[#0F172A] transition-colors">
+          <button 
+            type="button"
+            onClick={onClose} 
+            className="w-8 h-8 rounded-md flex items-center justify-center text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#334155] mb-1">
+            <label className="block text-xs font-bold text-[#0F172A] mb-1.5">
               Organization Identifier (Slug)
             </label>
             <input
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '') })}
-              className="zonix-input w-full font-mono"
+              className="zonix-input w-full font-mono text-xs font-semibold"
               placeholder="e.g. beta-logistics"
               required
               disabled={!!org}
@@ -61,70 +66,79 @@ function OrgModal({ org, onClose, onSave, user }) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#334155] mb-1">Display Name</label>
+            <label className="block text-xs font-bold text-[#0F172A] mb-1.5">
+              Display Name
+            </label>
             <input
               type="text"
               value={form.displayName}
               onChange={(e) => setForm({ ...form, displayName: e.target.value })}
-              className="zonix-input w-full"
-              placeholder="e.g. Beta Logistics Fleet"
+              className="zonix-input w-full text-xs font-semibold"
+              placeholder="e.g. Beta Logistics Inc."
               required
             />
           </div>
 
-          <div className="space-y-1.5 p-3.5 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0]">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-[#0F172A] font-bold">Allocation &amp; Seat Quotas</span>
+          {/* Allocation & Seat Quotas */}
+          <div className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg p-3.5 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#0F172A] uppercase font-mono tracking-wider">
+                Allocation &amp; Seat Quotas
+              </span>
               {!isSuperAdmin && (
                 <span className="text-[11px] text-[#B45309] font-medium flex items-center gap-1">
                   <Lock className="w-3 h-3" /> Managed by Super Admin
                 </span>
               )}
             </div>
+
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-[11px] text-[#64748B] font-medium mb-1">Max Users</label>
+                <label className="block text-[11px] font-semibold text-[#475569] mb-1">Max Users</label>
                 <input
                   type="number"
+                  min="1"
                   value={form.maxUsers}
                   onChange={(e) => setForm({ ...form, maxUsers: parseInt(e.target.value) || 1 })}
+                  className="zonix-input w-full text-xs font-mono font-bold"
                   disabled={!isSuperAdmin}
-                  className={`zonix-input w-full font-mono ${!isSuperAdmin ? 'bg-[#F1F5F9] cursor-not-allowed opacity-75' : ''}`}
-                  min="1"
+                  required
                 />
               </div>
               <div>
-                <label className="block text-[11px] text-[#64748B] font-medium mb-1">Max Sessions</label>
+                <label className="block text-[11px] font-semibold text-[#475569] mb-1">Max Sessions</label>
                 <input
                   type="number"
+                  min="1"
                   value={form.maxSessions}
                   onChange={(e) => setForm({ ...form, maxSessions: parseInt(e.target.value) || 1 })}
+                  className="zonix-input w-full text-xs font-mono font-bold"
                   disabled={!isSuperAdmin}
-                  className={`zonix-input w-full font-mono ${!isSuperAdmin ? 'bg-[#F1F5F9] cursor-not-allowed opacity-75' : ''}`}
-                  min="1"
+                  required
                 />
               </div>
               <div>
-                <label className="block text-[11px] text-[#64748B] font-medium mb-1">Max Tabs / Seat</label>
+                <label className="block text-[11px] font-semibold text-[#475569] mb-1">Max Tabs / Seat</label>
                 <input
                   type="number"
+                  min="1"
                   value={form.maxTabs}
                   onChange={(e) => setForm({ ...form, maxTabs: parseInt(e.target.value) || 1 })}
+                  className="zonix-input w-full text-xs font-mono font-bold"
                   disabled={!isSuperAdmin}
-                  className={`zonix-input w-full font-mono ${!isSuperAdmin ? 'bg-[#F1F5F9] cursor-not-allowed opacity-75' : ''}`}
-                  min="1"
+                  required
                 />
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#334155] mb-1">Target Load Board URL</label>
+            <label className="block text-xs font-bold text-[#0F172A] mb-1.5">Target Load Board URL</label>
             <input
               type="text"
               value={form.targetUrl}
               onChange={(e) => setForm({ ...form, targetUrl: e.target.value })}
-              className="zonix-input w-full font-mono"
+              className="zonix-input w-full font-mono text-xs"
               placeholder="https://one.dat.com/search-loads"
             />
             <p className="text-[11px] text-[#64748B] mt-1">Direct URL dispatched inside the locked browser wrapper.</p>
@@ -140,14 +154,15 @@ function OrgModal({ org, onClose, onSave, user }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
 function SuperAdminRequiredModal({ onClose, onSwitchUser }) {
-  return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fadeIn" onClick={onClose}>
-      <div className="bg-white border border-[#CBD5E1] rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4 animate-fadeIn" onClick={(e) => e.stopPropagation()}>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] bg-[#0A0F1D]/75 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={onClose}>
+      <div className="relative my-auto w-full max-w-md bg-white border border-[#CBD5E1] rounded-xl shadow-2xl p-6 space-y-4 animate-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start gap-3.5 border-b border-[#E2E8F0] pb-3.5">
           <div className="w-10 h-10 rounded-lg bg-[#FFFBEB] border border-[#FDE68A] text-[#B45309] flex items-center justify-center flex-shrink-0 mt-0.5">
             <ShieldAlert className="w-5 h-5" />
@@ -158,16 +173,16 @@ function SuperAdminRequiredModal({ onClose, onSwitchUser }) {
           </div>
         </div>
 
-        <div className="space-y-2.5 text-xs text-[#334155] leading-relaxed">
+        <div className="space-y-3 text-xs text-[#334155] leading-relaxed">
           <p>
             You are currently logged in with <strong className="text-[#0F172A]">Organization Admin</strong> role. Org admins are scoped to manage users and proxies for their assigned tenant.
           </p>
-          <div className="p-3 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] space-y-1.5 font-mono text-[11px]">
+          <div className="p-3.5 bg-[#F8FAFC] rounded-lg border border-[#CBD5E1] space-y-1.5 font-mono text-[11px]">
             <p className="font-bold text-[#0F172A] font-sans">To create a new tenant organization:</p>
-            <p>1. Sign out of this session.</p>
-            <p>2. Leave <span className="text-[#1E40AF] font-bold">Organization ID</span> blank.</p>
-            <p>3. Enter username: <span className="text-[#1E40AF] font-bold">superadmin</span>.</p>
-            <p>4. Enter the master superadmin password.</p>
+            <p className="text-[#475569]">1. Sign out of this session.</p>
+            <p className="text-[#475569]">2. Leave <span className="text-[#1E40AF] font-bold">Organization ID</span> blank.</p>
+            <p className="text-[#475569]">3. Enter username: <span className="text-[#1E40AF] font-bold">superadmin</span>.</p>
+            <p className="text-[#475569]">4. Enter the master superadmin password.</p>
           </div>
         </div>
 
@@ -180,7 +195,8 @@ function SuperAdminRequiredModal({ onClose, onSwitchUser }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -252,7 +268,7 @@ export default function OrganizationsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-6">
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#CBD5E1] pb-4">
         <div>
@@ -274,7 +290,7 @@ export default function OrganizationsPage() {
 
         <button
           onClick={handleCreateClick}
-          className="zonix-btn-primary self-start sm:self-auto"
+          className="zonix-btn-primary self-start sm:self-auto gap-1.5"
           title={isSuperAdmin ? "Create new organization" : "Requires Super Administrator role"}
         >
           <Plus className="w-3.5 h-3.5" />
@@ -286,8 +302,8 @@ export default function OrganizationsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {loading ? (
           <div className="col-span-3 py-16 text-center text-xs text-[#64748B]">
-            <div className="w-5 h-5 border-2 border-[#1E40AF] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            Loading organization registry...
+            <div className="w-6 h-6 border-2 border-[#1E40AF] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="font-medium">Loading organization registry...</p>
           </div>
         ) : organizations.length === 0 ? (
           <div className="col-span-3 zonix-card p-12 text-center text-xs text-[#64748B] space-y-3">
@@ -303,7 +319,7 @@ export default function OrganizationsPage() {
             const sessionPct = Math.min(100, Math.round(((org._count?.sessions || 0) / (org.maxSessions || 1)) * 100));
 
             return (
-              <div key={org.id} className="zonix-card flex flex-col justify-between hover:border-[#94A3B8]">
+              <div key={org.id} className="zonix-card flex flex-col justify-between hover:border-[#94A3B8] transition-all duration-150">
                 <div>
                   {/* Card Header */}
                   <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
@@ -346,8 +362,8 @@ export default function OrganizationsPage() {
                           <span>User Capacity</span>
                           <span className="font-mono font-semibold text-[#0F172A]">{userPct}%</span>
                         </div>
-                        <div className="h-1.5 w-full bg-[#E2E8F0] rounded-full overflow-hidden">
-                          <div className="h-full bg-[#1E40AF] rounded-full" style={{ width: `${userPct}%` }} />
+                        <div className="h-2 w-full bg-[#E2E8F0] rounded-full overflow-hidden">
+                          <div className="h-full bg-[#1E40AF] rounded-full transition-all duration-300" style={{ width: `${userPct}%` }} />
                         </div>
                       </div>
 
@@ -356,8 +372,8 @@ export default function OrganizationsPage() {
                           <span>Active Concurrency</span>
                           <span className="font-mono font-semibold text-[#0F172A]">{sessionPct}%</span>
                         </div>
-                        <div className="h-1.5 w-full bg-[#E2E8F0] rounded-full overflow-hidden">
-                          <div className="h-full bg-[#047857] rounded-full" style={{ width: `${sessionPct}%` }} />
+                        <div className="h-2 w-full bg-[#E2E8F0] rounded-full overflow-hidden">
+                          <div className="h-full bg-[#047857] rounded-full transition-all duration-300" style={{ width: `${sessionPct}%` }} />
                         </div>
                       </div>
                     </div>
@@ -386,7 +402,7 @@ export default function OrganizationsPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => { setEditingOrg(org); setShowModal(true); }}
-                      className="zonix-btn-secondary text-xs h-[32px] px-3"
+                      className="zonix-btn-secondary text-xs h-[32px] px-3 gap-1.5"
                     >
                       <Edit2 className="w-3.5 h-3.5 text-[#475569]" />
                       <span>Edit</span>

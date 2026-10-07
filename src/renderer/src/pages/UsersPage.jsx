@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Users, Plus, Edit2, Trash2, X, Shield, ShieldOff,
@@ -21,9 +22,9 @@ function InviteModal({ orgId, onClose, onSend }) {
     setLoading(false);
   };
 
-  return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fadeIn" onClick={onClose}>
-      <div className="bg-white border border-[#CBD5E1] rounded-xl shadow-2xl w-full max-w-md p-6 space-y-5 animate-fadeIn" onClick={(e) => e.stopPropagation()}>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] bg-[#0A0F1D]/75 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={onClose}>
+      <div className="relative my-auto w-full max-w-md bg-white border border-[#CBD5E1] rounded-xl shadow-2xl p-6 space-y-5 animate-modal-content max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3.5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center font-bold">
@@ -96,7 +97,8 @@ function InviteModal({ orgId, onClose, onSend }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -118,9 +120,9 @@ function UserModal({ user, orgId, onClose, onSave }) {
     setLoading(false);
   };
 
-  return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fadeIn" onClick={onClose}>
-      <div className="bg-white border border-[#CBD5E1] rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4 animate-fadeIn" onClick={(e) => e.stopPropagation()}>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] bg-[#0A0F1D]/75 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={onClose}>
+      <div className="relative my-auto w-full max-w-md bg-white border border-[#CBD5E1] rounded-xl shadow-2xl p-6 space-y-4 animate-modal-content max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
           <h3 className="text-sm font-bold text-[#0F172A]">
             {user ? 'Edit Dispatcher Credentials' : 'New User Registration'}
@@ -201,7 +203,8 @@ function UserModal({ user, orgId, onClose, onSave }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -413,7 +416,7 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-6">
       {/* Session Provisioning Panel */}
       <div className="zonix-card p-5 space-y-4">
         <div className="flex items-center gap-3">
@@ -529,12 +532,12 @@ export default function UsersPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-[#CBD5E1] text-[11px] text-[#475569] uppercase bg-[#F8FAFC]">
-                <th className="py-2.5 px-4 text-left font-bold">Username</th>
-                <th className="py-2.5 px-4 text-left font-bold">Email</th>
-                <th className="py-2.5 px-4 text-left font-bold">Role</th>
-                <th className="py-2.5 px-4 text-left font-bold">Active / Max Tabs</th>
-                <th className="py-2.5 px-4 text-left font-bold">Status</th>
-                <th className="py-2.5 px-4 text-right font-bold">Actions</th>
+                <th className="py-2.5 px-4 text-left font-bold whitespace-nowrap">Username</th>
+                <th className="py-2.5 px-4 text-left font-bold whitespace-nowrap">Email</th>
+                <th className="py-2.5 px-4 text-left font-bold whitespace-nowrap">Role</th>
+                <th className="py-2.5 px-4 text-left font-bold whitespace-nowrap">Active / Max Tabs</th>
+                <th className="py-2.5 px-4 text-left font-bold whitespace-nowrap">Status</th>
+                <th className="py-2.5 px-4 text-right font-bold whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody>

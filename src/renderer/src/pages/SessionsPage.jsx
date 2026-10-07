@@ -80,13 +80,13 @@ export default function SessionsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-[#CBD5E1] text-[11px] text-[#475569] uppercase font-mono bg-[#F8FAFC]">
-                <th className="py-3 px-4 text-left font-bold">Session ID</th>
-                <th className="py-3 px-4 text-left font-bold">Organization</th>
-                <th className="py-3 px-4 text-left font-bold">Operator</th>
-                <th className="py-3 px-4 text-left font-bold">Proxy Node</th>
-                <th className="py-3 px-4 text-left font-bold">Status</th>
-                <th className="py-3 px-4 text-left font-bold">Uptime</th>
-                <th className="py-3 px-4 text-right font-bold">Actions</th>
+                <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Session ID</th>
+                <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Organization</th>
+                <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Operator</th>
+                <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Proxy Node</th>
+                <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Status</th>
+                <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Uptime</th>
+                <th className="py-3 px-4 text-right font-bold whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E2E8F0]">

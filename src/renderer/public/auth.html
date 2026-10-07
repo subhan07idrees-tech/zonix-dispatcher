@@ -20,7 +20,34 @@
       justify-content: center;
       user-select: none;
       overflow: hidden;
+      position: relative;
     }
+
+    /* Ambient background gradient spheres */
+    .bg-sphere-1 {
+      position: absolute;
+      top: -120px;
+      left: -120px;
+      width: 380px;
+      height: 380px;
+      background: rgba(37, 99, 235, 0.08);
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+    .bg-sphere-2 {
+      position: absolute;
+      bottom: -120px;
+      right: -120px;
+      width: 380px;
+      height: 380px;
+      background: rgba(30, 64, 175, 0.08);
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+
+    /* Window Drag Title Bar */
     .title-bar {
       position: absolute;
       top: 0;
@@ -33,40 +60,30 @@
       padding: 0 0 0 14px;
       -webkit-app-region: drag;
       justify-content: space-between;
-      border-bottom: 1px solid #E2E8F0;
+      border-bottom: 1px solid #CBD5E1;
+      z-index: 100;
     }
     .title-bar-left {
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .title-bar-badge {
-      width: 18px;
-      height: 18px;
-      border-radius: 4px;
-      background: #172033;
-      color: #FFFFFF;
-      font-size: 10px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: monospace;
-    }
     .title-bar-text {
       font-size: 12px;
-      font-weight: 700;
-      color: #1E293B;
-      letter-spacing: 0.5px;
+      font-weight: 800;
+      color: #0F172A;
+      letter-spacing: 1px;
+      font-family: monospace;
     }
     .title-bar-ver {
       font-size: 10px;
-      color: #64748B;
+      color: #475569;
       background: #F1F5F9;
       padding: 1px 6px;
       border-radius: 4px;
-      border: 1px solid #E2E8F0;
+      border: 1px solid #CBD5E1;
       font-family: monospace;
+      font-weight: 700;
     }
     .window-controls {
       display: flex;
@@ -93,55 +110,69 @@
       background: #DC2626;
       color: #FFFFFF;
     }
+
+    /* Card */
     .card {
       width: 100%;
       max-width: 420px;
-      padding: 32px 36px;
+      padding: 32px 34px 28px;
       background: #FFFFFF;
-      border: 1px solid #D9DEE7;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 10px 25px -5px rgba(15, 23, 42, 0.08);
+      border: 1px solid #CBD5E1;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
       text-align: center;
-      margin-top: 24px;
+      margin-top: 20px;
+      position: relative;
+      overflow: hidden;
+      z-index: 10;
+      animation: cardAppear 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+    @keyframes cardAppear {
+      from { opacity: 0; transform: scale(0.97) translateY(4px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* Top Accent Line */
+    .card-accent {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #2563EB, #38BDF8, #1E40AF);
+    }
+
     .brand-header {
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
     }
-    .logo-container {
-      width: 48px;
-      height: 48px;
-      background: #172033;
-      border: 1px solid #0F172A;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 12px;
-      box-shadow: 0 2px 8px rgba(23, 32, 51, 0.15);
+    .logo-svg-wrap {
+      margin-bottom: 10px;
+      filter: drop-shadow(0 4px 6px rgba(30, 64, 175, 0.2));
+      transition: transform 0.2s ease;
     }
-    .logo-container span {
-      color: #FFFFFF;
-      font-size: 20px;
-      font-weight: 800;
-      font-family: monospace;
+    .logo-svg-wrap:hover {
+      transform: scale(1.05);
     }
     .title {
-      font-size: 20px;
-      font-weight: 800;
+      font-size: 22px;
+      font-weight: 900;
       color: #0F172A;
-      letter-spacing: 0.5px;
-      margin-bottom: 3px;
+      letter-spacing: 1.5px;
+      font-family: monospace;
+      margin-bottom: 2px;
     }
     .subtitle {
-      font-size: 12px;
-      font-weight: 500;
-      color: #64748B;
+      font-size: 11px;
+      font-weight: 600;
+      color: #475569;
+      letter-spacing: 0.2px;
     }
+
     .form-group {
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       text-align: left;
     }
     .form-group label {
@@ -149,14 +180,15 @@
       justify-content: space-between;
       align-items: baseline;
       font-size: 12px;
-      font-weight: 600;
-      color: #334155;
-      margin-bottom: 6px;
+      font-weight: 700;
+      color: #0F172A;
+      margin-bottom: 5px;
     }
     .form-group label .hint {
       font-size: 11px;
-      font-weight: 400;
-      color: #94A3B8;
+      font-weight: 500;
+      color: #64748B;
+      font-family: monospace;
     }
     .form-group input {
       width: 100%;
@@ -164,16 +196,17 @@
       padding: 0 12px;
       background: #FFFFFF;
       border: 1px solid #CBD5E1;
-      border-radius: 6px;
+      border-radius: 7px;
       color: #0F172A;
       font-size: 13px;
+      font-weight: 500;
       font-family: inherit;
       outline: none;
       transition: border-color 0.15s, box-shadow 0.15s;
     }
     .form-group input:focus {
-      border-color: #245B9E;
-      box-shadow: 0 0 0 3px rgba(36, 91, 158, 0.15);
+      border-color: #1E40AF;
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15);
     }
     .form-group input::placeholder {
       color: #94A3B8;
@@ -183,6 +216,7 @@
     }
     .password-wrapper input {
       padding-right: 38px !important;
+      font-family: monospace;
     }
     .password-toggle {
       position: absolute;
@@ -209,17 +243,18 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
       text-align: left;
     }
     .remember-me input[type="checkbox"] {
       width: 15px;
       height: 15px;
-      accent-color: #245B9E;
+      accent-color: #1E40AF;
       cursor: pointer;
     }
     .remember-me label {
-      font-size: 12px;
+      font-size: 11px;
+      font-weight: 600;
       color: #475569;
       cursor: pointer;
       user-select: none;
@@ -227,22 +262,24 @@
     .btn {
       width: 100%;
       height: 40px;
-      background: #245B9E;
-      border: 1px solid #1D4B84;
-      border-radius: 6px;
+      background: #1E40AF;
+      border: 1px solid #1D4ED8;
+      border-radius: 7px;
       color: #FFFFFF;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 700;
+      letter-spacing: 0.3px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
       transition: background-color 0.15s, box-shadow 0.15s, transform 0.05s;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
     }
     .btn:hover {
-      background: #1D4B84;
+      background: #1D4ED8;
+      box-shadow: 0 2px 6px rgba(30, 64, 175, 0.25);
     }
     .btn:active {
       transform: translateY(1px);
@@ -254,15 +291,17 @@
     }
     .error {
       background: #FEF2F2;
-      border: 1px solid #FCA5A5;
-      border-radius: 6px;
-      padding: 10px 12px;
-      margin-bottom: 16px;
+      border: 1px solid #FECACA;
+      border-radius: 7px;
+      padding: 9px 12px;
+      margin-bottom: 14px;
       font-size: 12px;
-      color: #991B1B;
-      display: none;
+      font-weight: 600;
+      color: #B91C1C;
       text-align: left;
       line-height: 1.4;
+      display: none;
+      animation: cardAppear 0.15s ease-out;
     }
     .error.visible {
       display: block;
@@ -271,8 +310,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 22px;
-      padding-top: 14px;
+      margin-top: 18px;
+      padding-top: 12px;
       border-top: 1px solid #E2E8F0;
       font-size: 11px;
       color: #64748B;
@@ -280,15 +319,15 @@
     .security-tag {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      color: #059669;
-      font-weight: 500;
+      gap: 5px;
+      color: #047857;
+      font-weight: 700;
     }
     .security-dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: #059669;
+      background: #047857;
     }
     .spinner {
       display: inline-block;
@@ -305,9 +344,16 @@
   </style>
 </head>
 <body>
+  <div class="bg-sphere-1"></div>
+  <div class="bg-sphere-2"></div>
+
   <div class="title-bar">
     <div class="title-bar-left">
-      <div class="title-bar-badge">Z</div>
+      <!-- High-Tech SVG Logo Mark -->
+      <svg width="18" height="18" viewBox="0 0 48 48" fill="none">
+        <path d="M24 3.5L42 12V27C42 36.2 24 44.5 24 44.5C24 44.5 6 36.2 6 27V12L24 3.5Z" fill="#1E40AF" stroke="#3B82F6" stroke-width="2"/>
+        <path d="M15 15.5H33L21.5 27H33V32.5H15L26.5 21H15V15.5Z" fill="#38BDF8"/>
+      </svg>
       <span class="title-bar-text">ZONIX</span>
       <span class="title-bar-ver" id="appVerTag">v1.8.18</span>
     </div>
@@ -322,12 +368,40 @@
   </div>
 
   <div class="card">
+    <div class="card-accent"></div>
     <div class="brand-header">
-      <div class="logo-container">
-        <span>Z</span>
+      <div class="logo-svg-wrap">
+        <!-- Bespoke Geometric ZONIX Logo (52x52) -->
+        <svg width="52" height="52" viewBox="0 0 48 48" fill="none">
+          <defs>
+            <linearGradient id="authLogoBg" x1="6" y1="4" x2="42" y2="44" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#1E40AF" />
+              <stop offset="50%" stopColor="#1E3A8A" />
+              <stop offset="100%" stopColor="#0B132B" />
+            </linearGradient>
+            <linearGradient id="authLogoZ" x1="12" y1="10" x2="36" y2="38" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#38BDF8" />
+              <stop offset="50%" stopColor="#60A5FA" />
+              <stop offset="100%" stopColor="#2563EB" />
+            </linearGradient>
+            <linearGradient id="authLogoZWhite" x1="14" y1="12" x2="34" y2="36" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#FFFFFF" />
+              <stop offset="100%" stopColor="#BAE6FD" />
+            </linearGradient>
+            <filter id="authLogoGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#2563EB" floodOpacity="0.3" />
+            </filter>
+          </defs>
+          <path d="M24 3.5L42 12V27C42 36.2 24 44.5 24 44.5C24 44.5 6 36.2 6 27V12L24 3.5Z" fill="url(#authLogoBg)" stroke="#3B82F6" stroke-width="1.5" stroke-linejoin="round" filter="url(#authLogoGlow)"/>
+          <path d="M24 7.5L38 14.2V26C38 33.2 24 39.8 24 39.8C24 39.8 10 33.2 10 26V14.2L24 7.5Z" stroke="rgba(56, 189, 248, 0.25)" stroke-width="1" stroke-dasharray="2 2" fill="none"/>
+          <path d="M15 15.5H33L21.5 27H33V32.5H15L26.5 21H15V15.5Z" fill="url(#authLogoZ)"/>
+          <path d="M16.5 17H31.5L21.8 26.5H31.5V31H16.5L26.2 21.5H16.5V17Z" fill="url(#authLogoZWhite)" opacity="0.9"/>
+          <circle cx="33" cy="15.5" r="1.5" fill="#38BDF8" />
+          <circle cx="15" cy="32.5" r="1.5" fill="#38BDF8" />
+        </svg>
       </div>
-      <h1 class="title">ZONIX Console</h1>
-      <p class="subtitle">System Control & Administration Gateway</p>
+      <h1 class="title">ZONIX</h1>
+      <p class="subtitle">System Control &amp; Dispatch Administration</p>
     </div>
 
     <div id="error" class="error"></div>
@@ -351,7 +425,7 @@
           <span>Password</span>
         </label>
         <div class="password-wrapper">
-          <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+          <input type="password" id="password" placeholder="••••••••••••" required autocomplete="current-password">
           <button type="button" class="password-toggle" id="togglePasswordBtn" title="Show password">
             <svg id="eyeIcon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
           </button>
@@ -455,8 +529,8 @@
           api.setConfig('userId', userId);
           document.body.innerHTML = `
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#F1F5F9;color:#0F172A;font-family:system-ui,sans-serif;gap:12px;">
-              <div class="spinner" style="border-color:#245B9E;border-top-color:transparent;width:24px;height:24px;"></div>
-              <div style="font-size:13px;font-weight:600;color:#1E293B;letter-spacing:0.3px;">AUTHENTICATED // PROVISIONING CONTROL NODE...</div>
+              <div class="spinner" style="border-color:#1E40AF;border-top-color:transparent;width:26px;height:26px;"></div>
+              <div style="font-size:13px;font-weight:700;color:#0F172A;letter-spacing:0.5px;font-family:monospace;">AUTHENTICATED // INITIALIZING CONTROL NODE...</div>
             </div>
           `;
         } else {

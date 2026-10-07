@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Wifi, Plus, Edit2, Trash2, X, Zap, Server, Activity, ShieldCheck, CheckCircle2, AlertTriangle } from 'lucide-react';
 
@@ -21,9 +22,9 @@ function ProxyModal({ proxy, orgId, onClose, onSave }) {
     setLoading(false);
   };
 
-  return (
-    <div className="fixed inset-0 bg-[#0F172A]/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fadeIn" onClick={onClose}>
-      <div className="bg-white border border-[#CBD5E1] rounded-xl shadow-2xl w-full max-w-md p-6 space-y-5 animate-scaleUp" onClick={(e) => e.stopPropagation()}>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] bg-[#0A0F1D]/75 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={onClose}>
+      <div className="relative my-auto w-full max-w-md bg-white border border-[#CBD5E1] rounded-xl shadow-2xl p-6 space-y-5 animate-modal-content max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center">
@@ -52,7 +53,7 @@ function ProxyModal({ proxy, orgId, onClose, onSave }) {
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="zonix-input w-full text-xs"
+              className="zonix-input w-full text-xs font-semibold"
               placeholder="e.g. us-east-residential-01"
               required
             />
@@ -76,7 +77,7 @@ function ProxyModal({ proxy, orgId, onClose, onSave }) {
                 type="number"
                 value={form.port}
                 onChange={(e) => setForm({ ...form, port: parseInt(e.target.value) || 8080 })}
-                className="zonix-input w-full text-xs font-mono"
+                className="zonix-input w-full text-xs font-mono font-bold"
                 required
               />
             </div>
@@ -101,7 +102,7 @@ function ProxyModal({ proxy, orgId, onClose, onSave }) {
                 type="number"
                 value={form.maxSessions}
                 onChange={(e) => setForm({ ...form, maxSessions: parseInt(e.target.value) || 1 })}
-                className="zonix-input w-full text-xs font-mono"
+                className="zonix-input w-full text-xs font-mono font-bold"
                 min="1"
               />
             </div>
@@ -139,7 +140,8 @@ function ProxyModal({ proxy, orgId, onClose, onSave }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -245,7 +247,7 @@ export default function ProxiesPage() {
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-6">
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#CBD5E1] pb-4">
         <div>
@@ -279,7 +281,7 @@ export default function ProxiesPage() {
           )}
           <button 
             onClick={() => { setEditingProxy(null); setShowModal(true); }} 
-            className="zonix-btn-primary"
+            className="zonix-btn-primary gap-1.5"
           >
             <Plus className="w-4 h-4" />
             <span>New Proxy Node</span>
@@ -305,7 +307,7 @@ export default function ProxiesPage() {
             </p>
             <button 
               onClick={() => { setEditingProxy(null); setShowModal(true); }} 
-              className="zonix-btn-primary inline-flex mt-2"
+              className="zonix-btn-primary inline-flex mt-2 gap-1.5"
             >
               <Plus className="w-4 h-4" />
               <span>Provision First Node</span>
@@ -319,7 +321,7 @@ export default function ProxiesPage() {
             const testResult = testResults[proxy.id];
 
             return (
-              <div key={proxy.id} className="zonix-card p-5 space-y-4 hover:border-[#94A3B8] transition-colors">
+              <div key={proxy.id} className="zonix-card p-5 space-y-4 hover:border-[#94A3B8] transition-all duration-150">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center font-bold">
