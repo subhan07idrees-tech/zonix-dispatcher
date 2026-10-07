@@ -133,12 +133,12 @@ export default function LoginPage() {
               <span className="w-1.5 h-1.5 rounded-full bg-[#047857]" />
               Direct Node Gateway
             </span>
-            <span className="font-mono text-[#64748B]">Multi-Tenant v{window.zonixAPI?.appVersion || '1.9.6'}</span>
+            <span className="font-mono text-[#64748B]">Multi-Tenant v{window.zonixAPI?.appVersion || '1.9.7'}</span>
           </div>
         </div>
 
         <p className="text-center text-[11px] text-[#64748B] font-mono">
-          ZONIX Dispatcher v{window.zonixAPI?.appVersion || '1.9.6'}
+          ZONIX Dispatcher v{window.zonixAPI?.appVersion || '1.9.7'}
         </p>
       </div>
     </div>

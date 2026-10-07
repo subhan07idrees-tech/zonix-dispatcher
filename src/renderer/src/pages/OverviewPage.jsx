@@ -4,7 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import {
   Building2, Users, Radio, Wifi, AlertTriangle,
-  ShieldCheck, RefreshCw, Activity, MessageSquare, Send, CheckCircle2, Clock, Server, ArrowUpRight, Shield, X
+  ShieldCheck, RefreshCw, Activity, MessageSquare, Send, CheckCircle2, Clock, Server, ArrowUpRight, Shield, X,
+  Wrench, Megaphone, Globe, Check
 } from 'lucide-react';
 
 function MetricCard({ icon: Icon, label, value, subtext, highlight = false, isTextValue = false }) {
@@ -95,6 +96,9 @@ export default function OverviewPage() {
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
   const [showSupportModal, setShowSupportModal] = useState(false);
+  const [supportType, setSupportType] = useState('MAINTENANCE'); // 'MAINTENANCE' | 'SUPPORT' | 'ANNOUNCEMENT'
+  const [supportAudience, setSupportAudience] = useState('org'); // 'single' | 'org' | 'all'
+  const [maintenanceWindow, setMaintenanceWindow] = useState('Tonight: 11:00 PM - 01:00 AM UTC');
   const [supportEmail, setSupportEmail] = useState('');
   const [supportSubject, setSupportSubject] = useState('');
   const [supportMessage, setSupportMessage] = useState('');
@@ -349,12 +353,20 @@ export default function OverviewPage() {
             onClick={() => {
               setSupportEmail((user?.email && !user.email.includes('@zonix.io')) ? user.email : 'subhan07idrees@gmail.com');
               setSupportError(null);
+              if (!supportSubject) {
+                setSupportSubject(supportType === 'MAINTENANCE' ? 'Scheduled System Maintenance Notice' : 'Operational Advisory');
+              }
+              if (!supportMessage) {
+                setSupportMessage(supportType === 'MAINTENANCE' 
+                  ? 'We have scheduled a routine maintenance and infrastructure optimization window. During this brief timeframe, automated session dispatch and cookie rotation will pause to ensure database consistency. Normal operations will resume immediately after.'
+                  : 'Important operations advisory for all active dispatchers.');
+              }
               setShowSupportModal(true);
             }}
             className="zonix-btn-secondary gap-1.5"
           >
-            <MessageSquare className="w-3.5 h-3.5 text-[#475569]" />
-            <span>Contact Support &amp; Report Issue</span>
+            <Megaphone className="w-3.5 h-3.5 text-[#1E40AF]" />
+            <span>Send Notice / Contact Support</span>
           </button>
         </div>
 
@@ -513,7 +525,7 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      {/* Support Modal (Portal) */}
+      {/* Support & Operational Notice Modal (Portal) */}
       {showSupportModal && createPortal(
         <div 
           className="fixed inset-0 z-[9999] bg-[#0A0F1D]/75 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" 
@@ -524,15 +536,34 @@ export default function OverviewPage() {
             }
           }}
         >
-          <div className="relative my-auto bg-white border border-[#CBD5E1] rounded-xl shadow-2xl p-6 w-full max-w-md space-y-4 animate-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+          <div className="relative my-auto bg-white border border-[#CBD5E1] rounded-2xl shadow-2xl p-6 w-full max-w-lg space-y-4 animate-modal-content" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3.5">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center">
-                  <MessageSquare className="w-4 h-4" />
+                <div className={`w-9 h-9 rounded-xl border flex items-center justify-center ${
+                  supportType === 'MAINTENANCE'
+                    ? 'bg-[#FEF3C7] border-[#FDE68A] text-[#B45309]'
+                    : supportType === 'ANNOUNCEMENT'
+                    ? 'bg-[#EFF6FF] border-[#BFDBFE] text-[#1D4ED8]'
+                    : 'bg-[#F0FDF4] border-[#BBF7D0] text-[#15803D]'
+                }`}>
+                  {supportType === 'MAINTENANCE' ? (
+                    <Wrench className="w-4 h-4" />
+                  ) : supportType === 'ANNOUNCEMENT' ? (
+                    <Megaphone className="w-4 h-4" />
+                  ) : (
+                    <MessageSquare className="w-4 h-4" />
+                  )}
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-[#0F172A]">Submit Support Ticket</h4>
-                  <p className="text-xs text-[#64748B]">Delivered directly to ZONIX Operations Team</p>
+                  <h4 className="text-sm font-bold text-[#0F172A]">
+                    {supportType === 'MAINTENANCE' 
+                      ? 'Dispatch Maintenance Notice' 
+                      : supportType === 'ANNOUNCEMENT' 
+                      ? 'Broadcast System Advisory' 
+                      : 'Submit Operational Ticket'}
+                  </h4>
+                  <p className="text-xs text-[#64748B]">Professional executive-grade branded email delivery</p>
                 </div>
               </div>
               <button 
@@ -555,9 +586,132 @@ export default function OverviewPage() {
               </div>
             )}
 
-            <div className="space-y-3.5">
+            {/* Notice Category Tabs */}
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-[#475569] mb-1.5">
+                Notice Category
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  disabled={submittingSupport}
+                  onClick={() => {
+                    setSupportType('MAINTENANCE');
+                    setSupportSubject('Scheduled System Maintenance Notice');
+                  }}
+                  className={`py-2 px-2.5 rounded-lg border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                    supportType === 'MAINTENANCE'
+                      ? 'bg-[#FEF3C7] border-[#F59E0B] text-[#92400E] shadow-2xs'
+                      : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:bg-[#F1F5F9]'
+                  }`}
+                >
+                  <Wrench className="w-3.5 h-3.5" />
+                  <span>Maintenance</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={submittingSupport}
+                  onClick={() => {
+                    setSupportType('ANNOUNCEMENT');
+                    setSupportSubject('Operations Advisory & System Update');
+                  }}
+                  className={`py-2 px-2.5 rounded-lg border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                    supportType === 'ANNOUNCEMENT'
+                      ? 'bg-[#EFF6FF] border-[#3B82F6] text-[#1E40AF] shadow-2xs'
+                      : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:bg-[#F1F5F9]'
+                  }`}
+                >
+                  <Megaphone className="w-3.5 h-3.5" />
+                  <span>Advisory</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={submittingSupport}
+                  onClick={() => {
+                    setSupportType('SUPPORT');
+                    setSupportSubject('Operational Support Request');
+                  }}
+                  className={`py-2 px-2.5 rounded-lg border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                    supportType === 'SUPPORT'
+                      ? 'bg-[#F0FDF4] border-[#22C55E] text-[#15803D] shadow-2xs'
+                      : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:bg-[#F1F5F9]'
+                  }`}
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>Support</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Audience Target Radio Options */}
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-[#475569] mb-1.5">
+                Target Audience
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  disabled={submittingSupport}
+                  onClick={() => setSupportAudience('single')}
+                  className={`p-2.5 rounded-lg border text-left transition-all ${
+                    supportAudience === 'single'
+                      ? 'bg-[#EFF6FF] border-[#3B82F6] text-[#1E40AF]'
+                      : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#475569] hover:bg-[#F1F5F9]'
+                  }`}
+                >
+                  <div className="text-xs font-bold flex items-center justify-between">
+                    <span>Single Recipient</span>
+                    {supportAudience === 'single' && <Check className="w-3.5 h-3.5 text-[#1E40AF]" />}
+                  </div>
+                  <div className="text-[10px] text-[#64748B] mt-0.5">Specific user address</div>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={submittingSupport}
+                  onClick={() => setSupportAudience('org')}
+                  className={`p-2.5 rounded-lg border text-left transition-all ${
+                    supportAudience === 'org'
+                      ? 'bg-[#EFF6FF] border-[#3B82F6] text-[#1E40AF]'
+                      : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#475569] hover:bg-[#F1F5F9]'
+                  }`}
+                >
+                  <div className="text-xs font-bold flex items-center justify-between">
+                    <span>All Users in Org</span>
+                    {supportAudience === 'org' && <Check className="w-3.5 h-3.5 text-[#1E40AF]" />}
+                  </div>
+                  <div className="text-[10px] text-[#64748B] mt-0.5">{user?.orgName || 'This organization'}</div>
+                </button>
+
+                {isSuperAdmin && (
+                  <button
+                    type="button"
+                    disabled={submittingSupport}
+                    onClick={() => setSupportAudience('all')}
+                    className={`p-2.5 rounded-lg border text-left transition-all ${
+                      supportAudience === 'all'
+                        ? 'bg-[#EFF6FF] border-[#3B82F6] text-[#1E40AF]'
+                        : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#475569] hover:bg-[#F1F5F9]'
+                    }`}
+                  >
+                    <div className="text-xs font-bold flex items-center justify-between">
+                      <span>Fleet-wide</span>
+                      {supportAudience === 'all' && <Check className="w-3.5 h-3.5 text-[#1E40AF]" />}
+                    </div>
+                    <div className="text-[10px] text-[#64748B] mt-0.5">All registered tenants</div>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* If Single Recipient, show recipient email input */}
+            {supportAudience === 'single' && (
               <div>
-                <label className="block text-xs font-bold text-[#0F172A] mb-1">Your Email Address (Recipient)</label>
+                <label className="block text-xs font-bold text-[#0F172A] mb-1">
+                  Recipient Email Address
+                </label>
                 <input
                   type="email"
                   disabled={submittingSupport}
@@ -570,9 +724,49 @@ export default function OverviewPage() {
                   className="zonix-input w-full text-xs disabled:opacity-60"
                 />
               </div>
+            )}
 
+            {/* If Maintenance Type, show Maintenance Window & Quick Chips */}
+            {supportType === 'MAINTENANCE' && (
+              <div className="p-3 rounded-xl bg-[#FFFBEB] border border-[#FDE68A] space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#92400E] flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" />
+                    Scheduled Maintenance Window / Time
+                  </label>
+                  <span className="text-[10px] font-mono text-[#B45309] font-bold">UTC Time</span>
+                </div>
+                <input
+                  type="text"
+                  disabled={submittingSupport}
+                  value={maintenanceWindow}
+                  onChange={(e) => setMaintenanceWindow(e.target.value)}
+                  placeholder="e.g. Tonight: 11:00 PM - 01:00 AM UTC"
+                  className="zonix-input w-full text-xs font-mono bg-white disabled:opacity-60 border-[#FCD34D]"
+                />
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  {[
+                    'Tonight: 11:00 PM - 01:00 AM UTC',
+                    'Tomorrow: 02:00 AM - 04:00 AM UTC',
+                    'Sunday Weekend: 03:00 AM - 05:00 AM UTC'
+                  ].map((chip) => (
+                    <button
+                      key={chip}
+                      type="button"
+                      disabled={submittingSupport}
+                      onClick={() => setMaintenanceWindow(chip)}
+                      className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-white border border-[#FDE68A] text-[#92400E] hover:bg-[#FEF3C7] transition-colors"
+                    >
+                      {chip.split(':')[0]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
               <div>
-                <label className="block text-xs font-bold text-[#0F172A] mb-1">Issue Subject</label>
+                <label className="block text-xs font-bold text-[#0F172A] mb-1">Email Subject Line</label>
                 <input
                   type="text"
                   disabled={submittingSupport}
@@ -581,13 +775,13 @@ export default function OverviewPage() {
                     setSupportSubject(e.target.value);
                     if (supportError) setSupportError(null);
                   }}
-                  placeholder="e.g. Session re-authentication or proxy latency query"
+                  placeholder="Subject line for email recipients..."
                   className="zonix-input w-full text-xs disabled:opacity-60"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#0F172A] mb-1">Detailed Description</label>
+                <label className="block text-xs font-bold text-[#0F172A] mb-1">Notice / Message Content</label>
                 <textarea
                   rows={4}
                   disabled={submittingSupport}
@@ -596,100 +790,108 @@ export default function OverviewPage() {
                     setSupportMessage(e.target.value);
                     if (supportError) setSupportError(null);
                   }}
-                  placeholder="Explain what happened or request technical assistance..."
-                  className="zonix-input w-full text-xs h-auto py-2.5 disabled:opacity-60"
+                  placeholder="Describe the update details, reason, or technical instructions..."
+                  className="zonix-input w-full text-xs h-auto py-2.5 disabled:opacity-60 leading-relaxed font-sans"
                 />
               </div>
+            </div>
 
-              <div className="flex gap-2.5 pt-2 border-t border-[#E2E8F0]">
-                <button
-                  type="button"
-                  disabled={submittingSupport}
-                  onClick={() => {
-                    setShowSupportModal(false);
-                    setSupportError(null);
-                  }}
-                  className="zonix-btn-secondary flex-1 py-2 text-xs disabled:opacity-40"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={submittingSupport}
-                  onClick={async () => {
-                    const trimmedEmail = supportEmail.trim();
-                    const trimmedSubj = supportSubject.trim();
-                    const trimmedMsg = supportMessage.trim();
+            {/* Modal Actions */}
+            <div className="flex gap-2.5 pt-2 border-t border-[#E2E8F0]">
+              <button
+                type="button"
+                disabled={submittingSupport}
+                onClick={() => {
+                  setShowSupportModal(false);
+                  setSupportError(null);
+                }}
+                className="zonix-btn-secondary flex-1 py-2 text-xs disabled:opacity-40"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={submittingSupport}
+                onClick={async () => {
+                  const trimmedEmail = supportEmail.trim();
+                  const trimmedSubj = supportSubject.trim();
+                  const trimmedMsg = supportMessage.trim();
 
-                    if (!trimmedEmail) {
-                      setSupportError('Please provide your email address to receive the confirmation.');
-                      return;
-                    }
+                  if (supportAudience === 'single' && !trimmedEmail) {
+                    setSupportError('Please provide a recipient email address.');
+                    return;
+                  }
 
-                    if (!trimmedSubj || !trimmedMsg) {
-                      setSupportError('Please provide both an issue subject and a detailed description.');
-                      return;
-                    }
+                  if (!trimmedSubj || !trimmedMsg) {
+                    setSupportError('Please provide both a subject and message text.');
+                    return;
+                  }
 
-                    setSubmittingSupport(true);
-                    setSupportError(null);
+                  setSubmittingSupport(true);
+                  setSupportError(null);
 
-                    try {
-                      const res = await authFetch('/support/ticket', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          userEmail: trimmedEmail,
-                          subject: trimmedSubj,
-                          message: trimmedMsg,
-                          telemetry: {
-                            appVersion: window.zonixAPI?.appVersion ? ('v' + window.zonixAPI.appVersion) : 'v1.9.6',
-                            os: 'Windows 10/11',
-                            targetDomain,
-                            userRole: user?.role,
-                            orgName: user?.orgName || orgDetails?.displayName,
-                            latency: proxyLatencyDisplay,
-                            cookieStatus: healthTelemetry.cookieStatus
-                          }
-                        })
+                  try {
+                    const res = await authFetch('/support/ticket', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        userEmail: trimmedEmail || ((user?.email && !user.email.includes('@zonix.io')) ? user.email : 'subhan07idrees@gmail.com'),
+                        audience: supportAudience,
+                        ticketType: supportType,
+                        maintenanceWindow: supportType === 'MAINTENANCE' ? maintenanceWindow : null,
+                        subject: trimmedSubj,
+                        message: trimmedMsg,
+                        telemetry: {
+                          appVersion: window.zonixAPI?.appVersion ? ('v' + window.zonixAPI.appVersion) : 'v1.9.7',
+                          os: 'Windows 10/11',
+                          targetDomain,
+                          userRole: user?.role,
+                          orgName: user?.orgName || orgDetails?.displayName,
+                          latency: proxyLatencyDisplay,
+                          cookieStatus: healthTelemetry.cookieStatus
+                        }
+                      })
+                    });
+
+                    const data = await res.json().catch(() => ({}));
+
+                    if (res.ok && data.success) {
+                      setShowSupportModal(false);
+                      setSupportError(null);
+                      setNotification({
+                        type: 'success',
+                        title: supportType === 'MAINTENANCE' ? 'Maintenance Notice Dispatched' : 'Email Delivered',
+                        message: data.message || 'Your notice was delivered to all recipients in high-deliverability executive format.'
                       });
-
-                      const data = await res.json().catch(() => ({}));
-
-                      if (res.ok && data.success) {
-                        setShowSupportModal(false);
-                        setSupportSubject('');
-                        setSupportMessage('');
-                        setSupportError(null);
-                        setNotification({
-                          type: 'success',
-                          title: 'Ticket Dispatched',
-                          message: data.message || 'Your support ticket was securely transmitted to ZONIX Operations Team.'
-                        });
-                      } else {
-                        setSupportError(data.error || 'Failed to deliver support ticket. Please check your connection and try again.');
-                      }
-                    } catch (e) {
-                      setSupportError(e.message || 'Unable to connect to support server. Please check your network connection.');
-                    } finally {
-                      setSubmittingSupport(false);
+                    } else {
+                      setSupportError(data.error || 'Failed to dispatch email. Please check configuration.');
                     }
-                  }}
-                  className="zonix-btn-primary flex-1 py-2 text-xs gap-1.5 disabled:opacity-60"
-                >
-                  {submittingSupport ? (
-                    <>
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>Sending Ticket...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Send Ticket</span>
-                    </>
-                  )}
-                </button>
-              </div>
+                  } catch (e) {
+                    setSupportError(e.message || 'Unable to connect to email server. Please check your network connection.');
+                  } finally {
+                    setSubmittingSupport(false);
+                  }
+                }}
+                className="zonix-btn-primary flex-1 py-2 text-xs gap-1.5 disabled:opacity-60"
+              >
+                {submittingSupport ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Transmitting Notice...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-3.5 h-3.5" />
+                    <span>
+                      {supportAudience === 'org' 
+                        ? 'Broadcast to Org Users' 
+                        : supportAudience === 'all' 
+                        ? 'Broadcast Fleet-wide' 
+                        : 'Send Email'}
+                    </span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>,
