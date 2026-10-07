@@ -410,6 +410,17 @@ function createSyncWindow(orgId, userId, targetUrl) {
     });
   });
 
+  syncWindow.on('closed', () => {
+    syncWindow = null;
+    if (activeSessions.size === 0 && !mainWindow) {
+      if (!authWindow || authWindow.isDestroyed()) {
+        createAuthWindow();
+      } else {
+        authWindow.show();
+      }
+    }
+  });
+
   disableDevTools(syncWindow);
  
   return syncWindow;
@@ -443,7 +454,7 @@ async function createDispatchWindow(sessionId, config) {
     password: proxyPassword || config.proxyPassword
   });
 
-  if (probe.status === 'unreachable') {
+  if (probe.status === 'unreachable' || probe.latency === -1) {
     console.error(`[ZONIX Launch Gate] 🛑 BLOCKED DISPATCH WINDOW: Proxy ${displayName} is unreachable.`);
     throw new Error(`Proxy Unreachable: The configured proxy server (${displayName}) could not be reached. Dispatcher launch was aborted to prevent account blockage or IP leaks. Please verify your proxy host, port, and credentials in the Admin Portal.`);
   }
@@ -1006,12 +1017,17 @@ async function getActiveProxyForOrg(orgId, token) {
     });
     if (response.ok) {
       const data = await response.json();
-      const activeProxy = data.proxies?.find(p => p.status === 'ACTIVE');
-      if (activeProxy) {
+      const proxiesList = data.proxies || [];
+      if (proxiesList.length > 0) {
+        // ALWAYS select the assigned proxy for this organization:
+        // Prefer an ACTIVE node, but if all are UNREACHABLE/OFFLINE/TESTING,
+        // still select it so the pre-flight gate accurately tests it!
+        const chosenProxy = proxiesList.find(p => p.status === 'ACTIVE') || proxiesList[0];
+
         // Cache active proxy to local vault for offline resilience
         try {
           const vaultKey = `cached_proxy_${orgId}`;
-          const rawStr = JSON.stringify(activeProxy);
+          const rawStr = JSON.stringify(chosenProxy);
           if (safeStorage && safeStorage.isEncryptionAvailable()) {
             store.set(vaultKey, safeStorage.encryptString(rawStr).toString('base64'));
           } else {
@@ -1020,14 +1036,22 @@ async function getActiveProxyForOrg(orgId, token) {
         } catch (vErr) {
           console.warn('[ZONIX Main] Failed to write proxy to local vault cache:', vErr.message);
         }
-        return activeProxy;
+        console.log(`[ZONIX Main] Selected organization proxy: ${chosenProxy.name} (${chosenProxy.host}:${chosenProxy.port}, status: ${chosenProxy.status})`);
+        return chosenProxy;
+      } else {
+        // Organization has 0 proxies in backend. Clear any stale cached proxy!
+        try {
+          store.delete(`cached_proxy_${orgId}`);
+        } catch (e) {}
+        console.warn(`[ZONIX Main] Organization ${orgId} has 0 proxies configured in backend.`);
+        return null;
       }
     }
   } catch (err) {
     console.error('[ZONIX Main] Failed to fetch proxy for org from backend:', orgId, err.message);
   }
 
-  // FALLBACK TO LOCAL ENCRYPTED VAULT CACHE IF BACKEND IS OFFLINE!
+  // FALLBACK TO LOCAL ENCRYPTED VAULT CACHE ONLY IF BACKEND IS OFFLINE!
   try {
     const vaultKey = `cached_proxy_${orgId}`;
     const rawVal = store.get(vaultKey);
@@ -1293,7 +1317,7 @@ function registerIPC() {
         password: proxyPassword
       });
 
-      if (preProbe.status === 'unreachable') {
+      if (preProbe.status === 'unreachable' || preProbe.latency === -1) {
         throw new Error(`Proxy Unreachable: The configured proxy server (${proxyNode.name} · ${proxyNode.host}:${proxyNode.port}) is not responding or unreachable. Launch was aborted to protect your account.`);
       }
 

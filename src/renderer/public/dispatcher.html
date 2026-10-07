@@ -1395,13 +1395,25 @@
       const proxyOverlay = document.getElementById('proxyOutageOverlay');
       if (statusObj.status === 'disconnected') {
         if (proxyOverlay) proxyOverlay.classList.add('active');
-        // Instantly halt all guest webview activity to freeze in-flight scripts
+        // Instantly halt all guest webview activity and hide viewports to freeze in-flight scripts
         tabs.forEach(t => {
-          try { if (t.webview) t.webview.stop(); } catch(e) {}
+          try {
+            if (t.webview) {
+              t.webview.stop();
+              t.webview.style.visibility = 'hidden';
+            }
+          } catch(e) {}
         });
         console.warn('[Dispatcher] 🚨 Proxy connection dropped. Immediate zero-leak lockdown active.');
       } else if (statusObj.status === 'connected') {
         if (proxyOverlay) proxyOverlay.classList.remove('active');
+        tabs.forEach(t => {
+          try {
+            if (t.webview) {
+              t.webview.style.visibility = 'visible';
+            }
+          } catch(e) {}
+        });
         console.log('[Dispatcher] ✅ Proxy connection restored. Resuming secure tunnel.');
       }
     });

@@ -444,6 +444,14 @@
       });
     }
 
+    if (api && api.onSyncFailed) {
+      api.onSyncFailed((err) => {
+        console.error('IPC sync:failed received:', err);
+        document.getElementById('errorMsg').textContent = err || 'Verification failed. Proxy unreachable.';
+        document.getElementById('errorView').style.display = 'flex';
+      });
+    }
+
     document.getElementById('retryBtn').addEventListener('click', () => {
       startLaunch();
     });
