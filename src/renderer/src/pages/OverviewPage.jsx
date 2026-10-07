@@ -578,7 +578,7 @@ export default function OverviewPage() {
                           subject: supportSubject,
                           message: supportMessage,
                           telemetry: {
-                            appVersion: 'v1.8.19',
+                            appVersion: 'v1.8.20',
                             os: 'Windows',
                             targetDomain
                           }
