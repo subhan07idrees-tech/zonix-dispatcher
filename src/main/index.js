@@ -329,9 +329,12 @@ async function fetchCookiesForSession(orgId, userId, targetDomain, token) {
 function createSyncWindow(orgId, userId, targetUrl) {
   // Start prefetching cookies and proxy nodes concurrently
   const token = getAuthToken();
+  const effectiveTarget = (targetUrl && targetUrl.trim() !== '' && !targetUrl.includes('app.example.com')) 
+    ? targetUrl 
+    : (store.get('targetUrl') || 'https://one.dat.com');
   let targetDomain = '';
   try {
-    targetDomain = new URL(targetUrl).hostname;
+    targetDomain = new URL(effectiveTarget).hostname;
   } catch (e) {}
  
   prefetchData = {
@@ -358,7 +361,12 @@ function createSyncWindow(orgId, userId, targetUrl) {
   syncWindow.loadFile(path.join(__dirname, '..', 'renderer', 'dist', 'sync.html'));
   syncWindow.webContents.on('did-finish-load', () => {
     syncWindow.show();
-    syncWindow.webContents.send('sync:start', { orgId, userId, targetUrl });
+    syncWindow.webContents.send('sync:start', { 
+      orgId, 
+      userId, 
+      targetUrl: effectiveTarget,
+      username: store.get('username') || ''
+    });
   });
 
   disableDevTools(syncWindow);
@@ -367,7 +375,20 @@ function createSyncWindow(orgId, userId, targetUrl) {
 }
 
 async function createDispatchWindow(sessionId, config) {
-  const { orgId, userId, proxyString, cookies, localStorageData, targetUrl, hardwareProfile } = config;
+  const { 
+    orgId, 
+    userId, 
+    username, 
+    proxyString, 
+    proxyUsername, 
+    proxyPassword, 
+    proxyName, 
+    proxyHost, 
+    cookies, 
+    localStorageData, 
+    targetUrl, 
+    hardwareProfile 
+  } = config;
   const partitionId = `${CONFIG.PARTITION_PREFIX}${orgId}_user_${userId}`;
 
   // partitionId already starts with 'persist:' from CONFIG.PARTITION_PREFIX.
@@ -483,13 +504,20 @@ async function createDispatchWindow(sessionId, config) {
   });
 
   const lsData = localStorageData || '{}';
+  const effectiveTarget = (targetUrl && targetUrl.trim() !== '' && !targetUrl.includes('app.example.com')) 
+    ? targetUrl 
+    : (store.get('targetUrl') || 'https://one.dat.com');
+
   activeSessions.set(sessionId, {
     window: dispatchWindow,
     orgId,
     userId,
+    username: username || store.get('username') || '',
     partitionId,
     proxyString,
-    targetUrl,
+    proxyName: proxyName || '',
+    proxyHost: proxyHost || '',
+    targetUrl: effectiveTarget,
     localStorageData: lsData,
     startTime: Date.now(),
     heartbeatTimer: null
@@ -499,8 +527,8 @@ async function createDispatchWindow(sessionId, config) {
 
   if (proxyString) {
     proxyManager.startContinuousHealthCheck(sessionId, proxyString, dispatchWindow, {
-      username: config.proxyUsername,
-      password: config.proxyPassword
+      username: proxyUsername || config.proxyUsername,
+      password: proxyPassword || config.proxyPassword
     });
   }
   startHeartbeatMonitor(sessionId);
@@ -509,8 +537,15 @@ async function createDispatchWindow(sessionId, config) {
   const preloadPath = path.join(__dirname, '..', 'preload', 'index.js');
   const wrapperPath = path.join(__dirname, '..', 'renderer', 'dist', 'dispatcher.html');
   const maxTabs = store.get('maxTabs') || 5;
+
+  const proxyLabel = proxyName 
+    ? `${proxyName}${proxyHost ? ` · ${proxyHost}` : ''}`
+    : (proxyHost || (proxyString ? proxyString.replace(/^https?:\/\//, '') : ''));
+
+  const operatorUser = username || store.get('username') || userId || 'Dispatcher';
+
   // URL-encode partitionId so the 'persist:' prefix (colon) doesn't break URL parsing
-  const wrapperUrl = `file://${wrapperPath}?partition=${encodeURIComponent(partitionId)}&url=${encodeURIComponent(targetUrl)}&preload=${encodeURIComponent(preloadPath)}&maxTabs=${maxTabs}`;
+  const wrapperUrl = `file://${wrapperPath}?partition=${encodeURIComponent(partitionId)}&url=${encodeURIComponent(effectiveTarget)}&preload=${encodeURIComponent(preloadPath)}&maxTabs=${maxTabs}&proxy=${encodeURIComponent(proxyLabel)}&user=${encodeURIComponent(operatorUser)}&org=${encodeURIComponent(orgId || '')}`;
   try {
     await dispatchWindow.loadURL(wrapperUrl);
   } catch (loadErr) {
@@ -982,17 +1017,21 @@ function registerIPC() {
       if (result.success) {
         const actualOrgId = result.organization.id;
         setAuthToken(result.token);
-         store.set('orgId', actualOrgId);
-         store.set('userId', result.user.id);
-         store.set('userRole', result.user.role);
-         store.set('targetUrl', result.organization.targetUrl || '');
-         store.set('maxTabs', result.organization.maxTabs || 5);
-         connectWebSocket();
+        const effectiveTargetUrl = (result.organization.targetUrl && result.organization.targetUrl.trim() !== '' && !result.organization.targetUrl.includes('app.example.com')) 
+          ? result.organization.targetUrl 
+          : 'https://one.dat.com';
+        store.set('orgId', actualOrgId);
+        store.set('userId', result.user.id);
+        store.set('username', result.user.username);
+        store.set('userRole', result.user.role);
+        store.set('targetUrl', effectiveTargetUrl);
+        store.set('maxTabs', result.organization.maxTabs || 5);
+        connectWebSocket();
         
         setTimeout(() => {
           try {
             if (result.user.role === 'DISPATCHER') {
-              createSyncWindow(actualOrgId, result.user.id, result.organization.targetUrl || '');
+              createSyncWindow(actualOrgId, result.user.id, effectiveTargetUrl);
             } else {
               createMainWindow();
             }
@@ -1112,11 +1151,17 @@ function registerIPC() {
     }
   });
 
-  ipcMain.handle('dispatch:launch', async (event, { targetUrl }) => {
-    const orgId = store.get('orgId');
-    const userId = store.get('userId');
+  ipcMain.handle('dispatch:launch', async (event, options = {}) => {
+    const orgId = options.orgId || store.get('orgId');
+    const userId = options.userId || store.get('userId');
+    const username = options.username || store.get('username') || '';
     const token = getAuthToken();
     const sessionId = uuidv4();
+    const effectiveTargetUrl = (options.targetUrl && options.targetUrl.trim() !== '' && !options.targetUrl.includes('app.example.com'))
+      ? options.targetUrl
+      : (store.get('targetUrl') || 'https://one.dat.com');
+
+    console.log(`[ZONIX Main] dispatch:launch orgId=${orgId}, userId=${userId}, targetUrl=${effectiveTargetUrl}`);
 
     try {
       let cookiesObj = { cookies: [], localStorage: '{}' };
@@ -1134,7 +1179,7 @@ function registerIPC() {
       } else {
         // Fallback if launch was triggered without prefetch
         let targetDomain = '';
-        try { targetDomain = new URL(targetUrl).hostname; } catch (e) {}
+        try { targetDomain = new URL(effectiveTargetUrl).hostname; } catch (e) {}
         const results = await Promise.allSettled([
           fetchCookiesForSession(orgId, userId, targetDomain, token),
           getActiveProxyForOrg(orgId, token)
@@ -1163,7 +1208,7 @@ function registerIPC() {
         },
         body: JSON.stringify({
           userId,
-          targetUrl,
+          targetUrl: effectiveTargetUrl,
           proxyNodeId: proxyNode ? proxyNode.id : null,
           cookies: cookiesObj.cookies || []
         })
@@ -1187,12 +1232,15 @@ function registerIPC() {
       await createDispatchWindow(backendSessionId, {
         orgId,
         userId,
+        username,
         proxyString: activeProxyString,
         proxyUsername,
         proxyPassword,
+        proxyName: proxyNode ? proxyNode.name : '',
+        proxyHost: proxyNode ? `${proxyNode.host}:${proxyNode.port}` : '',
         cookies: cookiesObj.cookies || [],
         localStorageData: cookiesObj.localStorage || '{}',
-        targetUrl,
+        targetUrl: effectiveTargetUrl,
         hardwareProfile
       });
 
