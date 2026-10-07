@@ -14,6 +14,22 @@ const originalLog = console.log;
 const originalWarn = console.warn;
 const originalError = console.error;
 
+let logBuffer = [];
+let logFlushTimer = null;
+
+function flushLogBuffer(sync = false) {
+  if (logBuffer.length === 0) return;
+  const chunk = logBuffer.join('');
+  logBuffer = [];
+  try {
+    if (sync) {
+      fs.appendFileSync(logFile, chunk);
+    } else {
+      fs.appendFile(logFile, chunk, () => {});
+    }
+  } catch (e) {}
+}
+
 function writeToLogFile(level, args) {
   try {
     const formattedMsg = args.map(arg => {
@@ -22,7 +38,19 @@ function writeToLogFile(level, args) {
       }
       return String(arg);
     }).join(' ');
-    fs.appendFileSync(logFile, `[${new Date().toLocaleTimeString()}] [${level}] ${formattedMsg}\n`);
+    logBuffer.push(`[${new Date().toLocaleTimeString()}] [${level}] ${formattedMsg}\n`);
+    if (logBuffer.length >= 30) {
+      if (logFlushTimer) {
+        clearTimeout(logFlushTimer);
+        logFlushTimer = null;
+      }
+      flushLogBuffer();
+    } else if (!logFlushTimer) {
+      logFlushTimer = setTimeout(() => {
+        logFlushTimer = null;
+        flushLogBuffer();
+      }, 250);
+    }
   } catch (e) {}
 }
 
@@ -135,6 +163,19 @@ async function zonixFetch(url, options = {}) {
   const headers = options.headers || {};
   headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
   return nodeFetch(url, { ...options, headers });
+}
+
+// Background Keep-Alive Ping: prevents Render free tier backend from cold-sleeping (15m idle limit)
+let keepAliveTimer = null;
+function startBackendKeepAlive() {
+  if (keepAliveTimer) return;
+  const ping = async () => {
+    try {
+      await zonixFetch(`${CONFIG.BACKEND_URL}/api/health`, { method: 'GET' });
+    } catch (e) {}
+  };
+  ping();
+  keepAliveTimer = setInterval(ping, 210000); // Ping every 3.5 minutes
 }
 
 function createTray() {
@@ -1846,6 +1887,7 @@ app.whenReady().then(async () => {
   createTray();
   registerIPC();
   setupAutoUpdater();
+  startBackendKeepAlive();
 
   // Clear any cached session on startup so they always see the login page
   store.delete('authToken');
@@ -1899,6 +1941,12 @@ app.on('window-all-closed', () => {
 });
 
 app.on('before-quit', () => {
+  if (keepAliveTimer) {
+    clearInterval(keepAliveTimer);
+    keepAliveTimer = null;
+  }
+  flushLogBuffer(true);
+
   activeSessions.forEach((data, id) => {
     clearInterval(data.heartbeatTimer);
     try {

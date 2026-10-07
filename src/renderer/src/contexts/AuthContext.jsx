@@ -6,6 +6,14 @@ const AuthContext = createContext(null);
 
 const API_BASE = (window.zonixAPI && window.zonixAPI.backendUrl) ? `${window.zonixAPI.backendUrl}/api` : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:4000/api' : 'https://zonix-backend-0ggt.onrender.com/api');
 
+// Module-level in-memory SWR cache for instant page switching (0ms latency)
+const apiCache = new Map();
+const CACHE_TTL_MS = 15000; // 15 seconds fresh window
+
+export function clearApiCache() {
+  apiCache.clear();
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [organization, setOrganization] = useState(null);
@@ -141,6 +149,7 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     localStorage.removeItem('zonix_token');
+    apiCache.clear();
     setToken(null);
     setUser(null);
     setOrganization(null);
@@ -153,7 +162,41 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const authFetch = async (url, options = {}) => {
+  const authFetch = useCallback(async (url, options = {}) => {
+    const method = (options.method || 'GET').toUpperCase();
+    const cacheKey = `${url}?token=${token || ''}`;
+
+    // On mutations (POST, PUT, DELETE, PATCH), invalidate cache immediately to prevent stale UI state
+    if (method !== 'GET') {
+      apiCache.clear();
+      const response = await fetch(`${API_BASE}${url}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          ...options.headers
+        }
+      });
+
+      if (response.status === 401) {
+        logout();
+        throw new Error('Session expired');
+      }
+
+      return response;
+    }
+
+    // For GET requests: check if active fresh cache entry exists
+    if (!options.skipCache && apiCache.has(cacheKey)) {
+      const entry = apiCache.get(cacheKey);
+      if (Date.now() - entry.timestamp < CACHE_TTL_MS) {
+        return new Response(JSON.stringify(entry.data), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
     const response = await fetch(`${API_BASE}${url}`, {
       ...options,
       headers: {
@@ -168,8 +211,18 @@ export function AuthProvider({ children }) {
       throw new Error('Session expired');
     }
 
+    if (response.ok) {
+      try {
+        const cloned = response.clone();
+        const data = await cloned.json();
+        apiCache.set(cacheKey, { data, timestamp: Date.now() });
+      } catch (e) {
+        // Non-JSON response, ignore caching
+      }
+    }
+
     return response;
-  };
+  }, [token]);
 
   const value = {
     user,
@@ -181,6 +234,7 @@ export function AuthProvider({ children }) {
     login,
     logout,
     authFetch,
+    clearCache: clearApiCache,
     showAlert,
     showConfirm
   };
