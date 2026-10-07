@@ -430,6 +430,26 @@ async function createDispatchWindow(sessionId, config) {
     targetUrl, 
     hardwareProfile 
   } = config;
+  if (!proxyString || proxyString.trim() === '') {
+    throw new Error('No Proxy Configured: An active proxy tunnel is strictly required to launch the dispatcher.');
+  }
+
+  // PRE-FLIGHT PROXY REACHABILITY VERIFICATION GATE:
+  // Strictly prevent dispatch window from opening if proxy is unreachable or broken
+  const displayName = proxyName ? `${proxyName} (${proxyHost || proxyString})` : (proxyHost || proxyString);
+  console.log(`[ZONIX Launch Gate] Probing proxy reachability for session ${sessionId} (${displayName})...`);
+  const probe = await proxyManager.checkProxyHealth(proxyString, sessionId, {
+    username: proxyUsername || config.proxyUsername,
+    password: proxyPassword || config.proxyPassword
+  });
+
+  if (probe.status === 'unreachable') {
+    console.error(`[ZONIX Launch Gate] 🛑 BLOCKED DISPATCH WINDOW: Proxy ${displayName} is unreachable.`);
+    throw new Error(`Proxy Unreachable: The configured proxy server (${displayName}) could not be reached. Dispatcher launch was aborted to prevent account blockage or IP leaks. Please verify your proxy host, port, and credentials in the Admin Portal.`);
+  }
+
+  console.log(`[ZONIX Launch Gate] ✅ Proxy confirmed reachable (latency: ${probe.latency}ms). Opening secure viewport...`);
+
   const partitionId = `${CONFIG.PARTITION_PREFIX}${orgId}_user_${userId}`;
 
   // partitionId already starts with 'persist:' from CONFIG.PARTITION_PREFIX.
@@ -1263,6 +1283,18 @@ function registerIPC() {
         proxyUsername = proxyNode.username || '';
         proxyPassword = proxyNode.password || '';
         console.log(`[ZONIX Main] Routing dispatch session through proxy:`, activeProxyString);
+      } else {
+        throw new Error('No Proxy Assigned: Your organization has no active proxy route configured. An active proxy is required to protect your accounts and prevent IP leaks.');
+      }
+
+      console.log(`[ZONIX Launch Gate] Pre-flight probing proxy node ${proxyNode.name} (${activeProxyString})...`);
+      const preProbe = await proxyManager.checkProxyHealth(activeProxyString, `prelaunch_${userId}`, {
+        username: proxyUsername,
+        password: proxyPassword
+      });
+
+      if (preProbe.status === 'unreachable') {
+        throw new Error(`Proxy Unreachable: The configured proxy server (${proxyNode.name} · ${proxyNode.host}:${proxyNode.port}) is not responding or unreachable. Launch was aborted to protect your account.`);
       }
 
       // Register session with backend
@@ -1732,7 +1764,17 @@ function registerIPC() {
 
   ipcMain.on('window:close', (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
-    if (win) win.close();
+    if (win) {
+      if (win === syncWindow) {
+        syncWindow = null;
+        if (!authWindow || authWindow.isDestroyed()) {
+          createAuthWindow();
+        } else {
+          authWindow.show();
+        }
+      }
+      win.close();
+    }
   });
 }
 

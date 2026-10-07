@@ -578,7 +578,7 @@ export default function OverviewPage() {
                           subject: supportSubject,
                           message: supportMessage,
                           telemetry: {
-                            appVersion: window.zonixAPI?.appVersion ? ('v' + window.zonixAPI.appVersion) : 'v1.9.2',
+                            appVersion: window.zonixAPI?.appVersion ? ('v' + window.zonixAPI.appVersion) : 'v1.9.3',
                             os: 'Windows',
                             targetDomain
                           }

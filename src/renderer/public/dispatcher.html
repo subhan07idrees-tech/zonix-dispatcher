@@ -816,9 +816,12 @@
       <p class="overlay-desc">
         Your dedicated proxy connection was interrupted. ZONIX zero-leak shield has secured this viewport to prevent your real IP address from leaking.
       </p>
-      <p style="color: #EF4444; font-size: 11px; font-family: ui-monospace, monospace; letter-spacing: 1px;">
+      <p style="color: #EF4444; font-size: 11px; font-family: ui-monospace, monospace; letter-spacing: 1px; margin-bottom: 20px;">
         RECONNECTING SECURE TUNNEL...
       </p>
+      <button id="outageCloseBtn" class="header-btn" style="background:#EF4444;color:#FFFFFF;border:none;padding:10px 24px;font-size:11px;font-weight:700;letter-spacing:0.5px;box-shadow:0 0 15px rgba(239,68,68,0.4);">
+        CLOSE SESSION SAFELY
+      </button>
     </div>
 
     <!-- Session Paused Overlay -->
@@ -1411,6 +1414,12 @@
     window.zonixAPI?.onSessionResume?.(() => {
       document.getElementById('sessionPausedOverlay').classList.remove('active');
       console.log('[Dispatcher] Session resumed with fresh cookies.');
+    });
+
+    document.getElementById('outageCloseBtn')?.addEventListener('click', () => {
+      if (window.zonixAPI?.closeWindow) {
+        window.zonixAPI.closeWindow();
+      }
     });
   </script>
 </body>
