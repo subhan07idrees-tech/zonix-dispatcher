@@ -98,6 +98,7 @@ export default function OverviewPage() {
   const [supportSubject, setSupportSubject] = useState('');
   const [supportMessage, setSupportMessage] = useState('');
   const [submittingSupport, setSubmittingSupport] = useState(false);
+  const [supportError, setSupportError] = useState(null);
   const [scheduledTime, setScheduledTime] = useState('07:45 AM');
   const [savingTime, setSavingTime] = useState(false);
   const [orgDetails, setOrgDetails] = useState(null);
@@ -180,7 +181,11 @@ export default function OverviewPage() {
           notification.type === 'success' ? 'bg-[#ECFDF5] border-[#A7F3D0] text-[#047857]' : 'bg-[#FEF2F2] border-[#FECACA] text-[#B91C1C]'
         }`}>
           <div className="flex items-center gap-3">
-            <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+            {notification.type === 'success' ? (
+              <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-[#047857]" />
+            ) : (
+              <AlertTriangle className="w-5 h-5 flex-shrink-0 text-[#B91C1C]" />
+            )}
             <div>
               <p className="font-bold uppercase tracking-wider">{notification.title}</p>
               <p className="mt-0.5 font-medium">{notification.message}</p>
@@ -505,7 +510,15 @@ export default function OverviewPage() {
 
       {/* Support Modal (Portal) */}
       {showSupportModal && createPortal(
-        <div className="fixed inset-0 z-[9999] bg-[#0A0F1D]/75 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={() => setShowSupportModal(false)}>
+        <div 
+          className="fixed inset-0 z-[9999] bg-[#0A0F1D]/75 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" 
+          onClick={() => {
+            if (!submittingSupport) {
+              setShowSupportModal(false);
+              setSupportError(null);
+            }
+          }}
+        >
           <div className="relative my-auto bg-white border border-[#CBD5E1] rounded-xl shadow-2xl p-6 w-full max-w-md space-y-4 animate-modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
               <div className="flex items-center gap-3">
@@ -519,22 +532,37 @@ export default function OverviewPage() {
               </div>
               <button 
                 type="button"
-                onClick={() => setShowSupportModal(false)}
-                className="w-8 h-8 rounded-md flex items-center justify-center text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors"
+                disabled={submittingSupport}
+                onClick={() => {
+                  setShowSupportModal(false);
+                  setSupportError(null);
+                }}
+                className="w-8 h-8 rounded-md flex items-center justify-center text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors disabled:opacity-40"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
+
+            {supportError && (
+              <div className="p-3 rounded-lg bg-[#FEF2F2] border border-[#FECACA] text-[#B91C1C] text-xs flex items-start gap-2.5 animate-modal-content">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#B91C1C]" />
+                <div className="flex-1 font-medium leading-relaxed">{supportError}</div>
+              </div>
+            )}
 
             <div className="space-y-3.5">
               <div>
                 <label className="block text-xs font-bold text-[#0F172A] mb-1">Issue Subject</label>
                 <input
                   type="text"
+                  disabled={submittingSupport}
                   value={supportSubject}
-                  onChange={(e) => setSupportSubject(e.target.value)}
-                  placeholder="e.g. Session re-authentication or proxy ping query"
-                  className="zonix-input w-full text-xs"
+                  onChange={(e) => {
+                    setSupportSubject(e.target.value);
+                    if (supportError) setSupportError(null);
+                  }}
+                  placeholder="e.g. Session re-authentication or proxy latency query"
+                  className="zonix-input w-full text-xs disabled:opacity-60"
                 />
               </div>
 
@@ -542,18 +570,26 @@ export default function OverviewPage() {
                 <label className="block text-xs font-bold text-[#0F172A] mb-1">Detailed Description</label>
                 <textarea
                   rows={4}
+                  disabled={submittingSupport}
                   value={supportMessage}
-                  onChange={(e) => setSupportMessage(e.target.value)}
-                  placeholder="Explain what happened or request assistance..."
-                  className="zonix-input w-full text-xs h-auto py-2.5"
+                  onChange={(e) => {
+                    setSupportMessage(e.target.value);
+                    if (supportError) setSupportError(null);
+                  }}
+                  placeholder="Explain what happened or request technical assistance..."
+                  className="zonix-input w-full text-xs h-auto py-2.5 disabled:opacity-60"
                 />
               </div>
 
               <div className="flex gap-2.5 pt-2 border-t border-[#E2E8F0]">
                 <button
                   type="button"
-                  onClick={() => setShowSupportModal(false)}
-                  className="zonix-btn-secondary flex-1 py-2 text-xs"
+                  disabled={submittingSupport}
+                  onClick={() => {
+                    setShowSupportModal(false);
+                    setSupportError(null);
+                  }}
+                  className="zonix-btn-secondary flex-1 py-2 text-xs disabled:opacity-40"
                 >
                   Cancel
                 </button>
@@ -561,62 +597,70 @@ export default function OverviewPage() {
                   type="button"
                   disabled={submittingSupport}
                   onClick={async () => {
-                    if (!supportSubject || !supportMessage) {
-                      setNotification({
-                        type: 'error',
-                        title: 'Missing Fields',
-                        message: 'Please provide both an issue subject and description.'
-                      });
+                    const trimmedSubj = supportSubject.trim();
+                    const trimmedMsg = supportMessage.trim();
+
+                    if (!trimmedSubj || !trimmedMsg) {
+                      setSupportError('Please provide both an issue subject and a detailed description.');
                       return;
                     }
+
                     setSubmittingSupport(true);
+                    setSupportError(null);
+
                     try {
-                      const res = await authFetch('/organizations/support/ticket', {
+                      const res = await authFetch('/support/ticket', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                          subject: supportSubject,
-                          message: supportMessage,
+                          subject: trimmedSubj,
+                          message: trimmedMsg,
                           telemetry: {
-                            appVersion: window.zonixAPI?.appVersion ? ('v' + window.zonixAPI.appVersion) : 'v1.9.4',
-                            os: 'Windows',
-                            targetDomain
+                            appVersion: window.zonixAPI?.appVersion ? ('v' + window.zonixAPI.appVersion) : 'v1.9.5',
+                            os: 'Windows 10/11',
+                            targetDomain,
+                            userRole: user?.role,
+                            orgName: user?.orgName || orgDetails?.displayName,
+                            latency: proxyLatencyDisplay,
+                            cookieStatus: healthTelemetry.cookieStatus
                           }
                         })
                       });
-                      const data = await res.json();
-                      if (data.success) {
+
+                      const data = await res.json().catch(() => ({}));
+
+                      if (res.ok && data.success) {
                         setShowSupportModal(false);
                         setSupportSubject('');
                         setSupportMessage('');
+                        setSupportError(null);
                         setNotification({
                           type: 'success',
                           title: 'Ticket Dispatched',
-                          message: 'Your support ticket was securely transmitted to ZONIX Support.'
+                          message: data.message || 'Your support ticket was securely transmitted to ZONIX Operations Team.'
                         });
                       } else {
-                        setShowSupportModal(false);
-                        setNotification({
-                          type: 'success',
-                          title: 'Ticket Logged',
-                          message: 'Your ticket has been logged in the system registry.'
-                        });
+                        setSupportError(data.error || 'Failed to deliver support ticket. Please check your connection and try again.');
                       }
                     } catch (e) {
-                      setShowSupportModal(false);
-                      setNotification({
-                        type: 'success',
-                        title: 'Ticket Logged',
-                        message: 'Support request logged in local queue.'
-                      });
+                      setSupportError(e.message || 'Unable to connect to support server. Please check your network connection.');
                     } finally {
                       setSubmittingSupport(false);
                     }
                   }}
-                  className="zonix-btn-primary flex-1 py-2 text-xs gap-1.5"
+                  className="zonix-btn-primary flex-1 py-2 text-xs gap-1.5 disabled:opacity-60"
                 >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>{submittingSupport ? 'Sending...' : 'Send Ticket'}</span>
+                  {submittingSupport ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Sending Ticket...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Send Ticket</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
