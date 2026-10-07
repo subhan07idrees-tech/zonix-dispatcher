@@ -95,6 +95,7 @@ export default function OverviewPage() {
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
   const [showSupportModal, setShowSupportModal] = useState(false);
+  const [supportEmail, setSupportEmail] = useState('');
   const [supportSubject, setSupportSubject] = useState('');
   const [supportMessage, setSupportMessage] = useState('');
   const [submittingSupport, setSubmittingSupport] = useState(false);
@@ -345,7 +346,11 @@ export default function OverviewPage() {
           </button>
 
           <button
-            onClick={() => setShowSupportModal(true)}
+            onClick={() => {
+              setSupportEmail((user?.email && !user.email.includes('@zonix.io')) ? user.email : 'subhan07idrees@gmail.com');
+              setSupportError(null);
+              setShowSupportModal(true);
+            }}
             className="zonix-btn-secondary gap-1.5"
           >
             <MessageSquare className="w-3.5 h-3.5 text-[#475569]" />
@@ -552,6 +557,21 @@ export default function OverviewPage() {
 
             <div className="space-y-3.5">
               <div>
+                <label className="block text-xs font-bold text-[#0F172A] mb-1">Your Email Address (Recipient)</label>
+                <input
+                  type="email"
+                  disabled={submittingSupport}
+                  value={supportEmail}
+                  onChange={(e) => {
+                    setSupportEmail(e.target.value);
+                    if (supportError) setSupportError(null);
+                  }}
+                  placeholder="e.g. subhan07idrees@gmail.com"
+                  className="zonix-input w-full text-xs disabled:opacity-60"
+                />
+              </div>
+
+              <div>
                 <label className="block text-xs font-bold text-[#0F172A] mb-1">Issue Subject</label>
                 <input
                   type="text"
@@ -597,8 +617,14 @@ export default function OverviewPage() {
                   type="button"
                   disabled={submittingSupport}
                   onClick={async () => {
+                    const trimmedEmail = supportEmail.trim();
                     const trimmedSubj = supportSubject.trim();
                     const trimmedMsg = supportMessage.trim();
+
+                    if (!trimmedEmail) {
+                      setSupportError('Please provide your email address to receive the confirmation.');
+                      return;
+                    }
 
                     if (!trimmedSubj || !trimmedMsg) {
                       setSupportError('Please provide both an issue subject and a detailed description.');
@@ -613,10 +639,11 @@ export default function OverviewPage() {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
+                          userEmail: trimmedEmail,
                           subject: trimmedSubj,
                           message: trimmedMsg,
                           telemetry: {
-                            appVersion: window.zonixAPI?.appVersion ? ('v' + window.zonixAPI.appVersion) : 'v1.9.5',
+                            appVersion: window.zonixAPI?.appVersion ? ('v' + window.zonixAPI.appVersion) : 'v1.9.6',
                             os: 'Windows 10/11',
                             targetDomain,
                             userRole: user?.role,
