@@ -143,6 +143,8 @@ let tray = null;
 let activeSessions = new Map();
 // Maps partitionId -> localStorageData (JSON string). Used for O(1) lookup in IPC handler.
 const sessionLocalStorageMap = new Map();
+// Maps guest webContents.id -> { partitionId, localStorageData, sessionId, orgId, userId } for zero-latency token injection
+const guestWebContentsMap = new Map();
 let wsConnection = null;
 let proxyManager = null;
 let securityEngine = null;
@@ -295,15 +297,15 @@ async function verifyCookieSync(sess, originalCookies, targetUrl, retries = 3) {
 
         const nowSec = Math.floor(Date.now() / 1000);
         let exp = cookie.expirationDate;
-        if (!exp || exp < nowSec + 86400) {
-          exp = nowSec + 31536000;
+        // Extend session and device identification cookies to at least 30 days to prevent premature DAT logouts
+        if (!exp || exp < nowSec + 30 * 86400) {
+          exp = nowSec + 30 * 86400; // 30 days guaranteed minimum
         }
 
         const cookieDetails = {
           url: cookieUrl,
           name: cookie.name,
           value: cookie.value,
-          domain: cookie.domain ? (cookie.domain.startsWith('.') ? cookie.domain : `.${cookie.domain}`) : `.${cleanDomain}`,
           path: cookie.path || '/',
           secure: isSecure,
           httpOnly: cookie.httpOnly !== undefined ? cookie.httpOnly : false,
@@ -311,14 +313,23 @@ async function verifyCookieSync(sess, originalCookies, targetUrl, retries = 3) {
           expirationDate: exp
         };
 
+        // If cookie has a specific domain defined, preserve its original format
+        if (cookie.domain) {
+          cookieDetails.domain = cookie.domain;
+        }
+
         try {
           await sess.cookies.set(cookieDetails);
         } catch (setErr) {
-          // If domain-specific set fails, retry without explicit domain parameter (letting Electron derive domain from url)
+          // If explicit domain set fails, retry without domain parameter (Electron will derive host-only cookie from url)
           delete cookieDetails.domain;
-          await sess.cookies.set(cookieDetails);
+          try {
+            await sess.cookies.set(cookieDetails);
+          } catch (retryErr) {
+            console.error(`[ZONIX] Failed cookie set '${cookie.name}':`, retryErr.message);
+          }
         }
-        console.log(`[ZONIX] Set cookie: ${cookie.name} domain=${cleanDomain} secure=${isSecure} sameSite=${sameSite}`);
+        console.log(`[ZONIX] Set cookie: ${cookie.name} domain=${cookie.domain || cleanDomain} secure=${isSecure} sameSite=${sameSite}`);
       } catch (err) {
         console.error(`[ZONIX] Injection error for '${cookie.name}':`, err.message);
       }
@@ -489,14 +500,14 @@ async function createDispatchWindow(sessionId, config) {
   }
 
   if (cookies && cookies.length > 0) {
-    // ALWAYS clear old stale partition storage & cookies from disk before injecting fresh cookies
+    // Clear only stale cookies to prevent conflict; NEVER wipe localstorage or indexdb so Auth0 tokens persist!
     try {
       await sess.clearStorageData({
-        storages: ['cookies', 'localstorage', 'cache', 'indexdb', 'websql', 'serviceworkers']
+        storages: ['cookies']
       });
-      console.log(`[ZONIX] Cleared stale disk partition storage for: ${partitionId}`);
+      console.log(`[ZONIX] Cleared stale partition cookies for: ${partitionId}`);
     } catch (cleanErr) {
-      console.warn(`[ZONIX] Warning clearing partition storage:`, cleanErr.message);
+      console.warn(`[ZONIX] Warning clearing partition cookies:`, cleanErr.message);
     }
 
     // Inject cookies into the ONE correct session (partitionId already has persist: prefix).
@@ -545,6 +556,18 @@ async function createDispatchWindow(sessionId, config) {
   dispatchWindow.webContents.on('did-attach-webview', (event, webContents) => {
     webContents.setUserAgent(targetUserAgent);
     console.log(`[ZONIX] Inherited parent User Agent to child webview: ${targetUserAgent}`);
+
+    // Register guest webContents for instant 0ms localStorage token injection
+    guestWebContentsMap.set(webContents.id, {
+      partitionId,
+      localStorageData: localStorageData || '{}',
+      sessionId,
+      orgId,
+      userId
+    });
+    webContents.on('destroyed', () => {
+      guestWebContentsMap.delete(webContents.id);
+    });
 
     // Instant tripwire if guest webview encounters proxy drop
     webContents.on('did-fail-load', (e, errorCode, errorDesc) => {
@@ -1088,25 +1111,73 @@ function registerIPC() {
   });
 
   ipcMain.on('get-session-local-storage', (event) => {
-    // Identify the sender's session by comparing session objects directly.
-    // event.sender.session is the actual Session object of the WebContents (or guest webview).
-    const senderSession = event.sender.session;
     let foundData = '{}';
 
-    // Fast path: iterate known partitions and compare session object identity
-    for (const [partitionId, lsData] of sessionLocalStorageMap) {
-      try {
-        const partSess = session.fromPartition(partitionId);
-        if (partSess === senderSession) {
-          foundData = lsData;
-          console.log(`[ZONIX Main] IPC get-session-local-storage: matched partition "${partitionId}". Keys: ${Object.keys(JSON.parse(foundData || '{}')).length}`);
-          break;
+    try {
+      // 1. Direct O(1) match via guestWebContentsMap (registered when webview attaches)
+      const guestInfo = guestWebContentsMap.get(event.sender.id);
+      if (guestInfo && guestInfo.localStorageData && guestInfo.localStorageData !== '{}') {
+        const keyCount = Object.keys(JSON.parse(guestInfo.localStorageData || '{}')).length;
+        console.log(`[ZONIX Main] IPC get-session-local-storage: matched guest webview ${event.sender.id} (${guestInfo.partitionId}). Keys: ${keyCount}`);
+        event.returnValue = guestInfo.localStorageData;
+        return;
+      }
+
+      // 2. Session object identity match against sessionLocalStorageMap
+      const senderSession = event.sender.session;
+      for (const [partitionId, lsData] of sessionLocalStorageMap) {
+        try {
+          const partSess = session.fromPartition(partitionId);
+          if (partSess === senderSession && lsData && lsData !== '{}') {
+            const keyCount = Object.keys(JSON.parse(lsData || '{}')).length;
+            console.log(`[ZONIX Main] IPC get-session-local-storage: matched partition "${partitionId}" by session identity. Keys: ${keyCount}`);
+            event.returnValue = lsData;
+            return;
+          }
+        } catch (e) {}
+      }
+
+      // 3. Storage path matching (accounting for 'persist:' prefix differences)
+      if (senderSession && typeof senderSession.getStoragePath === 'function') {
+        const sPath = (senderSession.getStoragePath() || '').toLowerCase();
+        for (const [partId, lsData] of sessionLocalStorageMap) {
+          const cleanPart = partId.replace(/^persist:/, '').toLowerCase();
+          if (cleanPart && sPath.includes(cleanPart) && lsData && lsData !== '{}') {
+            const keyCount = Object.keys(JSON.parse(lsData || '{}')).length;
+            console.log(`[ZONIX Main] IPC get-session-local-storage: matched partition "${partId}" by storage path. Keys: ${keyCount}`);
+            event.returnValue = lsData;
+            return;
+          }
         }
-      } catch (e) {}
+      }
+
+      // 4. Match activeSessions by window webContents or partition
+      for (const [sId, sessData] of activeSessions) {
+        if (sessData.localStorageData && sessData.localStorageData !== '{}') {
+          if (sessData.window && !sessData.window.isDestroyed() && sessData.window.webContents === event.sender) {
+            event.returnValue = sessData.localStorageData;
+            return;
+          }
+        }
+      }
+
+      // 5. Resilient fallback: return first active non-empty session token vault
+      if (sessionLocalStorageMap.size > 0) {
+        for (const [k, v] of sessionLocalStorageMap.entries()) {
+          if (v && v !== '{}') {
+            const keyCount = Object.keys(JSON.parse(v || '{}')).length;
+            console.log(`[ZONIX Main] IPC get-session-local-storage: fallback matched partition "${k}". Keys: ${keyCount}`);
+            event.returnValue = v;
+            return;
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[ZONIX Main] get-session-local-storage error:', err.message);
     }
 
     if (foundData === '{}') {
-      console.warn('[ZONIX Main] IPC get-session-local-storage: no session match found for sender.');
+      console.warn('[ZONIX Main] IPC get-session-local-storage: no session match found for sender ID', event.sender.id);
     }
     event.returnValue = foundData;
   });
@@ -1200,49 +1271,6 @@ function registerIPC() {
       createAuthWindow();
     }
     return { success: true };
-  });
-
-  ipcMain.on('get-session-local-storage', (event) => {
-    try {
-      const senderContents = event.sender;
-      let foundData = '{}';
-
-      // 1. Match by sender webContents in activeSessions
-      activeSessions.forEach((sessData) => {
-        if (sessData.window && !sessData.window.isDestroyed() && sessData.window.webContents === senderContents) {
-          if (sessData.localStorageData && sessData.localStorageData !== '{}') {
-            foundData = sessData.localStorageData;
-          }
-        }
-      });
-
-      // 2. Fallback: Match by storage path in sessionLocalStorageMap
-      if (foundData === '{}' && senderContents.session) {
-        const sPath = senderContents.session.getStoragePath() || '';
-        sessionLocalStorageMap.forEach((val, key) => {
-          if (key && val && val !== '{}') {
-            if (sPath.includes(key) || key.includes(sPath)) {
-              foundData = val;
-            }
-          }
-        });
-      }
-
-      // 3. Fallback: Return the first non-empty entry in sessionLocalStorageMap
-      if (foundData === '{}' && sessionLocalStorageMap.size > 0) {
-        for (const [k, v] of sessionLocalStorageMap.entries()) {
-          if (v && v !== '{}') {
-            foundData = v;
-            break;
-          }
-        }
-      }
-
-      event.returnValue = foundData;
-    } catch (err) {
-      console.error('[ZONIX Main] get-session-local-storage error:', err.message);
-      event.returnValue = '{}';
-    }
   });
 
   ipcMain.handle('get-session-local-storage-async', async (event, args) => {

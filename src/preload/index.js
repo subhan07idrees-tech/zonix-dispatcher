@@ -52,6 +52,25 @@ const { contextBridge, ipcRenderer } = require('electron');
         }
       }
 
+      // 1b. Seed directly into document main world context before any DAT scripts evaluate
+      try {
+        const injectScript = document.createElement('script');
+        injectScript.textContent = `
+          (function() {
+            try {
+              var tokens = ${JSON.stringify(data)};
+              for (var key in tokens) {
+                if (tokens.hasOwnProperty(key)) {
+                  try { window.localStorage.setItem(key, tokens[key]); } catch(e) {}
+                }
+              }
+            } catch(e) {}
+          })();
+        `;
+        (document.head || document.documentElement).appendChild(injectScript);
+        injectScript.remove();
+      } catch (e) {}
+
       // 2. Wrap prototype methods to intercept reads, writes, and deletions dynamically.
       // This protects session tokens from being wiped by client-side clear/logout calls,
       // while still allowing the site to successfully read new/updated tokens.
