@@ -233,6 +233,17 @@ export default function DiagnosticsPage() {
             {dispatchers.map(u => {
               const cs = cookieStatus[u.id];
               const hasCookies = cs?.hasData && cs.cookieCount > 0;
+              const hasTokens = cs?.hasLocalStorage;
+              const isOperational = hasCookies || hasTokens;
+
+              let statusLabel = 'Needs Authentication';
+              if (hasCookies && hasTokens) {
+                statusLabel = `${cs.cookieCount} Cookies & Token Synced`;
+              } else if (hasCookies) {
+                statusLabel = `${cs.cookieCount} Cookies Synced`;
+              } else if (hasTokens) {
+                statusLabel = 'Token Vault Synced';
+              }
 
               return (
                 <div key={u.id} className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg p-4 space-y-3 hover:border-[#94A3B8] transition-colors">
@@ -249,19 +260,19 @@ export default function DiagnosticsPage() {
                         {u.status === 'ACTIVE' ? 'Active' : u.status}
                       </span>
                     </div>
-                    <StatusBadge ok={hasCookies} label={hasCookies ? `${cs.cookieCount} Cookies Synced` : 'Needs Authentication'} />
+                    <StatusBadge ok={isOperational} label={statusLabel} />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="bg-white rounded-lg p-3 space-y-1 border border-[#CBD5E1]">
-                      <div className="text-[11px] text-[#475569] font-bold">Synced Cookies</div>
-                      <div className={`text-base font-mono font-bold ${hasCookies ? 'text-[#047857]' : 'text-[#B91C1C]'}`}>
-                        {cs ? cs.cookieCount : '—'}
+                      <div className="text-[11px] text-[#475569] font-bold">Synced Cookies &amp; Auth</div>
+                      <div className={`text-base font-mono font-bold ${isOperational ? 'text-[#047857]' : 'text-[#64748B]'}`}>
+                        {hasCookies ? `${cs.cookieCount} Cookies` : (hasTokens ? 'Active (Token Vault)' : '0')}
                       </div>
                     </div>
                     <div className="bg-white rounded-lg p-3 space-y-1 border border-[#CBD5E1]">
                       <div className="text-[11px] text-[#475569] font-bold">Local Storage Vault</div>
-                      <div className={`text-base font-mono font-bold ${cs?.hasLocalStorage ? 'text-[#1E40AF]' : 'text-[#64748B]'}`}>
+                      <div className={`text-base font-mono font-bold ${cs?.hasLocalStorage ? 'text-[#047857]' : 'text-[#64748B]'}`}>
                         {cs?.hasLocalStorage ? 'Synced' : 'None'}
                       </div>
                     </div>
@@ -273,11 +284,11 @@ export default function DiagnosticsPage() {
                     </div>
                   </div>
 
-                  {!hasCookies && (
+                  {!isOperational && (
                     <div className="flex items-center gap-2.5 text-xs text-[#B45309] font-medium bg-[#FFFBEB] border border-[#FDE68A] p-3 rounded-lg">
                       <Key className="w-4 h-4 flex-shrink-0 text-[#B45309]" />
                       <span>
-                        Missing authentication cookies. Open <strong>User Registry</strong> and click the <strong>Authenticate (Key)</strong> button to capture fresh session cookies for this dispatcher.
+                        Missing authentication session. Open <strong>User Registry</strong> and click the <strong>Authenticate (Key)</strong> button to capture fresh credentials for this dispatcher.
                       </span>
                     </div>
                   )}

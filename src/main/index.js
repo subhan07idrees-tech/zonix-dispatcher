@@ -1654,10 +1654,9 @@ function registerIPC() {
       });
     });
 
+    // Capture all cookies from the session before any partition cleanup
     const allCookies = await sess.cookies.get({});
-
-    // Clean up temporary capture session storage
-    await sess.clearStorageData({ storages: ['cookies'] });
+    console.log(`[ZONIX Main] Capture window closed: retrieved ${allCookies.length} session cookies from partition.`);
 
     // If there was an active dispatcher session, hot-swap the cookies and resume it
     if (activeDispatcherSession) {
