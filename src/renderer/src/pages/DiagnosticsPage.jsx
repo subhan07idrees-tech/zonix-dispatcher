@@ -265,15 +265,15 @@ export default function DiagnosticsPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="bg-white rounded-lg p-3 space-y-1 border border-[#CBD5E1]">
-                      <div className="text-[11px] text-[#475569] font-bold">Synced Cookies &amp; Auth</div>
-                      <div className={`text-base font-mono font-bold ${isOperational ? 'text-[#047857]' : 'text-[#64748B]'}`}>
-                        {hasCookies ? `${cs.cookieCount} Cookies` : (hasTokens ? 'Active (Token Vault)' : '0')}
+                      <div className="text-[11px] text-[#475569] font-bold">Synced Cookies</div>
+                      <div className={`text-base font-mono font-bold ${hasCookies ? 'text-[#047857]' : (hasTokens ? 'text-[#047857]' : 'text-[#B91C1C]')}`}>
+                        {hasCookies ? `${cs.cookieCount} Cookies` : (hasTokens ? 'Synced via Token Vault' : '0')}
                       </div>
                     </div>
                     <div className="bg-white rounded-lg p-3 space-y-1 border border-[#CBD5E1]">
                       <div className="text-[11px] text-[#475569] font-bold">Local Storage Vault</div>
                       <div className={`text-base font-mono font-bold ${cs?.hasLocalStorage ? 'text-[#047857]' : 'text-[#64748B]'}`}>
-                        {cs?.hasLocalStorage ? 'Synced' : 'None'}
+                        {cs?.hasLocalStorage ? 'Synced (Active)' : 'None'}
                       </div>
                     </div>
                     <div className="bg-white rounded-lg p-3 space-y-1 border border-[#CBD5E1]">
