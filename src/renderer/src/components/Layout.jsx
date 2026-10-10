@@ -43,7 +43,7 @@ function TopBar() {
           <span className="text-[#CBD5E1] text-xs">/</span>
           <span className="text-xs text-[#475569] font-medium hidden md:inline">System Control Node</span>
           <span className="text-[10px] text-[#475569] font-mono bg-[#F8FAFC] px-2 py-0.5 rounded border border-[#E2E8F0] font-bold">
-            v{window.zonixAPI?.appVersion || '1.9.9'}
+            v{window.zonixAPI?.appVersion || '1.9.10'}
           </span>
         </div>
       </div>

@@ -846,7 +846,7 @@ export default function OverviewPage() {
                         subject: trimmedSubj,
                         message: trimmedMsg,
                         telemetry: {
-                          appVersion: window.zonixAPI?.appVersion ? ('v' + window.zonixAPI.appVersion) : 'v1.9.9',
+                          appVersion: window.zonixAPI?.appVersion ? ('v' + window.zonixAPI.appVersion) : 'v1.9.10',
                           os: 'Windows 10/11',
                           targetDomain,
                           userRole: user?.role,
