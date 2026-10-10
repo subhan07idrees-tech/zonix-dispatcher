@@ -69,7 +69,7 @@ export default function SessionsPage() {
         <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-[#1E40AF]" />
-            <h3 className="text-xs font-bold text-[#0F172A] uppercase font-mono tracking-wider">
+            <h3 className="text-xs font-semibold text-[#0F172A]">
               Dispatcher Session Registry
             </h3>
           </div>
@@ -79,7 +79,7 @@ export default function SessionsPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[#CBD5E1] text-[11px] text-[#475569] uppercase font-mono bg-[#F8FAFC]">
+              <tr className="border-b border-[#E2E8F0] text-xs font-semibold text-[#475569] bg-[#F8FAFC]">
                 <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Session ID</th>
                 <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Organization</th>
                 <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Operator</th>
@@ -93,7 +93,7 @@ export default function SessionsPage() {
               {sessions.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-16 text-center text-xs text-[#475569]">
-                    <div className="w-12 h-12 rounded-full bg-[#F1F5F9] border border-[#CBD5E1] flex items-center justify-center mx-auto mb-3 text-[#64748B]">
+                    <div className="w-12 h-12 rounded-full bg-[#F1F5F9] border border-[#E2E8F0] flex items-center justify-center mx-auto mb-3 text-[#64748B]">
                       <Radio className="w-6 h-6" />
                     </div>
                     <p className="font-bold text-sm text-[#0F172A]">No Active Dispatch Sessions</p>

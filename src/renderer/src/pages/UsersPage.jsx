@@ -23,8 +23,8 @@ function InviteModal({ orgId, onClose, onSend }) {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] bg-[#0A0F1D]/75 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={onClose}>
-      <div className="relative my-auto w-full max-w-md bg-white border border-[#CBD5E1] rounded-xl shadow-2xl p-6 space-y-5 animate-modal-content max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[9999] zonix-modal-backdrop overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={onClose}>
+      <div className="relative my-auto w-full max-w-md bg-white border border-[#E2E8F0] rounded-xl shadow-modal p-6 space-y-5 animate-modal-content max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3.5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center font-bold">
@@ -121,8 +121,8 @@ function UserModal({ user, orgId, onClose, onSave }) {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] bg-[#0A0F1D]/75 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={onClose}>
-      <div className="relative my-auto w-full max-w-md bg-white border border-[#CBD5E1] rounded-xl shadow-2xl p-6 space-y-4 animate-modal-content max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[9999] zonix-modal-backdrop overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={onClose}>
+      <div className="relative my-auto w-full max-w-md bg-white border border-[#E2E8F0] rounded-xl shadow-modal p-6 space-y-4 animate-modal-content max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
           <h3 className="text-sm font-bold text-[#0F172A]">
             {user ? 'Edit Dispatcher Credentials' : 'New User Registration'}
@@ -520,7 +520,7 @@ export default function UsersPage() {
       {/* Users table card */}
       <div className="zonix-card overflow-hidden">
         <div className="p-3.5 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
-          <h3 className="text-xs font-bold text-[#0F172A] uppercase font-mono tracking-wider">
+          <h3 className="text-xs font-semibold text-[#0F172A]">
             Dispatcher Account Directory
           </h3>
           <span className="text-xs text-[#64748B] font-mono font-medium">
@@ -531,7 +531,7 @@ export default function UsersPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[#CBD5E1] text-[11px] text-[#475569] uppercase bg-[#F8FAFC]">
+              <tr className="border-b border-[#E2E8F0] text-xs font-semibold text-[#475569] bg-[#F8FAFC]">
                 <th className="py-2.5 px-4 text-left font-bold whitespace-nowrap">Username</th>
                 <th className="py-2.5 px-4 text-left font-bold whitespace-nowrap">Email</th>
                 <th className="py-2.5 px-4 text-left font-bold whitespace-nowrap">Role</th>
@@ -623,7 +623,7 @@ export default function UsersPage() {
       {invites.length > 0 && (
         <div className="zonix-card overflow-hidden">
           <div className="p-3.5 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
-            <h3 className="text-xs font-bold text-[#0F172A] uppercase font-mono tracking-wider flex items-center gap-2">
+            <h3 className="text-xs font-semibold text-[#0F172A] flex items-center gap-2">
               <Clock className="w-4 h-4 text-[#1E40AF]" />
               Pending Email Invitations
             </h3>
@@ -632,7 +632,7 @@ export default function UsersPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#CBD5E1] text-[11px] text-[#475569] uppercase bg-[#F8FAFC]">
+                <tr className="border-b border-[#E2E8F0] text-xs font-semibold text-[#475569] bg-[#F8FAFC]">
                   <th className="py-2.5 px-4 text-left font-bold">Email Address</th>
                   <th className="py-2.5 px-4 text-left font-bold">Role</th>
                   <th className="py-2.5 px-4 text-left font-bold">Max Tabs</th>

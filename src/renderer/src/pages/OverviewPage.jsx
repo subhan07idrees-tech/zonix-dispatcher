@@ -12,7 +12,7 @@ function MetricCard({ icon: Icon, label, value, subtext, highlight = false, isTe
   return (
     <div className={`zonix-card p-5 flex flex-col justify-between hover:border-[#94A3B8] transition-all duration-150 ${highlight ? 'border-l-4 border-l-[#1E40AF]' : ''}`}>
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-bold uppercase tracking-wider text-[#475569]">{label}</span>
+        <span className="text-xs font-semibold text-[#64748B]">{label}</span>
         <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center">
           <Icon className="w-4 h-4 text-[#1E40AF]" />
         </div>
@@ -215,7 +215,7 @@ export default function OverviewPage() {
             Live fleet concurrency statistics, multi-tenant session telemetry, and proxy health diagnostics
           </p>
         </div>
-        <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-lg bg-white border border-[#CBD5E1] shadow-2xs">
+        <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-lg bg-white border border-[#E2E8F0] shadow-xs">
           <span className={`w-2.5 h-2.5 rounded-full ${overview.systemHealth >= 80 ? 'bg-[#047857]' : 'bg-[#B91C1C]'}`} />
           <span className="text-xs text-[#475569] font-medium">
             Fleet Health: <span className="font-mono text-[#0F172A] font-bold">{overview.systemHealth || 100}%</span>
@@ -467,7 +467,7 @@ export default function OverviewPage() {
             <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
               <div className="flex items-center gap-2">
                 <Radio className="w-4 h-4 text-[#1E40AF]" />
-                <h3 className="text-xs font-bold text-[#0F172A] uppercase font-mono tracking-wider">
+                <h3 className="text-xs font-semibold text-[#0F172A]">
                   Active Dispatch Sessions
                 </h3>
               </div>
@@ -479,7 +479,7 @@ export default function OverviewPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-[#CBD5E1] text-[11px] text-[#475569] uppercase font-mono bg-[#F8FAFC]">
+                  <tr className="border-b border-[#E2E8F0] text-xs font-semibold text-[#475569] bg-[#F8FAFC]">
                     <th className="py-2.5 px-4 text-left font-bold whitespace-nowrap">Session ID</th>
                     <th className="py-2.5 px-4 text-left font-bold whitespace-nowrap">Organization</th>
                     <th className="py-2.5 px-4 text-left font-bold whitespace-nowrap">Operator</th>
@@ -513,7 +513,7 @@ export default function OverviewPage() {
             <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-[#1E40AF]" />
-                <h3 className="text-xs font-bold text-[#0F172A] uppercase font-mono tracking-wider">
+                <h3 className="text-xs font-semibold text-[#0F172A]">
                   Alerts &amp; Telemetry
                 </h3>
               </div>
@@ -528,7 +528,7 @@ export default function OverviewPage() {
       {/* Support & Operational Notice Modal (Portal) */}
       {showSupportModal && createPortal(
         <div 
-          className="fixed inset-0 z-[9999] bg-[#0A0F1D]/75 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" 
+          className="fixed inset-0 z-[9999] zonix-modal-backdrop overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" 
           onClick={() => {
             if (!submittingSupport) {
               setShowSupportModal(false);
@@ -536,7 +536,7 @@ export default function OverviewPage() {
             }
           }}
         >
-          <div className="relative my-auto bg-white border border-[#CBD5E1] rounded-2xl shadow-2xl p-6 w-full max-w-lg space-y-4 animate-modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="relative my-auto bg-white border border-[#E2E8F0] rounded-xl shadow-modal p-6 w-full max-w-lg space-y-4 animate-modal-content" onClick={(e) => e.stopPropagation()}>
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3.5">
               <div className="flex items-center gap-3">
@@ -601,7 +601,7 @@ export default function OverviewPage() {
                   }}
                   className={`py-2 px-2.5 rounded-lg border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                     supportType === 'MAINTENANCE'
-                      ? 'bg-[#FEF3C7] border-[#F59E0B] text-[#92400E] shadow-2xs'
+                      ? 'bg-[#FEF3C7] border-[#F59E0B] text-[#92400E] shadow-xs'
                       : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:bg-[#F1F5F9]'
                   }`}
                 >
@@ -618,7 +618,7 @@ export default function OverviewPage() {
                   }}
                   className={`py-2 px-2.5 rounded-lg border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                     supportType === 'ANNOUNCEMENT'
-                      ? 'bg-[#EFF6FF] border-[#3B82F6] text-[#1E40AF] shadow-2xs'
+                      ? 'bg-[#EFF6FF] border-[#3B82F6] text-[#1E40AF] shadow-xs'
                       : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:bg-[#F1F5F9]'
                   }`}
                 >
@@ -635,7 +635,7 @@ export default function OverviewPage() {
                   }}
                   className={`py-2 px-2.5 rounded-lg border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                     supportType === 'SUPPORT'
-                      ? 'bg-[#F0FDF4] border-[#22C55E] text-[#15803D] shadow-2xs'
+                      ? 'bg-[#F0FDF4] border-[#22C55E] text-[#15803D] shadow-xs'
                       : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:bg-[#F1F5F9]'
                   }`}
                 >

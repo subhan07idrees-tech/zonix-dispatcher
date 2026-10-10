@@ -243,8 +243,8 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={value}>
       {children}
       {dialog && createPortal(
-        <div className="fixed inset-0 bg-[#0A0F1D]/75 backdrop-blur-xs flex items-center justify-center z-[99999] p-4 select-none animate-modal-backdrop" onClick={dialog.type === 'confirm' ? dialog.onCancel : undefined}>
-          <div className="bg-white border border-[#CBD5E1] rounded-xl max-w-md w-full p-6 shadow-2xl flex flex-col relative animate-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 zonix-modal-backdrop flex items-center justify-center z-[99999] p-4 select-none animate-modal-backdrop" onClick={dialog.type === 'confirm' ? dialog.onCancel : undefined}>
+          <div className="bg-white border border-[#E2E8F0] rounded-xl max-w-md w-full p-6 shadow-modal flex flex-col relative animate-modal-content" onClick={(e) => e.stopPropagation()}>
             {/* Header / Title */}
             <div className="flex items-start gap-3.5 mb-3">
               <div className="flex-shrink-0 mt-0.5">

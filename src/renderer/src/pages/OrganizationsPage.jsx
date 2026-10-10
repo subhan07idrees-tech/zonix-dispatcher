@@ -23,8 +23,8 @@ function OrgModal({ org, onClose, onSave, user }) {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] bg-[#0A0F1D]/75 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={onClose}>
-      <div className="relative my-auto w-full max-w-lg bg-white border border-[#CBD5E1] rounded-xl shadow-2xl p-6 space-y-5 animate-modal-content max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[9999] zonix-modal-backdrop overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={onClose}>
+      <div className="relative my-auto w-full max-w-lg bg-white border border-[#E2E8F0] rounded-xl shadow-modal p-6 space-y-5 animate-modal-content max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center font-bold">
@@ -161,8 +161,8 @@ function OrgModal({ org, onClose, onSave, user }) {
 
 function SuperAdminRequiredModal({ onClose, onSwitchUser }) {
   return createPortal(
-    <div className="fixed inset-0 z-[9999] bg-[#0A0F1D]/75 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={onClose}>
-      <div className="relative my-auto w-full max-w-md bg-white border border-[#CBD5E1] rounded-xl shadow-2xl p-6 space-y-4 animate-modal-content" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[9999] zonix-modal-backdrop overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={onClose}>
+      <div className="relative my-auto w-full max-w-md bg-white border border-[#E2E8F0] rounded-xl shadow-modal p-6 space-y-4 animate-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start gap-3.5 border-b border-[#E2E8F0] pb-3.5">
           <div className="w-10 h-10 rounded-lg bg-[#FFFBEB] border border-[#FDE68A] text-[#B45309] flex items-center justify-center flex-shrink-0 mt-0.5">
             <ShieldAlert className="w-5 h-5" />
@@ -177,7 +177,7 @@ function SuperAdminRequiredModal({ onClose, onSwitchUser }) {
           <p>
             You are currently logged in with <strong className="text-[#0F172A]">Organization Admin</strong> role. Org admins are scoped to manage users and proxies for their assigned tenant.
           </p>
-          <div className="p-3.5 bg-[#F8FAFC] rounded-lg border border-[#CBD5E1] space-y-1.5 font-mono text-[11px]">
+          <div className="p-3.5 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] space-y-1.5 font-mono text-[11px]">
             <p className="font-bold text-[#0F172A] font-sans">To create a new tenant organization:</p>
             <p className="text-[#475569]">1. Sign out of this session.</p>
             <p className="text-[#475569]">2. Leave <span className="text-[#1E40AF] font-bold">Organization ID</span> blank.</p>
@@ -342,15 +342,15 @@ export default function OrganizationsPage() {
                   <div className="p-4 space-y-3.5">
                     <div className="grid grid-cols-3 gap-2 text-center bg-[#F8FAFC] p-3 rounded-lg border border-[#E2E8F0]">
                       <div>
-                        <span className="text-[10px] text-[#64748B] font-semibold block uppercase">Users</span>
+                        <span className="text-[11px] text-[#64748B] font-semibold block">Users</span>
                         <span className="text-[#0F172A] font-bold text-sm font-mono">{org._count?.users || 0}/{org.maxUsers}</span>
                       </div>
                       <div className="border-x border-[#E2E8F0]">
-                        <span className="text-[10px] text-[#64748B] font-semibold block uppercase">Sessions</span>
+                        <span className="text-[11px] text-[#64748B] font-semibold block">Sessions</span>
                         <span className="text-[#0F172A] font-bold text-sm font-mono">{org._count?.sessions || 0}/{org.maxSessions}</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-[#64748B] font-semibold block uppercase">Max Tabs</span>
+                        <span className="text-[11px] text-[#64748B] font-semibold block">Max Tabs</span>
                         <span className="text-[#0F172A] font-bold text-sm font-mono">{org.maxTabs} seats</span>
                       </div>
                     </div>

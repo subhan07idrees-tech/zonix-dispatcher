@@ -34,7 +34,7 @@ function TopBar() {
   }, []);
 
   return (
-    <header className="h-12 border-b border-[#CBD5E1] bg-white flex items-center justify-between pl-3 sm:pl-4 flex-shrink-0 select-none shadow-xs z-20" style={{ WebkitAppRegion: 'drag' }}>
+    <header className="h-12 border-b border-[#E2E8F0] bg-white flex items-center justify-between pl-3 sm:pl-4 flex-shrink-0 select-none shadow-xs z-20" style={{ WebkitAppRegion: 'drag' }}>
       {/* Brand & Context */}
       <div className="flex items-center gap-3" style={{ WebkitAppRegion: 'no-drag' }}>
         <div className="flex items-center gap-2.5">
@@ -42,7 +42,7 @@ function TopBar() {
           <span className="text-sm font-extrabold tracking-widest text-[#0F172A] font-mono">ZONIX</span>
           <span className="text-[#CBD5E1] text-xs">/</span>
           <span className="text-xs text-[#475569] font-medium hidden md:inline">System Control Node</span>
-          <span className="text-[10px] text-[#475569] font-mono bg-[#F1F5F9] px-2 py-0.5 rounded border border-[#CBD5E1] font-bold">
+          <span className="text-[10px] text-[#475569] font-mono bg-[#F8FAFC] px-2 py-0.5 rounded border border-[#E2E8F0] font-bold">
             v{window.zonixAPI?.appVersion || '1.9.8'}
           </span>
         </div>
@@ -51,7 +51,7 @@ function TopBar() {
       {/* Status & Actions */}
       <div className="flex items-center gap-2.5 sm:gap-3 text-xs font-sans text-[#475569] h-full" style={{ WebkitAppRegion: 'no-drag' }}>
         {/* Connection status */}
-        <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-[#F8FAFC] border border-[#CBD5E1] shadow-2xs">
+        <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-[#F8FAFC] border border-[#E2E8F0] shadow-subtle">
           <span className="relative flex h-2 w-2">
             {connected && (
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
@@ -63,12 +63,12 @@ function TopBar() {
           </span>
         </div>
 
-        <div className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-[#F8FAFC] border border-[#CBD5E1]">
+        <div className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md bg-[#F8FAFC] border border-[#E2E8F0]">
           <span className="text-[#64748B] font-medium">Active:</span>
           <span className="text-[#0F172A] font-mono font-bold">{sessions.length}</span>
         </div>
 
-        <div className="hidden lg:flex items-center text-xs px-2.5 py-1 rounded-md bg-[#F8FAFC] border border-[#CBD5E1]">
+        <div className="hidden lg:flex items-center text-xs px-2.5 py-1 rounded-md bg-[#F8FAFC] border border-[#E2E8F0]">
           <span className="text-[#64748B] mr-1.5 font-medium">Time:</span>
           <span className="font-mono text-[#0F172A] font-bold">{utcTime} UTC</span>
         </div>
@@ -91,7 +91,7 @@ function TopBar() {
         </div>
 
         {/* Window control buttons */}
-        <div className="flex items-center h-full border-l border-[#CBD5E1]">
+        <div className="flex items-center h-full border-l border-[#E2E8F0]">
           <button
             onClick={() => window.zonixAPI?.minimizeWindow?.()}
             className="w-10 sm:w-11 h-full flex items-center justify-center text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors"

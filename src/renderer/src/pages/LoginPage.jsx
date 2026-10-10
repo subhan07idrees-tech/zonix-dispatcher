@@ -19,36 +19,36 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F1F5F9] p-4 select-none relative overflow-hidden">
-      {/* Subtle Background Geometry */}
-      <div className="absolute inset-0 pointer-events-none opacity-40">
-        <div className="absolute -top-32 -left-32 w-96 h-96 bg-blue-100 rounded-full blur-3xl" />
-        <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-indigo-100 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] p-4 select-none relative overflow-hidden">
+      {/* Subtle Structural Grid Background */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-[0.03]"
+        style={{
+          backgroundImage: 'radial-gradient(#0F172A 1px, transparent 1px)',
+          backgroundSize: '24px 24px'
+        }}
+      />
 
-      <div className="w-full max-w-[420px] space-y-5 relative z-10 animate-modal-content">
+      <div className="w-full max-w-[420px] space-y-6 relative z-10 animate-modal-content">
         {/* Brand Header with Custom Logo */}
-        <div className="text-center space-y-2.5">
+        <div className="text-center space-y-2">
           <div className="flex justify-center mb-1">
-            <ZonixLogo size={52} showText={false} />
+            <ZonixLogo size={48} showText={false} />
           </div>
           <div>
             <h1 className="text-2xl font-extrabold tracking-widest text-[#0F172A] font-mono">
               ZONIX
             </h1>
-            <p className="text-xs text-[#475569] mt-0.5 font-medium tracking-wide">
+            <p className="text-xs text-[#64748B] mt-1 font-medium">
               System Control &amp; Dispatch Administration Gateway
             </p>
           </div>
         </div>
 
         {/* Login Card */}
-        <div className="bg-white border border-[#CBD5E1] rounded-2xl p-7 shadow-xl space-y-5 relative overflow-hidden">
-          {/* Top subtle blue accent gradient strip */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#2563EB] via-[#38BDF8] to-[#1E40AF]" />
-
-          <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
-            <h2 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-white border border-[#E2E8F0] rounded-xl p-7 shadow-card space-y-5 relative">
+          <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3.5">
+            <h2 className="text-xs font-semibold text-[#0F172A] flex items-center gap-2">
               <Lock className="w-3.5 h-3.5 text-[#1E40AF]" />
               Console Authentication
             </h2>

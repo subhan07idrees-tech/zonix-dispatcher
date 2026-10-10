@@ -16,10 +16,10 @@ function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-zonix-base">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-zonix-cyan border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-zonix-text-dim text-sm font-mono">INITIALIZING ZONIX CONTROL NODE...</p>
+      <div className="h-screen w-screen flex items-center justify-center bg-[#F8FAFC]">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-2 border-[#1E40AF] border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-xs font-semibold text-[#475569] tracking-normal">Initializing Zonix Control Node...</p>
         </div>
       </div>
     );

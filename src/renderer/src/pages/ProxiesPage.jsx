@@ -23,8 +23,8 @@ function ProxyModal({ proxy, orgId, onClose, onSave }) {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] bg-[#0A0F1D]/75 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={onClose}>
-      <div className="relative my-auto w-full max-w-md bg-white border border-[#CBD5E1] rounded-xl shadow-2xl p-6 space-y-5 animate-modal-content max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[9999] zonix-modal-backdrop overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={onClose}>
+      <div className="relative my-auto w-full max-w-md bg-white border border-[#E2E8F0] rounded-xl shadow-modal p-6 space-y-5 animate-modal-content max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center">
@@ -348,12 +348,12 @@ export default function ProxiesPage() {
                 {/* Connection Address & Capacity */}
                 <div className="space-y-2.5 text-xs text-[#0F172A] bg-[#F8FAFC] p-3.5 rounded-lg border border-[#E2E8F0]">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-[#475569] uppercase tracking-wider">Tunnel Endpoint</span>
+                    <span className="text-xs font-semibold text-[#475569]">Tunnel Endpoint</span>
                     {proxy.username && (
                       <span className="text-[11px] font-mono text-[#475569] font-medium">Auth: {proxy.username}</span>
                     )}
                   </div>
-                  <div className="font-mono text-xs font-bold text-[#1E40AF] bg-white px-2.5 py-1.5 rounded border border-[#CBD5E1] truncate">
+                  <div className="font-mono text-xs font-bold text-[#1E40AF] bg-white px-2.5 py-1.5 rounded border border-[#E2E8F0] truncate">
                     {proxy.protocol.toLowerCase()}://{proxy.host}:{proxy.port}
                   </div>
 

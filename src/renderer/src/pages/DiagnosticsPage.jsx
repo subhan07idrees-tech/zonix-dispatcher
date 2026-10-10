@@ -29,8 +29,8 @@ function StatusBadge({ ok, label }) {
 
 function DiagMetric({ label, value, valueClass = 'text-[#0F172A]' }) {
   return (
-    <div className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg p-3.5 space-y-1">
-      <span className="text-[11px] font-bold text-[#475569] uppercase tracking-wider block">{label}</span>
+    <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3.5 space-y-1">
+      <span className="text-xs font-semibold text-[#64748B] block">{label}</span>
       <span className={`text-sm font-mono font-bold block truncate ${valueClass}`}>{value ?? '—'}</span>
     </div>
   );
@@ -215,7 +215,7 @@ export default function DiagnosticsPage() {
         <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-[#1E40AF]" />
-            <h3 className="text-xs font-bold text-[#0F172A] uppercase font-mono tracking-wider">
+            <h3 className="text-xs font-semibold text-[#0F172A]">
               Dispatcher Session Vault Audit <span className="text-[#64748B] font-normal font-sans">({targetDomain})</span>
             </h3>
           </div>
@@ -246,10 +246,10 @@ export default function DiagnosticsPage() {
               }
 
               return (
-                <div key={u.id} className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg p-4 space-y-3 hover:border-[#94A3B8] transition-colors">
+                <div key={u.id} className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-4 space-y-3 hover:border-[#94A3B8] transition-colors">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-md bg-white border border-[#CBD5E1] flex items-center justify-center text-[#475569]">
+                      <div className="w-7 h-7 rounded-md bg-white border border-[#E2E8F0] flex items-center justify-center text-[#475569]">
                         <User className="w-4 h-4 text-[#1E40AF]" />
                       </div>
                       <span className="text-xs font-mono text-[#0F172A] font-bold">{u.username}</span>
@@ -264,19 +264,19 @@ export default function DiagnosticsPage() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="bg-white rounded-lg p-3 space-y-1 border border-[#CBD5E1]">
+                    <div className="bg-white rounded-lg p-3 space-y-1 border border-[#E2E8F0]">
                       <div className="text-[11px] text-[#475569] font-bold">Synced Cookies</div>
                       <div className={`text-base font-mono font-bold ${hasCookies ? 'text-[#047857]' : (hasTokens ? 'text-[#047857]' : 'text-[#B91C1C]')}`}>
                         {hasCookies ? `${cs.cookieCount} Cookies` : (hasTokens ? 'Synced via Token Vault' : '0')}
                       </div>
                     </div>
-                    <div className="bg-white rounded-lg p-3 space-y-1 border border-[#CBD5E1]">
+                    <div className="bg-white rounded-lg p-3 space-y-1 border border-[#E2E8F0]">
                       <div className="text-[11px] text-[#475569] font-bold">Local Storage Vault</div>
                       <div className={`text-base font-mono font-bold ${cs?.hasLocalStorage ? 'text-[#047857]' : 'text-[#64748B]'}`}>
                         {cs?.hasLocalStorage ? 'Synced (Active)' : 'None'}
                       </div>
                     </div>
-                    <div className="bg-white rounded-lg p-3 space-y-1 border border-[#CBD5E1]">
+                    <div className="bg-white rounded-lg p-3 space-y-1 border border-[#E2E8F0]">
                       <div className="text-[11px] text-[#475569] font-bold">Last Vault Capture</div>
                       <div className="text-xs font-mono text-[#0F172A] font-semibold truncate pt-1">
                         {cs?.capturedAt ? new Date(cs.capturedAt).toLocaleString() : 'Never Captured'}
@@ -302,7 +302,7 @@ export default function DiagnosticsPage() {
       {/* Proxy nodes list */}
       <div className="zonix-card p-6 space-y-4">
         <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
-          <h3 className="text-xs font-bold text-[#0F172A] uppercase font-mono tracking-wider">
+          <h3 className="text-xs font-semibold text-[#0F172A]">
             Proxy Node Infrastructure Status
           </h3>
         </div>
@@ -311,9 +311,9 @@ export default function DiagnosticsPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {proxies.map(p => (
-              <div key={p.id} className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg p-3.5 flex items-center justify-between text-xs hover:border-[#94A3B8] transition-colors">
+              <div key={p.id} className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3.5 flex items-center justify-between text-xs hover:border-[#94A3B8] transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white border border-[#CBD5E1] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-white border border-[#E2E8F0] flex items-center justify-center">
                     {p.status === 'ACTIVE'
                       ? <Wifi className="w-4 h-4 text-[#047857]" />
                       : <WifiOff className="w-4 h-4 text-[#64748B]" />}

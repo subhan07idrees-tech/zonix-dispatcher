@@ -130,7 +130,7 @@ export default function LogsPage() {
         <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-[#1E40AF]" />
-            <h3 className="text-xs font-bold text-[#0F172A] uppercase font-mono tracking-wider">
+            <h3 className="text-xs font-semibold text-[#0F172A]">
               Audit Stream Ledger
             </h3>
           </div>
@@ -140,7 +140,7 @@ export default function LogsPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[#CBD5E1] text-[11px] text-[#475569] uppercase font-mono bg-[#F8FAFC]">
+              <tr className="border-b border-[#E2E8F0] text-xs font-semibold text-[#475569] bg-[#F8FAFC]">
                 <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Timestamp</th>
                 <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Action</th>
                 <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Resource</th>
