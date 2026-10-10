@@ -14,7 +14,13 @@ export function WebSocketProvider({ children }) {
   const connect = useCallback(() => {
     if (!isAuthenticated || !token) return;
 
-    const baseWs = window.location.protocol === 'file:' ? (window.zonixAPI?.wsUrl || 'wss://zonix-backend-0ggt.onrender.com/ws') : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
+    const baseWs = (window.zonixAPI?.wsUrl)
+      ? window.zonixAPI.wsUrl
+      : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'ws://localhost:4000/ws'
+        : (window.location.protocol === 'file:'
+          ? 'wss://zonix-backend-0ggt.onrender.com/ws'
+          : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`);
     const wsUrl = `${baseWs}${baseWs.includes('?') ? '&' : '?'}token=${token}`;
 
     try {

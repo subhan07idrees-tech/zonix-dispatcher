@@ -23,8 +23,8 @@ class ProxyManager {
       const startTime = Date.now();
       const url = new URL('https://clients3.google.com/generate_204'); // Low-overhead 204 endpoint
       
-      // Isolated test session with configured upstream proxy rules
-      const checkSess = session.fromPartition(`persist:proxy_check_${sessionId}`);
+      // Isolated in-memory test session with configured upstream proxy rules
+      const checkSess = session.fromPartition(`proxy_check_${sessionId}`);
       await checkSess.setProxy({ proxyRules: proxyString });
 
       const request = net.request({

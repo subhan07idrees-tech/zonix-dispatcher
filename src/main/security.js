@@ -42,8 +42,7 @@ class SecurityEngine {
     this.applyZeroLeakMasterFilter(targetSession, sessionId, proxyManager);
     this.applyWebRTCLeakProtection(targetSession);
     this.applyFingerprintConsistencyHeaders(targetSession, orgId);
-    this.applyContentSecurityPolicy(targetSession);
-    this.removeBrowserDetectionHeaders(targetSession);
+    this.applySecureResponseHeaders(targetSession);
 
     this.interceptedSessions.set(targetSession.id, {
       orgId,
@@ -101,15 +100,17 @@ class SecurityEngine {
   }
 
   applyWebRTCLeakProtection(targetSession) {
-    try {
-      // Chromium policy: strictly disables UDP when proxy is in use, routing WebRTC only through proxy
-      targetSession.setWebRTCIPHandlingPolicy('disable_non_proxied_udp');
-      console.log('[Security] Native WebRTC IP Handling Policy set to: disable_non_proxied_udp');
-    } catch (e) {
+    if (targetSession && typeof targetSession.setWebRTCIPHandlingPolicy === 'function') {
       try {
-        targetSession.setWebRTCIPHandlingPolicy('default_public_interface_only');
-      } catch (e2) {
-        console.error('[Security] Failed to set native WebRTC IP handling policy:', e.message);
+        // Chromium policy: strictly disables UDP when proxy is in use, routing WebRTC only through proxy
+        targetSession.setWebRTCIPHandlingPolicy('disable_non_proxied_udp');
+        console.log('[Security] Native WebRTC IP Handling Policy set to: disable_non_proxied_udp');
+      } catch (e) {
+        try {
+          targetSession.setWebRTCIPHandlingPolicy('default_public_interface_only');
+        } catch (e2) {
+          console.error('[Security] Failed to set native WebRTC IP handling policy:', e.message);
+        }
       }
     }
     console.log('[Security] WebRTC leak protection active (strict zero-leak mode)');
@@ -162,7 +163,7 @@ class SecurityEngine {
     return Math.abs(hash);
   }
 
-  applyContentSecurityPolicy(targetSession) {
+  applySecureResponseHeaders(targetSession) {
     targetSession.webRequest.onHeadersReceived(
       { urls: ['*://*/*'] },
       (details, callback) => {
@@ -178,6 +179,7 @@ class SecurityEngine {
           headerMap[key.toLowerCase()] = key;
         }
 
+        // 1. Content Security Policy adjustments
         const cspOriginalKey = headerMap['content-security-policy'];
         if (cspOriginalKey) {
           const existingCSP = headers[cspOriginalKey];
@@ -190,38 +192,17 @@ class SecurityEngine {
           }
         }
 
-        // Strip tracking headers case-insensitively using the map
-        const headersToStrip = ['x-device-id', 'x-client-id', 'x-session-fingerprint'];
-        for (const h of headersToStrip) {
+        // 2. Strip tracking headers case-insensitively using the map
+        const trackingHeadersToStrip = ['x-device-id', 'x-client-id', 'x-session-fingerprint'];
+        for (const h of trackingHeadersToStrip) {
           const originalKey = headerMap[h];
           if (originalKey) {
             delete headers[originalKey];
           }
         }
 
-        callback({ responseHeaders: headers });
-      }
-    );
-
-    console.log('[Security] CSP enhancement and tracking header removal applied');
-  }
-
-  removeBrowserDetectionHeaders(targetSession) {
-    targetSession.webRequest.onHeadersReceived(
-      { urls: ['*://*/*'] },
-      (details, callback) => {
-        const headers = details.responseHeaders;
-        if (!headers) {
-          callback({});
-          return;
-        }
-
-        const headerMap = {};
-        for (const key of Object.keys(headers)) {
-          headerMap[key.toLowerCase()] = key;
-        }
-
-        const headersToRemove = [
+        // 3. Strip server/backend disclosure headers
+        const detectionHeadersToRemove = [
           'x-powered-by',
           'x-aspnet-version',
           'x-aspnetmvc-version',
@@ -229,8 +210,7 @@ class SecurityEngine {
           'x-request-id',
           'x-debug'
         ];
-
-        for (const h of headersToRemove) {
+        for (const h of detectionHeadersToRemove) {
           const originalKey = headerMap[h];
           if (originalKey) {
             delete headers[originalKey];
@@ -240,6 +220,16 @@ class SecurityEngine {
         callback({ responseHeaders: headers });
       }
     );
+
+    console.log('[Security] Unified CSP, anti-tracking, and anti-fingerprint response headers applied');
+  }
+
+  applyContentSecurityPolicy(targetSession) {
+    return this.applySecureResponseHeaders(targetSession);
+  }
+
+  removeBrowserDetectionHeaders(targetSession) {
+    return this.applySecureResponseHeaders(targetSession);
   }
 
   getInterceptedSessions() {

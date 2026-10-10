@@ -378,7 +378,7 @@ export default function UsersPage() {
       }
     }
 
-    showAlert(
+    await showAlert(
       `Launching session authentication window for ${displayUsername}.\nTarget site: ${targetUrl}\n\nPlease log in on the window that opens, complete 2FA, then close the window to save the session vault.`,
       'Session Provisioning',
       'info'
