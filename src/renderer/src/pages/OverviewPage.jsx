@@ -8,9 +8,9 @@ import {
   Wrench, Megaphone, Globe, Check
 } from 'lucide-react';
 
-function MetricCard({ icon: Icon, label, value, subtext, highlight = false, isTextValue = false }) {
+function MetricCard({ icon: Icon, label, value, subtext, highlight = false, isTextValue = false, className = '' }) {
   return (
-    <div className={`zonix-card p-5 flex flex-col justify-between hover:border-[#94A3B8] transition-all duration-150 ${highlight ? 'border-l-4 border-l-[#1E40AF]' : ''}`}>
+    <div className={`zonix-card p-5 flex flex-col justify-between hover:border-[#94A3B8] hover:-translate-y-0.5 hover:shadow-card-hover transition-all duration-200 ${highlight ? 'border-l-4 border-l-[#1E40AF]' : ''} ${className}`}>
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs font-semibold text-[#64748B]">{label}</span>
         <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center">
@@ -35,7 +35,7 @@ function MetricCard({ icon: Icon, label, value, subtext, highlight = false, isTe
 
 function LiveSessionRow({ session }) {
   return (
-    <tr className="hover:bg-[#F8FAFC] transition-colors h-[48px]">
+    <tr className="hover:bg-[#F8FAFC] transition-colors h-[48px] animate-fadeIn">
       <td className="py-2.5 px-4 text-xs font-mono text-[#0F172A] font-bold">
         #{session.sessionId?.substring(0, 8) || 'N/A'}
       </td>
@@ -232,24 +232,28 @@ export default function OverviewPage() {
           subtext={isSuperAdmin ? `${overview.activeOrgs || 1} active` : "Active Tenant"}
           highlight={true}
           isTextValue={!isSuperAdmin}
+          className="stagger-1"
         />
         <MetricCard
           icon={Users}
           label="Registered Users"
           value={overview.activeUsers || orgDetails?._count?.users || 3}
           subtext={`${overview.totalUsers || orgDetails?.maxUsers || 25} capacity`}
+          className="stagger-2"
         />
         <MetricCard
           icon={Radio}
           label="Live Sessions"
           value={filteredSessions.length}
           subtext={filteredSessions.length > 0 ? `${filteredSessions.length} active` : 'Idle'}
+          className="stagger-3"
         />
         <MetricCard
           icon={Wifi}
           label="Proxy Nodes"
           value={overview.activeProxies || (primaryProxy ? 1 : 0)}
           subtext={`${overview.totalProxies || (primaryProxy ? 1 : 0)} online`}
+          className="stagger-4"
         />
       </div>
 

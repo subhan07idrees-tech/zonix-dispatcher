@@ -105,7 +105,7 @@ export default function SessionsPage() {
               ) : (
                 sessions.map((session) => {
                   return (
-                    <tr key={session.sessionId} className="hover:bg-[#F8FAFC] transition-colors h-[48px]">
+                    <tr key={session.sessionId} className="hover:bg-[#F8FAFC] transition-colors h-[48px] animate-fadeIn">
                       <td className="py-3 px-4 text-xs font-mono text-[#0F172A] font-bold">
                         #{session.sessionId?.substring(0, 8)}
                       </td>
@@ -128,7 +128,14 @@ export default function SessionsPage() {
                         <span className={`zonix-badge ${
                           session.status === 'ACTIVE' ? 'zonix-badge-active' : 'zonix-badge-warning'
                         }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${session.status === 'ACTIVE' ? 'bg-[#047857]' : 'bg-[#B45309]'}`} />
+                          {session.status === 'ACTIVE' ? (
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75" />
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#047857]" />
+                            </span>
+                          ) : (
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#B45309]" />
+                          )}
                           {session.status === 'ACTIVE' ? 'Active' : session.status}
                         </span>
                       </td>

@@ -38,12 +38,44 @@ export default {
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'glow': 'glow 2s ease-in-out infinite alternate',
+        'page-slide': 'pageSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'card-shake': 'cardShake 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97) both',
+        'radar-ping': 'radarPing 2s cubic-bezier(0, 0, 0.2, 1) infinite',
+        'stream-highlight': 'streamHighlight 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'shimmer': 'shimmer 2s infinite linear',
+        'breath-glow': 'breathGlow 3s ease-in-out infinite',
       },
       keyframes: {
         glow: {
           '0%': { boxShadow: '0 0 5px rgba(30, 64, 175, 0.2)' },
           '100%': { boxShadow: '0 0 20px rgba(30, 64, 175, 0.4)' },
-        }
+        },
+        pageSlideIn: {
+          '0%': { opacity: '0', transform: 'translateY(6px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        cardShake: {
+          '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+          '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+          '30%, 50%, 70%': { transform: 'translate3d(-3px, 0, 0)' },
+          '40%, 60%': { transform: 'translate3d(3px, 0, 0)' },
+        },
+        radarPing: {
+          '0%': { transform: 'scale(1)', opacity: '0.8' },
+          '75%, 100%': { transform: 'scale(2.2)', opacity: '0' },
+        },
+        streamHighlight: {
+          '0%': { backgroundColor: 'rgba(236, 253, 245, 0.85)' },
+          '100%': { backgroundColor: 'transparent' },
+        },
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
+        breathGlow: {
+          '0%, 100%': { opacity: '0.6', transform: 'scale(0.98)' },
+          '50%': { opacity: '1', transform: 'scale(1.02)' },
+        },
       }
     },
   },

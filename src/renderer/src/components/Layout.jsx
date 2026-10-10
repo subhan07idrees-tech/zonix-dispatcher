@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { WebSocketProvider, useWebSocket } from '../contexts/WebSocketContext';
 import ZonixLogo from './ZonixLogo';
@@ -240,6 +240,7 @@ function Sidebar({ collapsed, onToggle }) {
 
 function LayoutContent() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const location = useLocation();
 
   return (
     <div className="h-screen flex flex-col bg-[#F8FAFC] text-[#0F172A] overflow-hidden font-sans select-none">
@@ -250,7 +251,7 @@ function LayoutContent() {
           onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
         <main className="flex-1 overflow-y-auto bg-[#F8FAFC] p-4 sm:p-6 lg:p-8 min-w-0">
-          <div className="max-w-7xl mx-auto space-y-6 w-full">
+          <div key={location.pathname} className="max-w-7xl mx-auto space-y-6 w-full animate-page-slide">
             <Outlet />
           </div>
         </main>

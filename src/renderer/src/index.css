@@ -293,3 +293,43 @@
 .animate-modal-content {
   animation: modalContent 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+.animate-page-slide {
+  animation: pageSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-card-shake {
+  animation: cardShake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.animate-stream-highlight {
+  animation: streamHighlight 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.stagger-1 {
+  animation: pageSlideIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) 30ms forwards;
+  opacity: 0;
+}
+
+.stagger-2 {
+  animation: pageSlideIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) 70ms forwards;
+  opacity: 0;
+}
+
+.stagger-3 {
+  animation: pageSlideIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) 110ms forwards;
+  opacity: 0;
+}
+
+.stagger-4 {
+  animation: pageSlideIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) 150ms forwards;
+  opacity: 0;
+}
+
+/* Skeleton Loading Shimmer */
+.zonix-skeleton {
+  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite linear;
+  border-radius: 6px;
+}

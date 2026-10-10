@@ -557,7 +557,7 @@ export default function UsersPage() {
                 </tr>
               ) : (
                 users.map((u) => (
-                  <tr key={u.id} className="border-b border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors h-[46px]">
+                  <tr key={u.id} className="border-b border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors h-[46px] animate-fadeIn">
                     <td className="py-2.5 px-4 text-xs font-mono text-[#0F172A] font-bold">
                       {u.username}
                     </td>
@@ -642,7 +642,7 @@ export default function UsersPage() {
               </thead>
               <tbody>
                 {invites.map((inv) => (
-                  <tr key={inv.id} className="border-b border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors text-xs h-[44px]">
+                  <tr key={inv.id} className="border-b border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors text-xs h-[44px] animate-fadeIn">
                     <td className="py-2.5 px-4 font-mono text-[#0F172A] font-semibold">{inv.email}</td>
                     <td className="py-2.5 px-4 font-mono text-[#475569]">{inv.role}</td>
                     <td className="py-2.5 px-4 font-mono text-[#475569]">{inv.maxTabs} tabs</td>

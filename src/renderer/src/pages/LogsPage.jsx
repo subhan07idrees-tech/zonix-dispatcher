@@ -160,7 +160,7 @@ export default function LogsPage() {
               ) : logs.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-16 text-center text-xs text-[#475569]">
-                    <div className="w-12 h-12 rounded-full bg-[#F1F5F9] border border-[#CBD5E1] flex items-center justify-center mx-auto mb-3 text-[#64748B]">
+                    <div className="w-12 h-12 rounded-full bg-[#F1F5F9] border border-[#E2E8F0] flex items-center justify-center mx-auto mb-3 text-[#64748B]">
                       <ShieldAlert className="w-6 h-6" />
                     </div>
                     <p className="font-bold text-sm text-[#0F172A]">No Audit Entries Found</p>
@@ -169,7 +169,7 @@ export default function LogsPage() {
                 </tr>
               ) : (
                 logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-[#F8FAFC] transition-colors text-xs h-[46px]">
+                  <tr key={log.id} className="hover:bg-[#F8FAFC] transition-colors text-xs h-[46px] animate-fadeIn">
                     <td className="py-3 px-4 font-mono text-[#64748B] whitespace-nowrap">
                       {new Date(log.timestamp || log.createdAt).toLocaleString()}
                     </td>

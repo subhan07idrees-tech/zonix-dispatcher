@@ -321,7 +321,7 @@ export default function ProxiesPage() {
             const testResult = testResults[proxy.id];
 
             return (
-              <div key={proxy.id} className="zonix-card p-5 space-y-4 hover:border-[#94A3B8] transition-all duration-150">
+              <div key={proxy.id} className="zonix-card p-5 space-y-4 hover:border-[#94A3B8] hover:-translate-y-0.5 hover:shadow-card-hover transition-all duration-200 animate-fadeIn">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center font-bold">
@@ -340,7 +340,14 @@ export default function ProxiesPage() {
                   <span className={`zonix-badge ${
                     proxy.status === 'ACTIVE' ? 'zonix-badge-active' : 'zonix-badge-warning'
                   }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${proxy.status === 'ACTIVE' ? 'bg-[#047857]' : 'bg-[#B45309]'}`} />
+                    {proxy.status === 'ACTIVE' ? (
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-[#047857]" />
+                      </span>
+                    ) : (
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#B45309]" />
+                    )}
                     {proxy.status === 'ACTIVE' ? 'Active' : proxy.status}
                   </span>
                 </div>

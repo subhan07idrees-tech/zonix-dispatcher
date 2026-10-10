@@ -246,7 +246,7 @@ export default function DiagnosticsPage() {
               }
 
               return (
-                <div key={u.id} className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-4 space-y-3 hover:border-[#94A3B8] transition-colors">
+                <div key={u.id} className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-4 space-y-3 hover:border-[#94A3B8] transition-colors animate-fadeIn">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-md bg-white border border-[#E2E8F0] flex items-center justify-center text-[#475569]">
@@ -256,7 +256,14 @@ export default function DiagnosticsPage() {
                       <span className={`zonix-badge ${
                         u.status === 'ACTIVE' ? 'zonix-badge-active' : 'zonix-badge-warning'
                       }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${u.status === 'ACTIVE' ? 'bg-[#047857]' : 'bg-[#B45309]'}`} />
+                        {u.status === 'ACTIVE' ? (
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#047857]" />
+                          </span>
+                        ) : (
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#B45309]" />
+                        )}
                         {u.status === 'ACTIVE' ? 'Active' : u.status}
                       </span>
                     </div>
@@ -311,7 +318,7 @@ export default function DiagnosticsPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {proxies.map(p => (
-              <div key={p.id} className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3.5 flex items-center justify-between text-xs hover:border-[#94A3B8] transition-colors">
+              <div key={p.id} className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3.5 flex items-center justify-between text-xs hover:border-[#94A3B8] transition-colors animate-fadeIn">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-white border border-[#E2E8F0] flex items-center justify-center">
                     {p.status === 'ACTIVE'

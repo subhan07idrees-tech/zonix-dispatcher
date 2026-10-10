@@ -319,7 +319,7 @@ export default function OrganizationsPage() {
             const sessionPct = Math.min(100, Math.round(((org._count?.sessions || 0) / (org.maxSessions || 1)) * 100));
 
             return (
-              <div key={org.id} className="zonix-card flex flex-col justify-between hover:border-[#94A3B8] transition-all duration-150">
+              <div key={org.id} className="zonix-card flex flex-col justify-between hover:border-[#94A3B8] hover:-translate-y-0.5 hover:shadow-card-hover transition-all duration-200 animate-fadeIn">
                 <div>
                   {/* Card Header */}
                   <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
@@ -333,7 +333,14 @@ export default function OrganizationsPage() {
                       </div>
                     </div>
                     <span className={`zonix-badge ${org.status === 'ACTIVE' ? 'zonix-badge-active' : 'zonix-badge-warning'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${org.status === 'ACTIVE' ? 'bg-[#047857]' : 'bg-[#B45309]'}`} />
+                      {org.status === 'ACTIVE' ? (
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-[#047857]" />
+                        </span>
+                      ) : (
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#B45309]" />
+                      )}
                       {org.status}
                     </span>
                   </div>
