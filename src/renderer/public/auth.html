@@ -134,7 +134,7 @@
     /* Executive Floating Card */
     .card-wrap {
       width: 100%;
-      max-width: 430px;
+      max-width: 420px;
       padding: 0 16px;
       margin-top: 24px;
       position: relative;
@@ -142,11 +142,11 @@
     }
     .card {
       width: 100%;
-      padding: 28px 30px 24px;
+      padding: 30px 32px 24px;
       background: #FFFFFF;
       border: 1px solid #E2E8F0;
       border-radius: 14px;
-      box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.12), 0 10px 15px -5px rgba(15, 23, 42, 0.06);
+      box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.1), 0 10px 15px -5px rgba(15, 23, 42, 0.05);
       text-align: center;
       position: relative;
       animation: cardAppear 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -173,7 +173,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 22px;
     }
     .logo-container {
       position: relative;
@@ -201,39 +201,6 @@
       font-weight: 500;
       color: #64748B;
       letter-spacing: 0.1px;
-    }
-
-    /* Role Mode Switcher */
-    .role-tabs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      padding: 3px;
-      background: #F1F5F9;
-      border: 1px solid #E2E8F0;
-      border-radius: 8px;
-      margin-bottom: 18px;
-    }
-    .role-tab {
-      padding: 6.5px 12px;
-      border-radius: 6px;
-      border: none;
-      background: transparent;
-      font-size: 11.5px;
-      font-weight: 600;
-      color: #64748B;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: all 0.15s ease;
-      font-family: inherit;
-    }
-    .role-tab.active {
-      background: #FFFFFF;
-      color: #0F172A;
-      font-weight: 700;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
     }
 
     .form-group {
@@ -278,20 +245,6 @@
     }
     .form-group input::placeholder {
       color: #94A3B8;
-    }
-
-    .superadmin-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 9px 12px;
-      background: #F8FAFC;
-      border: 1px solid #E2E8F0;
-      border-radius: 8px;
-      font-size: 11.5px;
-      color: #475569;
-      margin-bottom: 14px;
-      text-align: left;
     }
 
     .password-wrapper {
@@ -463,7 +416,7 @@
         <path d="M15 15.5H33L21.5 27H33V32.5H15L26.5 21H15V15.5Z" fill="#38BDF8"/>
       </svg>
       <span class="title-bar-text">ZONIX</span>
-      <span class="title-bar-ver" id="appVerTag">v1.9.11</span>
+      <span class="title-bar-ver" id="appVerTag">v1.9.12</span>
     </div>
     <div class="window-controls">
       <button class="win-btn" type="button" onclick="api.minimizeWindow()" title="Minimize">
@@ -510,34 +463,16 @@
         <p class="subtitle">System Control &amp; Dispatch Administration</p>
       </div>
 
-      <!-- Role Selector Tabs -->
-      <div class="role-tabs">
-        <button type="button" class="role-tab active" id="tabOrg" onclick="setRoleMode('org')">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M8 10h.01"></path><path d="M16 10h.01"></path><path d="M8 14h.01"></path><path d="M16 14h.01"></path></svg>
-          <span>Org Dispatcher</span>
-        </button>
-        <button type="button" class="role-tab" id="tabSuper" onclick="setRoleMode('superadmin')">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-          <span>Super Admin</span>
-        </button>
-      </div>
-
       <div id="error" class="error"></div>
 
       <form id="authForm">
         <!-- Org ID Group -->
-        <div class="form-group" id="orgGroup">
+        <div class="form-group">
           <label>
             <span>Organization ID</span>
-            <span class="hint">Assigned Tenant</span>
+            <span class="hint">Blank for Super Admin</span>
           </label>
           <input type="text" id="orgId" class="font-mono" placeholder="e.g. alpha-team" autocomplete="organization">
-        </div>
-
-        <!-- Superadmin Info Pill (hidden by default) -->
-        <div class="superadmin-info" id="superInfo" style="display: none;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
-          <span>Direct Root Console Access (Multi-Tenant Scope)</span>
         </div>
 
         <div class="form-group">
@@ -584,36 +519,6 @@
 
   <script>
     const api = window.zonixAPI;
-    let currentRole = 'org';
-
-    function setRoleMode(role) {
-      currentRole = role;
-      const tabOrg = document.getElementById('tabOrg');
-      const tabSuper = document.getElementById('tabSuper');
-      const orgGroup = document.getElementById('orgGroup');
-      const superInfo = document.getElementById('superInfo');
-      const orgInput = document.getElementById('orgId');
-      const userInput = document.getElementById('userId');
-
-      if (role === 'superadmin') {
-        tabSuper.classList.add('active');
-        tabOrg.classList.remove('active');
-        orgGroup.style.display = 'none';
-        superInfo.style.display = 'flex';
-        orgInput.value = '';
-        if (!userInput.value || userInput.value === 'admin') {
-          userInput.value = 'superadmin';
-        }
-      } else {
-        tabOrg.classList.add('active');
-        tabSuper.classList.remove('active');
-        orgGroup.style.display = 'block';
-        superInfo.style.display = 'none';
-        if (userInput.value === 'superadmin') {
-          userInput.value = '';
-        }
-      }
-    }
 
     function triggerShake() {
       const card = document.getElementById('loginCard');
@@ -646,12 +551,7 @@
             const savedOrg = await api.getConfig('rememberedOrgId');
             const savedUser = await api.getConfig('rememberedUserId');
             if (savedOrg) document.getElementById('orgId').value = savedOrg;
-            if (savedUser) {
-              document.getElementById('userId').value = savedUser;
-              if (savedUser === 'superadmin' && !savedOrg) {
-                setRoleMode('superadmin');
-              }
-            }
+            if (savedUser) document.getElementById('userId').value = savedUser;
           }
         }
       } catch (err) {
@@ -665,7 +565,7 @@
       const btn = document.getElementById('submitBtn');
       const errorEl = document.getElementById('error');
 
-      const orgId = currentRole === 'superadmin' ? '' : document.getElementById('orgId').value.trim();
+      const orgId = document.getElementById('orgId').value.trim();
       const userId = document.getElementById('userId').value.trim();
       const password = document.getElementById('password').value;
       const rememberMe = document.getElementById('rememberMe').checked;
@@ -677,8 +577,8 @@
         return;
       }
 
-      if (!orgId && currentRole === 'org' && userId !== 'superadmin') {
-        errorEl.textContent = 'Organization ID is required for organization dispatchers. (Switch to Super Admin tab if authenticating root console).';
+      if (!orgId && userId !== 'superadmin') {
+        errorEl.textContent = 'Organization ID is required for organization dispatchers. (Only superadmin can leave it blank).';
         errorEl.classList.add('visible');
         triggerShake();
         return;
@@ -737,7 +637,7 @@
       } else {
         passwordInput.type = 'password';
         togglePasswordBtn.title = 'Show password';
-        eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+        eyeIcon.innerHTML = '<path d="M17 12s-3.82 8-11 8-11-8-11-8 3.82-8 11-8 11 8 11 8z"></path><circle cx="12" cy="12" r="3"></circle>';
       }
     });
   </script>

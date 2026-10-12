@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import ZonixLogo from '../components/ZonixLogo';
-import { AlertCircle, Eye, EyeOff, Lock, ShieldCheck, Building2, ShieldAlert } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, Lock } from 'lucide-react';
 
 export default function LoginPage() {
   const { login, error } = useAuth();
-  const [mode, setMode] = useState('org'); // 'org' | 'superadmin'
   const [orgId, setOrgId] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -24,7 +23,7 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await login(mode === 'superadmin' ? '' : orgId, username, password);
+    await login(orgId, username, password);
     setLoading(false);
   };
 
@@ -75,34 +74,6 @@ export default function LoginPage() {
             </span>
           </div>
 
-          {/* Role Mode Segmented Switcher */}
-          <div className="grid grid-cols-2 p-1 bg-[#F1F5F9] rounded-lg border border-[#E2E8F0] text-xs font-semibold">
-            <button
-              type="button"
-              onClick={() => setMode('org')}
-              className={`py-1.5 px-3 rounded-md transition-all duration-150 flex items-center justify-center gap-1.5 ${
-                mode === 'org'
-                  ? 'bg-white text-[#0F172A] shadow-xs font-bold'
-                  : 'text-[#64748B] hover:text-[#0F172A]'
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5 text-[#1E40AF]" />
-              <span>Org Dispatcher</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setMode('superadmin'); setOrgId(''); }}
-              className={`py-1.5 px-3 rounded-md transition-all duration-150 flex items-center justify-center gap-1.5 ${
-                mode === 'superadmin'
-                  ? 'bg-white text-[#0F172A] shadow-xs font-bold'
-                  : 'text-[#64748B] hover:text-[#0F172A]'
-              }`}
-            >
-              <ShieldAlert className="w-3.5 h-3.5 text-[#1E40AF]" />
-              <span>Super Admin</span>
-            </button>
-          </div>
-
           {error && (
             <div className="p-3 rounded-lg bg-[#FEF2F2] border border-[#FECACA] flex items-start gap-2.5 animate-modal-content">
               <AlertCircle className="w-4 h-4 text-[#B91C1C] flex-shrink-0 mt-0.5" />
@@ -111,27 +82,20 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === 'org' ? (
-              <div className="animate-fadeIn">
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-[#0F172A]">Organization ID</label>
-                  <span className="text-[11px] text-[#64748B] font-mono">Assigned Tenant</span>
-                </div>
-                <input
-                  type="text"
-                  value={orgId}
-                  onChange={(e) => setOrgId(e.target.value)}
-                  className="zonix-input w-full font-mono text-xs"
-                  placeholder="e.g. alpha-team"
-                  required
-                />
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-[#0F172A]">Organization ID</label>
+                <span className="text-[11px] text-[#64748B] font-mono">Blank for Super Admin</span>
               </div>
-            ) : (
-              <div className="p-2.5 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] flex items-center gap-2 text-xs text-[#64748B] animate-fadeIn">
-                <ShieldCheck className="w-4 h-4 text-[#047857] flex-shrink-0" />
-                <span className="font-medium">Direct Root Console Access (Multi-Tenant Scope)</span>
-              </div>
-            )}
+              <input
+                type="text"
+                value={orgId}
+                onChange={(e) => setOrgId(e.target.value)}
+                className="zonix-input w-full font-mono text-xs"
+                placeholder="e.g. alpha-team"
+                autoComplete="organization"
+              />
+            </div>
 
             <div>
               <label className="block text-xs font-bold text-[#0F172A] mb-1">Username or Email</label>
@@ -140,8 +104,9 @@ export default function LoginPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="zonix-input w-full text-xs font-medium"
-                placeholder={mode === 'superadmin' ? 'superadmin' : 'username or email'}
+                placeholder="username or email"
                 required
+                autoComplete="username"
               />
             </div>
 
@@ -155,6 +120,7 @@ export default function LoginPage() {
                   className="zonix-input w-full pr-10 text-xs font-mono"
                   placeholder="••••••••••••"
                   required
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"
@@ -169,7 +135,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading || !username || !password || (mode === 'org' && !orgId)}
+              disabled={loading || !username || !password}
               className="zonix-btn-primary w-full h-[40px] text-xs font-bold mt-2 tracking-wide shadow-xs active:scale-[0.985] transition-all"
             >
               {loading ? (
@@ -191,12 +157,12 @@ export default function LoginPage() {
               </span>
               Direct Node Gateway
             </span>
-            <span className="font-mono text-[#64748B]">Multi-Tenant v{window.zonixAPI?.appVersion || '1.9.11'}</span>
+            <span className="font-mono text-[#64748B]">Multi-Tenant v{window.zonixAPI?.appVersion || '1.9.12'}</span>
           </div>
         </div>
 
         <p className="text-center text-[11px] text-[#64748B] font-mono">
-          ZONIX Dispatcher v{window.zonixAPI?.appVersion || '1.9.11'}
+          ZONIX Dispatcher v{window.zonixAPI?.appVersion || '1.9.12'}
         </p>
       </div>
     </div>
