@@ -147,7 +147,7 @@ function Sidebar({ collapsed, onToggle }) {
       <div className="h-[56px] px-3.5 flex items-center justify-between border-b border-line flex-shrink-0">
         {!collapsed ? (
           <>
-            <ZonixLogo size={24} showText={true} version="v1.9.12" />
+            <ZonixLogo size={24} showText={true} version="v1.9.13" />
             <button
               type="button"
               onClick={onToggle}
