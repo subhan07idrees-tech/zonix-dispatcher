@@ -155,6 +155,7 @@ try {
     restartSession: (sessionId) => ipcRenderer.invoke('session:restart', sessionId),
     listSessions: () => ipcRenderer.invoke('sessions:list'),
     captureCookies: (args) => ipcRenderer.invoke('session:cookies:capture', args),
+    launchCaptureWindow: (args) => ipcRenderer.invoke('session:cookies:capture', args),
     invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
     getConfig: (key) => ipcRenderer.invoke('config:get', key),
     setConfig: (key, value) => ipcRenderer.invoke('config:set', key, value),

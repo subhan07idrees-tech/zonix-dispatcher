@@ -405,7 +405,8 @@ export default function UsersPage() {
 
     setLaunchingCapture(true);
     try {
-      if (window.zonixAPI && window.zonixAPI.launchCaptureWindow) {
+      const captureFn = window.zonixAPI?.launchCaptureWindow || window.zonixAPI?.captureCookies;
+      if (captureFn) {
         let proxyToUse = null;
         try {
           const proxyRes = await authFetch(`/proxies/${selectedOrg}`);
@@ -416,7 +417,7 @@ export default function UsersPage() {
           }
         } catch (pe) {}
 
-        await window.zonixAPI.launchCaptureWindow({
+        await captureFn({
           orgId: selectedOrg,
           userId: targetUserId,
           targetUrl,
@@ -424,7 +425,7 @@ export default function UsersPage() {
         });
         showToast(`Capture window launched for ${displayUsername}`, 'ok');
       } else {
-        showToast('Capture window not available in web router mode', 'warn');
+        showToast('Capture window is only available inside the ZONIX Desktop Application (not in web browser mode)', 'warn');
       }
     } catch (err) {
       showToast('Failed to open capture window: ' + err.message, 'err');
