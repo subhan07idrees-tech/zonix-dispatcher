@@ -19,6 +19,34 @@ function formatUtcTimestamp(dateOrIso) {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
 }
 
+function formatLogLocation(log) {
+  let details = log.details;
+  if (typeof details === 'string') {
+    try {
+      details = JSON.parse(details);
+    } catch {
+      // not JSON
+    }
+  }
+  const city = details?.city || log.city;
+  const state = details?.state || log.state || details?.region;
+  if (city && state && city !== 'Unknown' && state !== 'Unknown') {
+    return `${city}, ${state}`;
+  }
+  if (city && city !== 'Unknown') return city;
+  if (state && state !== 'Unknown') return state;
+  if (details?.location) return details.location;
+  if (log.location) return log.location;
+  return '—';
+}
+
+function formatLogIp(log) {
+  let ip = log.ipAddress || log.ip;
+  if (!ip) return '—';
+  if (ip.startsWith('::ffff:')) ip = ip.substring(7);
+  return ip;
+}
+
 export default function LogsPage() {
   const { authFetch } = useAuth();
   const { showToast } = useToast();
@@ -140,36 +168,66 @@ export default function LogsPage() {
             <table className="zx-table">
               <thead>
                 <tr>
-                  <th style={{ width: '200px' }}>Timestamp (UTC)</th>
-                  <th style={{ width: '240px' }}>Action</th>
+                  <th style={{ width: '160px' }}>Timestamp (UTC)</th>
+                  <th style={{ width: '120px' }}>Operator</th>
+                  <th style={{ width: '140px' }}>Organization</th>
+                  <th style={{ width: '220px' }}>Action</th>
                   <th>Resource</th>
-                  <th style={{ width: '160px' }}>Operator</th>
+                  <th style={{ width: '130px' }}>IP Address</th>
+                  <th style={{ width: '160px' }}>Location</th>
                 </tr>
               </thead>
               <tbody>
-                {logs.map((log) => (
-                  <tr key={log.id}>
-                    {/* Timestamp: mono, ISO YYYY-MM-DD HH:mm:ss */}
-                    <td className="font-mono text-xs tabular-nums text-ink-2 whitespace-nowrap">
-                      {formatUtcTimestamp(log.createdAt || log.timestamp)}
-                    </td>
+                {logs.map((log) => {
+                  const locText = formatLogLocation(log);
+                  const ipText = formatLogIp(log);
+                  const orgName = log.org?.displayName || log.org?.name || '—';
+                  const operatorName = log.user?.username || log.operator || log.userId || 'system';
+                  const resourceText = log.resource || (typeof log.details === 'string' ? log.details : '—');
 
-                    {/* Action: plain mono text, e.g. POST /auth/login, NO pill per row */}
-                    <td className="font-mono text-xs text-ink font-medium">
-                      {log.action}
-                    </td>
+                  return (
+                    <tr key={log.id}>
+                      {/* Timestamp: mono, ISO YYYY-MM-DD HH:mm:ss */}
+                      <td className="font-mono text-xs tabular-nums text-ink-2 whitespace-nowrap">
+                        {formatUtcTimestamp(log.createdAt || log.timestamp)}
+                      </td>
 
-                    {/* Resource */}
-                    <td className="text-xs text-ink-2 truncate max-w-[280px]" title={log.resource || log.details}>
-                      {log.resource || log.details || '—'}
-                    </td>
+                      {/* Operator */}
+                      <td className="font-mono text-xs text-ink font-medium whitespace-nowrap">
+                        {operatorName}
+                      </td>
 
-                    {/* Operator */}
-                    <td className="font-mono text-xs text-ink-2">
-                      {log.user?.username || log.operator || log.userId || 'system'}
-                    </td>
-                  </tr>
-                ))}
+                      {/* Organization */}
+                      <td className="text-xs text-ink-2 truncate max-w-[140px]" title={orgName}>
+                        {orgName !== '—' ? orgName : <span className="text-ink-3">—</span>}
+                      </td>
+
+                      {/* Action: plain mono text, e.g. POST /auth/login */}
+                      <td className="font-mono text-xs text-ink font-medium truncate max-w-[220px]" title={log.action}>
+                        {log.action}
+                      </td>
+
+                      {/* Resource */}
+                      <td className="text-xs text-ink-2 truncate max-w-[240px]" title={resourceText}>
+                        {resourceText}
+                      </td>
+
+                      {/* IP Address */}
+                      <td className="font-mono text-xs tabular-nums text-ink-2 whitespace-nowrap">
+                        {ipText !== '—' ? ipText : <span className="text-ink-3">—</span>}
+                      </td>
+
+                      {/* Location */}
+                      <td className="text-xs font-mono whitespace-nowrap">
+                        {locText !== '—' ? (
+                          <span className="text-ink font-medium">{locText}</span>
+                        ) : (
+                          <span className="text-ink-3">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
