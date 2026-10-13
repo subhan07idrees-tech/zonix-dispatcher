@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import OverviewPage from './pages/OverviewPage';
@@ -16,10 +17,10 @@ function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-[#F8FAFC]">
-        <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-2 border-[#1E40AF] border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-xs font-semibold text-[#475569] tracking-normal">Initializing Zonix Control Node...</p>
+      <div className="h-screen w-screen flex items-center justify-center bg-bg">
+        <div className="w-48 space-y-3 text-center">
+          <div className="h-4 w-32 mx-auto zx-skeleton" />
+          <div className="h-2 w-48 zx-skeleton" />
         </div>
       </div>
     );
@@ -62,7 +63,9 @@ export default function App() {
   return (
     <HashRouter>
       <AuthProvider>
-        <AppRoutes />
+        <ToastProvider>
+          <AppRoutes />
+        </ToastProvider>
       </AuthProvider>
     </HashRouter>
   );

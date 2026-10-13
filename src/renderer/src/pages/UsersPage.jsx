@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+import StatusBadge from '../components/StatusBadge';
+import RoleBadge from '../components/RoleBadge';
+import EmptyState from '../components/EmptyState';
 import {
-  Users, Plus, Edit2, Trash2, X, Shield, ShieldOff,
-  Key, Mail, Send, Copy, Check, Clock, ExternalLink
+  Users, Plus, Edit2, Trash2, X, ShieldOff, ShieldCheck,
+  Key, Mail, Send, Copy
 } from 'lucide-react';
 
 function InviteModal({ orgId, onClose, onSend }) {
@@ -22,83 +25,96 @@ function InviteModal({ orgId, onClose, onSend }) {
     setLoading(false);
   };
 
-  return createPortal(
-    <div className="fixed inset-0 z-[9999] zonix-modal-backdrop overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={onClose}>
-      <div className="relative my-auto w-full max-w-md bg-white border border-[#E2E8F0] rounded-xl shadow-modal p-6 space-y-5 animate-modal-content max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3.5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center font-bold">
-              <Mail className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-[#0F172A]">Invite Dispatcher via Email</h3>
-              <p className="text-xs text-[#64748B]">Send a secure invitation activation token</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="p-1 hover:bg-[#F1F5F9] rounded-md text-[#64748B] hover:text-[#0F172A]">
-            <X className="w-4 h-4" />
+  return (
+    <div className="zx-modal-overlay">
+      <div className="zx-modal-panel">
+        <div className="h-[56px] px-6 border-b border-line flex items-center justify-between">
+          <h3 className="text-[15px] font-semibold text-ink">
+            Invite dispatcher via email
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="zx-btn-icon"
+            aria-label="Close modal"
+          >
+            <X className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-[#334155] mb-1">Recipient Email Address</label>
-            <input
-              type="email"
-              placeholder="dispatcher@fleetlogistics.com"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="zonix-input w-full font-mono text-xs"
-              required
-              autoFocus
-            />
+        <form onSubmit={handleSubmit}>
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-ink-2 mb-1.5">
+                Recipient email address
+              </label>
+              <input
+                type="email"
+                placeholder="dispatcher@fleetlogistics.com"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="zx-input w-full font-mono text-xs"
+                required
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-ink-2 mb-1.5">
+                Max tabs
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="50"
+                value={form.maxTabs}
+                onChange={(e) => setForm({ ...form, maxTabs: parseInt(e.target.value, 10) || 1 })}
+                className="zx-input w-full font-mono text-xs tabular-nums"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-ink-2 mb-1.5">
+                Role
+              </label>
+              <select
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
+                className="zx-select w-full text-xs"
+              >
+                <option value="DISPATCHER">Dispatcher</option>
+                <option value="ADMIN">Org Admin</option>
+                {currentUser?.role === 'SUPER_ADMIN' && (
+                  <option value="SUPER_ADMIN">Super Admin</option>
+                )}
+              </select>
+            </div>
+
+            <p className="text-xs text-ink-3">
+              The recipient will receive an activation invitation with a secure setup link.
+            </p>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-[#334155] mb-1">Max Allowed Tabs / Seats</label>
-            <input
-              type="number"
-              min="1"
-              max="50"
-              value={form.maxTabs}
-              onChange={(e) => setForm({ ...form, maxTabs: parseInt(e.target.value) || 1 })}
-              className="zonix-input w-full font-mono text-xs"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-[#334155] mb-1">Assigned Role</label>
-            <select
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="zonix-select w-full text-xs"
+          <div className="h-[56px] px-6 border-t border-line flex items-center justify-end gap-2 bg-surface">
+            <button
+              type="button"
+              onClick={onClose}
+              className="zx-btn-secondary text-xs"
             >
-              <option value="DISPATCHER">Dispatcher</option>
-              <option value="ADMIN">Org Admin</option>
-              {currentUser?.role === 'SUPER_ADMIN' && (
-                <option value="SUPER_ADMIN">Super Admin</option>
-              )}
-            </select>
-          </div>
-
-          <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs text-[#475569] leading-relaxed">
-            The recipient will receive an activation email from <strong className="text-[#1E40AF] font-mono">invites@thezonix.com</strong> with a direct setup link.
-          </div>
-
-          <div className="flex gap-3 pt-2 border-t border-[#E2E8F0]">
-            <button type="button" onClick={onClose} className="zonix-btn-secondary flex-1 py-2 text-xs">
               Cancel
             </button>
-            <button type="submit" disabled={loading} className="zonix-btn-primary flex-1 py-2 text-xs">
-              <Send className="w-3.5 h-3.5" />
-              <span>{loading ? 'Sending...' : 'Send Invite'}</span>
+            <button
+              type="submit"
+              disabled={loading}
+              className="zx-btn-primary text-xs"
+            >
+              {loading ? 'Sending…' : 'Send invitation'}
             </button>
           </div>
         </form>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }
 
@@ -120,119 +136,149 @@ function UserModal({ user, orgId, onClose, onSave }) {
     setLoading(false);
   };
 
-  return createPortal(
-    <div className="fixed inset-0 z-[9999] zonix-modal-backdrop overflow-y-auto flex items-center justify-center p-4 sm:p-6 animate-modal-backdrop" onClick={onClose}>
-      <div className="relative my-auto w-full max-w-md bg-white border border-[#E2E8F0] rounded-xl shadow-modal p-6 space-y-4 animate-modal-content max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
-          <h3 className="text-sm font-bold text-[#0F172A]">
-            {user ? 'Edit Dispatcher Credentials' : 'New User Registration'}
+  return (
+    <div className="zx-modal-overlay">
+      <div className="zx-modal-panel">
+        <div className="h-[56px] px-6 border-b border-line flex items-center justify-between">
+          <h3 className="text-[15px] font-semibold text-ink">
+            {user ? 'Edit dispatcher' : 'New dispatcher'}
           </h3>
-          <button onClick={onClose} className="p-1 hover:bg-[#F1F5F9] rounded-md text-[#64748B]">
-            <X className="w-4 h-4" />
+          <button
+            type="button"
+            onClick={onClose}
+            className="zx-btn-icon"
+            aria-label="Close modal"
+          >
+            <X className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3.5">
-          <div>
-            <label className="block text-xs font-semibold text-[#334155] mb-1">Username</label>
-            <input
-              type="text"
-              value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
-              className="zonix-input w-full font-mono text-xs"
-              required
-              disabled={!!user}
-            />
+        <form onSubmit={handleSubmit}>
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-ink-2 mb-1.5">
+                Username
+              </label>
+              <input
+                type="text"
+                value={form.username}
+                onChange={(e) => setForm({ ...form, username: e.target.value })}
+                className="zx-input w-full font-mono text-xs"
+                placeholder="username"
+                required
+                disabled={!!user}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-ink-2 mb-1.5">
+                Email
+              </label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="zx-input w-full text-xs"
+                placeholder="dispatcher@domain.com"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-ink-2 mb-1.5">
+                {user ? 'New password (leave blank to keep current)' : 'Password'}
+              </label>
+              <input
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                className="zx-input w-full font-mono text-xs"
+                placeholder="••••••••••••"
+                required={!user}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-ink-2 mb-1.5">
+                  Role
+                </label>
+                <select
+                  value={form.role}
+                  onChange={(e) => setForm({ ...form, role: e.target.value })}
+                  className="zx-select w-full text-xs"
+                  disabled={user?.role === 'SUPER_ADMIN' && currentUser?.role !== 'SUPER_ADMIN'}
+                >
+                  <option value="DISPATCHER">Dispatcher</option>
+                  <option value="ADMIN">Org Admin</option>
+                  {currentUser?.role === 'SUPER_ADMIN' && (
+                    <option value="SUPER_ADMIN">Super Admin</option>
+                  )}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-ink-2 mb-1.5">
+                  Max tabs
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={form.maxTabs}
+                  onChange={(e) => setForm({ ...form, maxTabs: parseInt(e.target.value, 10) || 1 })}
+                  className="zx-input w-full font-mono text-xs tabular-nums"
+                  required
+                />
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-[#334155] mb-1">Email</label>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="zonix-input w-full font-mono text-xs"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-[#334155] mb-1">
-              {user ? 'New Password (leave blank to keep current)' : 'Password'}
-            </label>
-            <input
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="zonix-input w-full font-mono text-xs"
-              required={!user}
-              minLength={form.password ? 6 : undefined}
-              placeholder={user ? "••••••••" : ""}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-[#334155] mb-1">Max Allowed Tabs / Seats</label>
-            <input
-              type="number"
-              min="1"
-              max="100"
-              value={form.maxTabs}
-              onChange={(e) => setForm({ ...form, maxTabs: parseInt(e.target.value) || 1 })}
-              className="zonix-input w-full font-mono text-xs"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-[#334155] mb-1">Role</label>
-            <select
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="zonix-select w-full text-xs"
+
+          <div className="h-[56px] px-6 border-t border-line flex items-center justify-end gap-2 bg-surface">
+            <button
+              type="button"
+              onClick={onClose}
+              className="zx-btn-secondary text-xs"
             >
-              <option value="DISPATCHER">Dispatcher</option>
-              <option value="ADMIN">Org Admin</option>
-              {currentUser?.role === 'SUPER_ADMIN' && (
-                <option value="SUPER_ADMIN">Super Admin</option>
-              )}
-            </select>
-          </div>
-          <div className="flex gap-3 pt-2 border-t border-[#E2E8F0]">
-            <button type="button" onClick={onClose} className="zonix-btn-secondary flex-1 py-2 text-xs">
               Cancel
             </button>
-            <button type="submit" disabled={loading} className="zonix-btn-primary flex-1 py-2 text-xs">
-              {loading ? 'Saving...' : 'Save User'}
+            <button
+              type="submit"
+              disabled={loading}
+              className="zx-btn-primary text-xs"
+            >
+              {loading ? 'Saving…' : user ? 'Save changes' : 'Create dispatcher'}
             </button>
           </div>
         </form>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }
 
 export default function UsersPage() {
-  const { authFetch, user: currentUser, showAlert, showConfirm } = useAuth();
+  const { authFetch, user: currentUser, showConfirm } = useAuth();
+  const { showToast, copyToClipboard } = useToast();
+
   const [users, setUsers] = useState([]);
-  const [invites, setInvites] = useState([]);
+  const [orgs, setOrgs] = useState([]);
+  const [selectedOrg, setSelectedOrg] = useState('');
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [selectedOrg, setSelectedOrg] = useState(currentUser?.orgId || '');
-  const [orgs, setOrgs] = useState([]);
-  const [selectedDispatcherId, setSelectedDispatcherId] = useState('system');
-  const [copiedInviteId, setCopiedInviteId] = useState(null);
+  const [provisioningSeat, setProvisioningSeat] = useState('system');
+  const [launchingCapture, setLaunchingCapture] = useState(false);
 
-  const dispatchers = users.filter(u => u.role === 'DISPATCHER');
+  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
 
   useEffect(() => {
-    if (currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'ADMIN') {
-      fetchOrgs();
-    }
-  }, [currentUser]);
+    fetchOrgs();
+  }, []);
 
   useEffect(() => {
     if (selectedOrg) {
       fetchUsers();
-      fetchInvites();
     }
   }, [selectedOrg]);
 
@@ -240,10 +286,13 @@ export default function UsersPage() {
     try {
       const res = await authFetch('/organizations');
       const data = await res.json();
-      const list = data.organizations || [];
-      setOrgs(list);
-      if (list.length > 0 && (!selectedOrg || !list.some(o => o.id === selectedOrg))) {
-        setSelectedOrg(list[0].id);
+      const orgList = data.organizations || [];
+      setOrgs(orgList);
+      if (orgList.length > 0) {
+        if (!selectedOrg) {
+          const defaultOrg = orgList.find((o) => o.id === currentUser?.orgId) || orgList[0];
+          setSelectedOrg(defaultOrg.id);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -262,16 +311,6 @@ export default function UsersPage() {
     }
   };
 
-  const fetchInvites = async () => {
-    try {
-      const res = await authFetch(`/invites/${selectedOrg}`);
-      if (res.ok) {
-        const data = await res.json();
-        setInvites(data.invites || data.invitations || []);
-      }
-    } catch (e) {}
-  };
-
   const handleSendInvite = async (form) => {
     try {
       const res = await authFetch(`/invites/${selectedOrg}`, {
@@ -281,36 +320,14 @@ export default function UsersPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        showAlert(data.error || 'Failed to send invite', 'Error', 'error');
+        showToast(data.error || 'Failed to send invite', 'err');
         return;
       }
       setShowInviteModal(false);
-      fetchInvites();
-      showAlert(`Email invitation sent successfully to ${form.email}!`, 'Invite Sent', 'info');
+      showToast(`Invitation sent to ${form.email}`, 'ok');
     } catch (err) {
-      showAlert(err.message, 'Error', 'error');
+      showToast(err.message, 'err');
     }
-  };
-
-  const handleCancelInvite = async (inviteId) => {
-    const confirmed = await showConfirm('Cancel this pending invitation link?', 'Cancel Invitation', 'warning');
-    if (!confirmed) return;
-    try {
-      const res = await authFetch(`/invites/${selectedOrg}/${inviteId}`, { method: 'DELETE' });
-      if (res.ok) {
-        fetchInvites();
-        showAlert('Invitation cancelled successfully.', 'Cancelled', 'info');
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleCopyInviteLink = (inv) => {
-    const link = `https://thezonix.com/join.html?token=${inv.token}`;
-    navigator.clipboard.writeText(link);
-    setCopiedInviteId(inv.id);
-    setTimeout(() => setCopiedInviteId(null), 2000);
   };
 
   const handleSaveUser = async (form) => {
@@ -330,15 +347,16 @@ export default function UsersPage() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        showAlert(errorData.error || 'Failed to save user', 'Error', 'error');
+        showToast(errorData.error || 'Failed to save user', 'err');
         return;
       }
 
       setShowModal(false);
       setEditingUser(null);
       fetchUsers();
+      showToast('Dispatcher saved successfully', 'ok');
     } catch (err) {
-      showAlert(err.message || 'An error occurred', 'Error', 'error');
+      showToast(err.message || 'An error occurred', 'err');
     }
   };
 
@@ -350,344 +368,336 @@ export default function UsersPage() {
         body: JSON.stringify({ status: newStatus })
       });
       fetchUsers();
+      showToast(`User status set to ${newStatus.toLowerCase()}`, 'ok');
     } catch (err) {
-      console.error(err);
+      showToast('Error updating status', 'err');
     }
   };
 
   const handleDeleteUser = async (userId) => {
-    const confirmed = await showConfirm('Are you sure you want to delete this user? Their active sessions will be terminated.', 'Delete User', 'error');
+    const confirmed = await showConfirm(
+      'Are you sure you want to delete this user? Their active sessions will be terminated.',
+      'Delete User',
+      'error'
+    );
     if (!confirmed) return;
     try {
       await authFetch(`/users/${selectedOrg}/${userId}`, { method: 'DELETE' });
       fetchUsers();
+      showToast('User deleted', 'ok');
     } catch (err) {
-      console.error(err);
+      showToast('Error deleting user', 'err');
     }
   };
 
   const handleAuthenticateSite = async (targetUserId) => {
-    const targetOrg = orgs.find(o => o.id === selectedOrg) || { id: selectedOrg, targetUrl: 'https://one.dat.com/search-loads' };
+    const targetOrg = orgs.find((o) => o.id === selectedOrg) || {
+      id: selectedOrg,
+      targetUrl: 'https://one.dat.com/search-loads'
+    };
     const targetUrl = targetOrg.targetUrl || 'https://one.dat.com/search-loads';
-    let displayUsername = 'Organization-wide (All Dispatchers)';
 
+    let displayUsername = 'Organization-wide';
     if (targetUserId !== 'system') {
-      const foundDispatcher = dispatchers.find(d => d.id === targetUserId);
-      if (foundDispatcher) {
-        displayUsername = foundDispatcher.username;
-      }
+      const found = users.find((u) => u.id === targetUserId);
+      if (found) displayUsername = found.username;
     }
 
-    await showAlert(
-      `Launching session authentication window for ${displayUsername}.\nTarget site: ${targetUrl}\n\nPlease log in on the window that opens, complete 2FA, then close the window to save the session vault.`,
-      'Session Provisioning',
-      'info'
-    );
-
+    setLaunchingCapture(true);
     try {
-      const api = window.zonixAPI || window.electronAPI;
-      let captureRes = null;
-      if (api && api.captureCookies) {
-        captureRes = await api.captureCookies({
+      if (window.zonixAPI && window.zonixAPI.launchCaptureWindow) {
+        let proxyToUse = null;
+        try {
+          const proxyRes = await authFetch(`/proxies/${selectedOrg}`);
+          if (proxyRes.ok) {
+            const pData = await proxyRes.json();
+            const list = pData.proxies || pData.proxyNodes || [];
+            if (list.length > 0) proxyToUse = list[0];
+          }
+        } catch (pe) {}
+
+        await window.zonixAPI.launchCaptureWindow({
+          orgId: selectedOrg,
+          userId: targetUserId,
           targetUrl,
-          orgId: targetOrg.id,
-          userId: targetUserId
+          proxy: proxyToUse
         });
-      } else if (api && api.invoke) {
-        captureRes = await api.invoke('session:cookies:capture', {
-          targetUrl,
-          orgId: targetOrg.id,
-          userId: targetUserId
-        });
+        showToast(`Capture window launched for ${displayUsername}`, 'ok');
       } else {
-        await showAlert('Session capture is only available inside the ZONIX Desktop App.', 'Desktop App Required', 'warning');
-        return;
+        showToast('Capture window not available in web router mode', 'warn');
       }
-
-      if (captureRes && captureRes.success) {
-        await showAlert(`Successfully authenticated and saved secure login session for "${displayUsername}"!`, 'Authenticated', 'success');
-      }
-
-      fetchUsers();
     } catch (err) {
-      console.error('[ZONIX] Authentication window launch error:', err);
-      showAlert(err.message || 'An error occurred while launching session capture window', 'Authentication Error', 'error');
+      showToast('Failed to open capture window: ' + err.message, 'err');
+    } finally {
+      setLaunchingCapture(false);
     }
   };
 
+  const dispatchers = users.filter((u) => u.role !== 'SUPER_ADMIN');
+  const totalAllocatedTabs = users.reduce((acc, u) => acc + (u.maxTabs || 0), 0);
+
   return (
-    <div className="space-y-6">
-      {/* Session Provisioning Panel */}
-      <div className="zonix-card p-5 space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] flex items-center justify-center font-bold">
-            <Key className="w-4 h-4 text-[#1E40AF]" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-[#0F172A]">
-              Locked Site Session Provisioning (DAT One &amp; Portals)
-            </h3>
-            <p className="text-xs text-[#64748B]">Capture secure 30-day credentials and cookies for dispatchers</p>
-          </div>
-        </div>
-
-        <p className="text-xs text-[#475569] max-w-3xl leading-relaxed">
-          Launching the authentication window opens the target website in an isolated browser. Log in manually and complete 2FA. Once signed in, close the window — ZONIX will automatically intercept and securely store the authenticated cookies in the Session Vault.
+    <div className="space-y-5">
+      {/* Page Title FIRST */}
+      <div>
+        <h1 className="text-[24px] leading-[32px] font-semibold text-ink tracking-tight">
+          User registry
+        </h1>
+        <p className="text-sm text-ink-2 mt-0.5">
+          Dispatcher seats, concurrent tab limits, and session credentials
         </p>
-
-        <div className="flex flex-wrap items-end gap-3.5 pt-3 border-t border-[#E2E8F0]">
-          <div className="w-80">
-            <label className="block text-xs font-semibold text-[#334155] mb-1">
-              Target Dispatcher Seat
-            </label>
-            <select
-              value={selectedDispatcherId}
-              onChange={(e) => setSelectedDispatcherId(e.target.value)}
-              className="zonix-select w-full text-xs font-mono"
-            >
-              <option value="system">Organization-wide (All Dispatchers)</option>
-              {dispatchers.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.username} [{d.email || 'no-email'}]
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <button
-            onClick={() => handleAuthenticateSite(selectedDispatcherId)}
-            className="zonix-btn-primary text-xs h-[38px] px-4"
-          >
-            <Key className="w-3.5 h-3.5" />
-            <span>Launch Authentication Window</span>
-          </button>
-        </div>
       </div>
 
-      {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#CBD5E1] pb-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h2 className="text-xl font-bold text-[#0F172A] tracking-tight">
-              User &amp; Dispatcher Registry
+      {/* Dispatcher table card */}
+      <div className="zx-card">
+        {/* Header controls: org select, Invite by email, New dispatcher */}
+        <div className="zx-card-header">
+          <div className="flex items-center gap-3">
+            <h2 className="text-[15px] leading-[24px] font-semibold text-ink">
+              Dispatchers
             </h2>
-            <span className="zonix-badge-cyan text-[11px] font-semibold">{users.length} Users</span>
-          </div>
-          <p className="text-xs text-[#475569] mt-1 font-medium">
-            Manage dispatcher accounts, tab seat limits, role access, and email invitations
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          {currentUser?.role === 'SUPER_ADMIN' && orgs.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-[#475569]">Org:</span>
+            {orgs.length > 1 && (
               <select
                 value={selectedOrg}
-                onChange={(e) => {
-                  setLoading(true);
-                  setSelectedOrg(e.target.value);
-                }}
-                className="zonix-select text-xs h-[36px]"
+                onChange={(e) => setSelectedOrg(e.target.value)}
+                className="zx-select h-[32px] text-xs font-medium"
               >
-                {orgs.map((org) => (
-                  <option key={org.id} value={org.id}>
-                    {org.displayName} ({org.name})
+                {orgs.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.displayName || o.name}
                   </option>
                 ))}
               </select>
-            </div>
-          )}
-
-          <button
-            onClick={() => setShowInviteModal(true)}
-            className="zonix-btn-secondary text-xs h-[36px]"
-          >
-            <Mail className="w-3.5 h-3.5 text-[#475569]" />
-            <span>Invite via Email</span>
-          </button>
-
-          <button
-            onClick={() => { setEditingUser(null); setShowModal(true); }}
-            className="zonix-btn-primary text-xs h-[36px]"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>New Dispatcher</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Users table card */}
-      <div className="zonix-card overflow-hidden">
-        <div className="p-3.5 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
-          <h3 className="text-xs font-semibold text-[#0F172A]">
-            Dispatcher Account Directory
-          </h3>
-          <span className="text-xs text-[#64748B] font-mono font-medium">
-            Total Allocated: {users.reduce((acc, u) => acc + (u.maxTabs || 5), 0)} tabs
-          </span>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-[#E2E8F0] text-xs font-semibold text-[#475569] bg-[#F8FAFC]">
-                <th className="py-2.5 px-4 text-left font-bold whitespace-nowrap">Username</th>
-                <th className="py-2.5 px-4 text-left font-bold whitespace-nowrap">Email</th>
-                <th className="py-2.5 px-4 text-left font-bold whitespace-nowrap">Role</th>
-                <th className="py-2.5 px-4 text-left font-bold whitespace-nowrap">Active / Max Tabs</th>
-                <th className="py-2.5 px-4 text-left font-bold whitespace-nowrap">Status</th>
-                <th className="py-2.5 px-4 text-right font-bold whitespace-nowrap">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="py-16 text-center text-xs text-[#64748B]">
-                    <div className="w-5 h-5 border-2 border-[#1E40AF] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                    Loading user registry...
-                  </td>
-                </tr>
-              ) : users.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-16 text-center text-xs text-[#64748B]">
-                    <Users className="w-8 h-8 text-[#94A3B8] mx-auto mb-2" />
-                    No registered users in this organization.
-                  </td>
-                </tr>
-              ) : (
-                users.map((u) => (
-                  <tr key={u.id} className="border-b border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors h-[46px] animate-fadeIn">
-                    <td className="py-2.5 px-4 text-xs font-mono text-[#0F172A] font-bold">
-                      {u.username}
-                    </td>
-                    <td className="py-2.5 px-4 text-xs text-[#475569] font-mono">{u.email || '—'}</td>
-                    <td className="py-2.5 px-4 text-xs">
-                      <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#F1F5F9] text-[#1E293B] border border-[#CBD5E1]">
-                        {u.role === 'DISPATCHER' ? 'Dispatcher' : u.role === 'ADMIN' ? 'Org Admin' : u.role}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-4 text-xs font-mono text-[#0F172A]">
-                      <span className="font-bold">{u._count?.sessions || 0}</span> / {u.maxTabs || 5} tabs
-                    </td>
-                    <td className="py-2.5 px-4">
-                      <span className={`zonix-badge ${u.status === 'ACTIVE' ? 'zonix-badge-active' : 'zonix-badge-warning'}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${u.status === 'ACTIVE' ? 'bg-[#047857]' : 'bg-[#B45309]'}`} />
-                        {u.status}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {u.role === 'DISPATCHER' && (
-                          <button
-                            onClick={() => handleAuthenticateSite(u.id)}
-                            className="zonix-btn-secondary py-1 px-2 text-xs h-[30px]"
-                            title="Authenticate Locked Site Cookies"
-                          >
-                            <Key className="w-3.5 h-3.5 text-[#1E40AF]" />
-                            <span className="hidden md:inline">Authenticate</span>
-                          </button>
-                        )}
-                        <button
-                          onClick={() => toggleUserStatus(u)}
-                          className="zonix-btn-secondary py-1 px-2 text-xs h-[30px]"
-                          title={u.status === 'ACTIVE' ? 'Suspend User' : 'Activate User'}
-                        >
-                          {u.status === 'ACTIVE' ? <ShieldOff className="w-3.5 h-3.5 text-[#B45309]" /> : <Shield className="w-3.5 h-3.5 text-[#047857]" />}
-                        </button>
-                        <button
-                          onClick={() => { setEditingUser(u); setShowModal(true); }}
-                          className="zonix-btn-secondary py-1 px-2 text-xs h-[30px]"
-                          title="Edit User"
-                        >
-                          <Edit2 className="w-3.5 h-3.5 text-[#475569]" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteUser(u.id)}
-                          className="zonix-btn-danger py-1 px-2 text-xs h-[30px]"
-                          title="Delete User"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Invitations Table Card */}
-      {invites.length > 0 && (
-        <div className="zonix-card overflow-hidden">
-          <div className="p-3.5 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
-            <h3 className="text-xs font-semibold text-[#0F172A] flex items-center gap-2">
-              <Clock className="w-4 h-4 text-[#1E40AF]" />
-              Pending Email Invitations
-            </h3>
-            <span className="zonix-badge-cyan text-[10px] font-bold">{invites.length} Active</span>
+            )}
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowInviteModal(true)}
+              className="zx-btn-secondary text-xs"
+            >
+              <Mail className="w-4 h-4" strokeWidth={1.5} />
+              <span>Invite by email</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingUser(null);
+                setShowModal(true);
+              }}
+              className="zx-btn-primary text-xs"
+            >
+              <Plus className="w-4 h-4" strokeWidth={1.5} />
+              <span>New dispatcher</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="overflow-x-auto">
+          {loading ? (
+            <div className="p-8 space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-9 w-full zx-skeleton" />
+              ))}
+            </div>
+          ) : users.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="No dispatchers registered"
+              description="Register seats or send invitations to provision dispatchers."
+              action={
+                <button
+                  type="button"
+                  onClick={() => setShowModal(true)}
+                  className="zx-btn-secondary text-xs"
+                >
+                  <Plus className="w-4 h-4" strokeWidth={1.5} />
+                  <span>New dispatcher</span>
+                </button>
+              }
+            />
+          ) : (
+            <table className="zx-table">
               <thead>
-                <tr className="border-b border-[#E2E8F0] text-xs font-semibold text-[#475569] bg-[#F8FAFC]">
-                  <th className="py-2.5 px-4 text-left font-bold">Email Address</th>
-                  <th className="py-2.5 px-4 text-left font-bold">Role</th>
-                  <th className="py-2.5 px-4 text-left font-bold">Max Tabs</th>
-                  <th className="py-2.5 px-4 text-left font-bold">Expires</th>
-                  <th className="py-2.5 px-4 text-right font-bold">Actions</th>
+                <tr>
+                  <th style={{ width: '180px' }}>Username</th>
+                  <th>Email</th>
+                  <th style={{ width: '130px' }}>Role</th>
+                  <th style={{ width: '100px' }} className="text-right">Tabs</th>
+                  <th style={{ width: '120px' }}>Status</th>
+                  <th style={{ width: '210px' }} className="text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {invites.map((inv) => (
-                  <tr key={inv.id} className="border-b border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors text-xs h-[44px] animate-fadeIn">
-                    <td className="py-2.5 px-4 font-mono text-[#0F172A] font-semibold">{inv.email}</td>
-                    <td className="py-2.5 px-4 font-mono text-[#475569]">{inv.role}</td>
-                    <td className="py-2.5 px-4 font-mono text-[#475569]">{inv.maxTabs} tabs</td>
-                    <td className="py-2.5 px-4 font-mono text-[#475569]">{new Date(inv.expiresAt).toLocaleString()}</td>
-                    <td className="py-2.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => handleCopyInviteLink(inv)}
-                          className="zonix-btn-secondary py-1 px-2.5 text-xs h-[30px]"
-                          title="Copy direct invite URL"
-                        >
-                          {copiedInviteId === inv.id ? <Check className="w-3.5 h-3.5 text-[#047857]" /> : <Copy className="w-3.5 h-3.5" />}
-                          <span>{copiedInviteId === inv.id ? 'Copied' : 'Copy'}</span>
-                        </button>
-                        <button
-                          onClick={() => handleCancelInvite(inv.id)}
-                          className="zonix-btn-danger py-1 px-2 text-xs h-[30px]"
-                          title="Revoke invitation"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {users.map((u) => {
+                  const isUserSuperAdmin = u.role === 'SUPER_ADMIN';
+                  const activeTabs = u._count?.sessions || 0;
+                  const maxTabs = u.maxTabs || 5;
+
+                  return (
+                    <tr key={u.id}>
+                      {/* Username (mono) */}
+                      <td className="font-mono text-xs font-medium text-ink">
+                        {u.username}
+                      </td>
+
+                      {/* Email */}
+                      <td className="text-xs text-ink-2 truncate max-w-[220px]" title={u.email}>
+                        {u.email || '—'}
+                      </td>
+
+                      {/* Role (Role badge: neutral gray rectangle, 6px radius) */}
+                      <td>
+                        <RoleBadge role={u.role} />
+                      </td>
+
+                      {/* Tabs (3 / 5, tabular) */}
+                      <td className="font-mono text-xs tabular-nums text-right text-ink">
+                        {activeTabs} / {maxTabs}
+                      </td>
+
+                      {/* Status badge */}
+                      <td>
+                        <StatusBadge
+                          status={u.status === 'ACTIVE' ? 'Active' : 'Disabled'}
+                        />
+                      </td>
+
+                      {/* Actions */}
+                      <td className="text-right">
+                        <div className="inline-flex items-center justify-end gap-1">
+                          {/* Super admin rows have no Authenticate button */}
+                          {!isUserSuperAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => handleAuthenticateSite(u.id)}
+                              className="zx-btn-secondary h-[28px] px-2.5 text-xs mr-1"
+                              title="Capture session cookies"
+                            >
+                              <Key className="w-3.5 h-3.5" strokeWidth={1.5} />
+                              <span>Authenticate</span>
+                            </button>
+                          )}
+
+                          {/* Disable / Enable */}
+                          <button
+                            type="button"
+                            onClick={() => toggleUserStatus(u)}
+                            className="zx-btn-icon w-7 h-7"
+                            title={u.status === 'ACTIVE' ? 'Suspend seat' : 'Activate seat'}
+                            aria-label={u.status === 'ACTIVE' ? 'Suspend seat' : 'Activate seat'}
+                          >
+                            {u.status === 'ACTIVE' ? (
+                              <ShieldOff className="w-3.5 h-3.5 text-ink-2 hover:text-warn" strokeWidth={1.5} />
+                            ) : (
+                              <ShieldCheck className="w-3.5 h-3.5 text-ok" strokeWidth={1.5} />
+                            )}
+                          </button>
+
+                          {/* Edit */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingUser(u);
+                              setShowModal(true);
+                            }}
+                            className="zx-btn-icon w-7 h-7"
+                            title="Edit dispatcher"
+                            aria-label="Edit dispatcher"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+                          </button>
+
+                          {/* Delete */}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteUser(u.id)}
+                            className="zx-btn-icon w-7 h-7 text-ink-3 hover:text-err"
+                            title="Delete dispatcher"
+                            aria-label="Delete dispatcher"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+          )}
+        </div>
+      </div>
+
+      {/* Session Provisioning Card (Below the table) */}
+      <div className="zx-card">
+        <div className="zx-card-header">
+          <h2 className="text-[15px] leading-[24px] font-semibold text-ink">
+            Session provisioning
+          </h2>
+          <span className="font-mono text-xs text-ink-3 tabular-nums">
+            Total allocated: {totalAllocatedTabs} tabs
+          </span>
+        </div>
+
+        <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium text-ink">
+              Authenticate target load board session vault
+            </p>
+            <p className="text-xs text-ink-2">
+              Opens an isolated browser window to capture session tokens and encrypt them into the local hardware vault.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <select
+              value={provisioningSeat}
+              onChange={(e) => setProvisioningSeat(e.target.value)}
+              className="zx-select text-xs font-mono"
+            >
+              <option value="system">Organization-wide (All dispatchers)</option>
+              {dispatchers.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.username} ({d.maxTabs || 5} tabs)
+                </option>
+              ))}
+            </select>
+
+            <button
+              type="button"
+              disabled={launchingCapture}
+              onClick={() => handleAuthenticateSite(provisioningSeat)}
+              className="zx-btn-primary text-xs"
+            >
+              <Key className="w-4 h-4" strokeWidth={1.5} />
+              <span>Launch authentication window</span>
+            </button>
           </div>
         </div>
-      )}
+      </div>
 
-      {showModal && (
-        <UserModal
-          user={editingUser}
-          orgId={selectedOrg}
-          onClose={() => { setShowModal(false); setEditingUser(null); }}
-          onSave={handleSaveUser}
-        />
-      )}
-
+      {/* Invite Modal */}
       {showInviteModal && (
         <InviteModal
           orgId={selectedOrg}
           onClose={() => setShowInviteModal(false)}
           onSend={handleSendInvite}
+        />
+      )}
+
+      {/* User Modal */}
+      {showModal && (
+        <UserModal
+          user={editingUser}
+          orgId={selectedOrg}
+          onClose={() => {
+            setShowModal(false);
+            setEditingUser(null);
+          }}
+          onSave={handleSaveUser}
         />
       )}
     </div>

@@ -1,9 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Filter, RefreshCw, FileText, Search, ShieldAlert, ChevronLeft, ChevronRight, Activity, MapPin } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
+import EmptyState from '../components/EmptyState';
+import {
+  FileText, Search, Filter, RefreshCw, ChevronLeft, ChevronRight
+} from 'lucide-react';
+
+function formatUtcTimestamp(dateOrIso) {
+  if (!dateOrIso) return '—';
+  const d = new Date(dateOrIso);
+  if (isNaN(d.getTime())) return '—';
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  const hh = String(d.getUTCHours()).padStart(2, '0');
+  const min = String(d.getUTCMinutes()).padStart(2, '0');
+  const ss = String(d.getUTCSeconds()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+}
 
 export default function LogsPage() {
   const { authFetch } = useAuth();
+  const { showToast } = useToast();
+
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
@@ -11,7 +30,9 @@ export default function LogsPage() {
   const [filters, setFilters] = useState({ action: '', resource: '' });
   const limit = 50;
 
-  useEffect(() => { fetchLogs(); }, [page]);
+  useEffect(() => {
+    fetchLogs();
+  }, [page]);
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -25,200 +46,159 @@ export default function LogsPage() {
       setLogs(data.logs || []);
       setTotal(data.total || 0);
     } catch (err) {
-      console.error(err);
+      showToast('Error loading logs: ' + err.message, 'err');
     } finally {
       setLoading(false);
     }
   };
 
-  const getActionBadge = (action) => {
-    const act = (action || '').toUpperCase();
-    if (act.includes('DELETE') || act.includes('FAIL') || act.includes('KILL')) {
-      return 'text-[#B91C1C] bg-[#FEF2F2] border-[#FECACA]';
-    }
-    if (act.includes('POST') || act.includes('CREATE') || act.includes('LOGIN')) {
-      return 'text-[#047857] bg-[#ECFDF5] border-[#A7F3D0]';
-    }
-    if (act.includes('PUT') || act.includes('UPDATE') || act.includes('PATCH')) {
-      return 'text-[#B45309] bg-[#FFFBEB] border-[#FDE68A]';
-    }
-    return 'text-[#1E40AF] bg-[#EFF6FF] border-[#BFDBFE]';
+  const handleApplyFilters = (e) => {
+    e.preventDefault();
+    setPage(0);
+    fetchLogs();
   };
 
-  const formatLocation = (details) => {
-    if (!details) return '—';
-    let d = details;
-    if (typeof d === 'string') {
-      try { d = JSON.parse(d); } catch(e) { return '—'; }
-    }
-    const parts = [];
-    if (d.city) parts.push(d.city);
-    if (d.state) parts.push(d.state);
-    if (d.country) parts.push(d.country);
-    return parts.length > 0 ? parts.join(', ') : (d.location || '—');
-  };
-
-  const formatDetails = (details) => {
-    if (!details) return '—';
-    let d = details;
-    if (typeof d === 'string') {
-      try { d = JSON.parse(d); } catch(e) { return details; }
-    }
-    if (d.error) return `Error: ${d.error}`;
-    if (d.message) return d.message;
-    if (d.status) return `Status: ${d.status}`;
-    return JSON.stringify(d).substring(0, 70);
-  };
-
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
-    <div className="space-y-6 animate-fadeIn">
-      {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#CBD5E1] pb-4">
+    <div className="space-y-5">
+      {/* Page Header: Header has count caption "526 records" and Refresh */}
+      <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[#0F172A] tracking-tight flex items-center gap-2.5">
-            System Audit &amp; Security Logs
-            <span className="zonix-badge-cyan text-[11px] font-mono">{total} Records</span>
-          </h2>
-          <p className="text-xs text-[#475569] mt-1 font-medium">
-            Immutable audit stream, operator authentication events, and IP geolocation telemetry
+          <h1 className="text-[24px] leading-[32px] font-semibold text-ink tracking-tight">
+            System logs
+          </h1>
+          <p className="text-sm text-ink-2 mt-0.5">
+            Immutable audit stream and operator activity records
           </p>
         </div>
-        <button 
-          onClick={fetchLogs} 
-          disabled={loading}
-          className="zonix-btn-secondary self-start sm:self-auto gap-1.5"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 text-[#475569] ${loading ? 'animate-spin' : ''}`} />
-          <span>Refresh Logs</span>
-        </button>
+
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-xs text-ink-3 tabular-nums">
+            {total} records
+          </span>
+          <button
+            type="button"
+            onClick={fetchLogs}
+            disabled={loading}
+            className="zx-btn-secondary text-xs"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} strokeWidth={1.5} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
-      {/* Filter controls */}
-      <div className="flex flex-wrap items-center gap-3 bg-white p-4 rounded-lg border border-[#CBD5E1] shadow-xs">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="w-3.5 h-3.5 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
+      {/* Filter Row: action input with search icon, resource input with filter icon, Apply primary. All 36px high and aligned */}
+      <form onSubmit={handleApplyFilters} className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[220px]">
+          <Search className="w-4 h-4 text-ink-3 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={1.5} />
           <input
             type="text"
             value={filters.action}
             onChange={(e) => setFilters({ ...filters, action: e.target.value })}
-            placeholder="Filter by action (e.g. POST, login)..."
-            className="zonix-input w-full pl-9 text-xs"
+            placeholder="Filter by action (e.g. POST, login)…"
+            className="zx-input w-full pl-9 text-xs"
           />
         </div>
-        <div className="relative flex-1 min-w-[200px]">
-          <Filter className="w-3.5 h-3.5 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
+
+        <div className="relative flex-1 min-w-[220px]">
+          <Filter className="w-4 h-4 text-ink-3 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={1.5} />
           <input
             type="text"
             value={filters.resource}
             onChange={(e) => setFilters({ ...filters, resource: e.target.value })}
-            placeholder="Filter by resource (e.g. auth, users)..."
-            className="zonix-input w-full pl-9 text-xs"
+            placeholder="Filter by resource (e.g. auth, users)…"
+            className="zx-input w-full pl-9 text-xs"
           />
         </div>
+
         <button
-          onClick={() => { setPage(0); fetchLogs(); }}
-          className="zonix-btn-primary py-2 px-4 text-xs"
+          type="submit"
+          className="zx-btn-primary text-xs"
         >
-          Apply Filters
+          Apply
         </button>
-      </div>
+      </form>
 
-      {/* Logs Table Card */}
-      <div className="zonix-card overflow-hidden">
-        <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
-          <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-[#1E40AF]" />
-            <h3 className="text-xs font-semibold text-[#0F172A]">
-              Audit Stream Ledger
-            </h3>
-          </div>
-          <span className="text-xs text-[#475569] font-mono font-medium">Page {page + 1} of {totalPages || 1}</span>
-        </div>
-
+      {/* Table Card */}
+      <div className="zx-card">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-[#E2E8F0] text-xs font-semibold text-[#475569] bg-[#F8FAFC]">
-                <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Timestamp</th>
-                <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Action</th>
-                <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Resource</th>
-                <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Operator / Subject</th>
-                <th className="py-3 px-4 text-left font-bold whitespace-nowrap">Telemetry Details</th>
-                <th className="py-3 px-4 text-right font-bold whitespace-nowrap">Origin Location</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E2E8F0]">
-              {loading ? (
+          {loading ? (
+            <div className="p-8 space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-9 w-full zx-skeleton" />
+              ))}
+            </div>
+          ) : logs.length === 0 ? (
+            <EmptyState
+              icon={FileText}
+              title="No log records found"
+              description="System actions and audit events will appear here in chronological order."
+            />
+          ) : (
+            <table className="zx-table">
+              <thead>
                 <tr>
-                  <td colSpan={6} className="py-16 text-center text-xs text-[#475569]">
-                    <div className="w-6 h-6 border-2 border-[#1E40AF] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                    <p className="font-medium">Fetching audit trail stream...</p>
-                  </td>
+                  <th style={{ width: '200px' }}>Timestamp (UTC)</th>
+                  <th style={{ width: '240px' }}>Action</th>
+                  <th>Resource</th>
+                  <th style={{ width: '160px' }}>Operator</th>
                 </tr>
-              ) : logs.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-16 text-center text-xs text-[#475569]">
-                    <div className="w-12 h-12 rounded-full bg-[#F1F5F9] border border-[#E2E8F0] flex items-center justify-center mx-auto mb-3 text-[#64748B]">
-                      <ShieldAlert className="w-6 h-6" />
-                    </div>
-                    <p className="font-bold text-sm text-[#0F172A]">No Audit Entries Found</p>
-                    <p className="text-[#475569] text-xs mt-1">Try resetting your search query or filter parameters.</p>
-                  </td>
-                </tr>
-              ) : (
-                logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-[#F8FAFC] transition-colors text-xs h-[46px] animate-fadeIn">
-                    <td className="py-3 px-4 font-mono text-[#64748B] whitespace-nowrap">
-                      {new Date(log.timestamp || log.createdAt).toLocaleString()}
+              </thead>
+              <tbody>
+                {logs.map((log) => (
+                  <tr key={log.id}>
+                    {/* Timestamp: mono, ISO YYYY-MM-DD HH:mm:ss */}
+                    <td className="font-mono text-xs tabular-nums text-ink-2 whitespace-nowrap">
+                      {formatUtcTimestamp(log.createdAt || log.timestamp)}
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold border ${getActionBadge(log.action)}`}>
-                        {log.action}
-                      </span>
+
+                    {/* Action: plain mono text, e.g. POST /auth/login, NO pill per row */}
+                    <td className="font-mono text-xs text-ink font-medium">
+                      {log.action}
                     </td>
-                    <td className="py-3 px-4 font-mono font-medium text-[#0F172A] whitespace-nowrap">
-                      {log.resource || 'system'}
+
+                    {/* Resource */}
+                    <td className="text-xs text-ink-2 truncate max-w-[280px]" title={log.resource || log.details}>
+                      {log.resource || log.details || '—'}
                     </td>
-                    <td className="py-3 px-4 font-mono text-[#0F172A] font-bold whitespace-nowrap">
-                      {log.user?.username || log.userId?.substring(0, 8) || 'System'}
-                    </td>
-                    <td className="py-3 px-4 font-mono text-[#475569] truncate max-w-sm" title={typeof log.details === 'string' ? log.details : JSON.stringify(log.details)}>
-                      {formatDetails(log.details)}
-                    </td>
-                    <td className="py-3 px-4 font-mono text-[#475569] text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <MapPin className="w-3 h-3 text-[#64748B]" />
-                        <span>{formatLocation(log.details)}</span>
-                      </div>
+
+                    {/* Operator */}
+                    <td className="font-mono text-xs text-ink-2">
+                      {log.user?.username || log.operator || log.userId || 'system'}
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
-        {/* Pagination Footer */}
-        <div className="p-4 border-t border-[#E2E8F0] flex items-center justify-between text-xs bg-[#F8FAFC]">
-          <span className="text-[#475569] font-mono font-medium">Showing {logs.length} of {total} entries</span>
+        {/* Footer row: Page 1 of 11 on left, Previous and Next secondary buttons on right */}
+        <div className="p-4 border-t border-line flex items-center justify-between text-xs bg-surface">
+          <span className="font-mono text-ink-2 tabular-nums">
+            Page {page + 1} of {totalPages}
+          </span>
+
           <div className="flex items-center gap-2">
             <button
+              type="button"
               disabled={page === 0}
-              onClick={() => setPage(prev => Math.max(0, prev - 1))}
-              className="zonix-btn-secondary py-1.5 px-3 text-xs h-[32px] disabled:opacity-40"
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              className="zx-btn-secondary h-[32px] px-3 text-xs"
             >
-              <ChevronLeft className="w-3.5 h-3.5" />
+              <ChevronLeft className="w-3.5 h-3.5" strokeWidth={1.5} />
               <span>Previous</span>
             </button>
             <button
+              type="button"
               disabled={page >= totalPages - 1}
-              onClick={() => setPage(prev => prev + 1)}
-              className="zonix-btn-secondary py-1.5 px-3 text-xs h-[32px] disabled:opacity-40"
+              onClick={() => setPage((p) => p + 1)}
+              className="zx-btn-secondary h-[32px] px-3 text-xs"
             >
               <span>Next</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-3.5 h-3.5" strokeWidth={1.5} />
             </button>
           </div>
         </div>

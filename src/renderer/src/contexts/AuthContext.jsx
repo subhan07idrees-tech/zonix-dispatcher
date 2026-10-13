@@ -243,33 +243,33 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={value}>
       {children}
       {dialog && createPortal(
-        <div className="fixed inset-0 zonix-modal-backdrop flex items-center justify-center z-[99999] p-4 select-none animate-modal-backdrop" onClick={dialog.type === 'confirm' ? dialog.onCancel : undefined}>
-          <div className="bg-white border border-[#E2E8F0] rounded-xl max-w-md w-full p-6 shadow-modal flex flex-col relative animate-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="zx-modal-overlay select-none" onClick={dialog.type === 'confirm' ? dialog.onCancel : undefined}>
+          <div className="zx-modal-panel max-w-[440px] p-6 flex flex-col" onClick={(e) => e.stopPropagation()}>
             {/* Header / Title */}
-            <div className="flex items-start gap-3.5 mb-3">
+            <div className="flex items-start gap-3 mb-2">
               <div className="flex-shrink-0 mt-0.5">
-                {dialog.variant === 'success' && <CheckCircle2 className="w-5 h-5 text-[#047857]" />}
-                {dialog.variant === 'error' && <AlertCircle className="w-5 h-5 text-[#B91C1C]" />}
-                {dialog.variant === 'warning' && <AlertTriangle className="w-5 h-5 text-[#B45309]" />}
-                {dialog.variant === 'info' && <Info className="w-5 h-5 text-[#1E40AF]" />}
+                {dialog.variant === 'success' && <CheckCircle2 className="w-5 h-5 text-ok" strokeWidth={1.5} />}
+                {dialog.variant === 'error' && <AlertCircle className="w-5 h-5 text-err" strokeWidth={1.5} />}
+                {dialog.variant === 'warning' && <AlertTriangle className="w-5 h-5 text-warn" strokeWidth={1.5} />}
+                {dialog.variant === 'info' && <Info className="w-5 h-5 text-accent" strokeWidth={1.5} />}
               </div>
               <div className="flex-1">
-                <h3 className="text-sm font-bold text-[#0F172A]">
+                <h3 className="text-sm font-semibold text-ink">
                   {dialog.title}
                 </h3>
-                <div className="text-xs text-[#475569] mt-2 leading-relaxed whitespace-pre-line font-medium">
+                <div className="text-xs text-ink-2 mt-1.5 leading-relaxed whitespace-pre-line">
                   {dialog.message}
                 </div>
               </div>
             </div>
 
             {/* Actions Footer */}
-            <div className="flex justify-end gap-2.5 mt-5 pt-3 border-t border-[#E2E8F0]">
+            <div className="flex justify-end gap-2 mt-5 pt-3 border-t border-line">
               {dialog.type === 'confirm' && (
                 <button
                   type="button"
                   onClick={dialog.onCancel}
-                  className="zonix-btn-secondary text-xs h-[34px] px-3.5"
+                  className="zx-btn-secondary text-xs"
                 >
                   Cancel
                 </button>
@@ -277,7 +277,7 @@ export function AuthProvider({ children }) {
               <button
                 type="button"
                 onClick={dialog.onConfirm}
-                className={dialog.variant === 'error' ? 'zonix-btn-danger text-xs h-[34px] px-4' : 'zonix-btn-primary text-xs h-[34px] px-4'}
+                className={dialog.variant === 'error' ? 'zx-btn-destructive text-xs' : 'zx-btn-primary text-xs'}
                 autoFocus
               >
                 Confirm
