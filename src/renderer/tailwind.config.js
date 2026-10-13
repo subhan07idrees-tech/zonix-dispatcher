@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -7,42 +8,42 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: '#F7F7F5',
+        bg: 'var(--bg)',
         surface: {
-          DEFAULT: '#FFFFFF',
-          hover: '#F1F1ED',
+          DEFAULT: 'var(--surface)',
+          hover: 'var(--surface-hover)',
         },
-        'row-hover': '#FAFAF8',
+        'row-hover': 'var(--row-hover)',
         line: {
-          DEFAULT: '#E6E6E1',
-          soft: '#EFEFEA',
-          input: '#D9D9D3',
+          DEFAULT: 'var(--line)',
+          soft: 'var(--line-soft)',
+          input: 'var(--line-input)',
         },
         ink: {
-          DEFAULT: '#14161B',
-          2: '#5B606B',
-          3: '#6A6F7B',
+          DEFAULT: 'var(--ink)',
+          2: 'var(--ink-2)',
+          3: 'var(--ink-3)',
         },
         accent: {
-          DEFAULT: '#2447D6',
-          hover: '#1C39B0',
-          press: '#162E91',
-          wash: '#EEF1FD',
+          DEFAULT: 'var(--accent)',
+          hover: 'var(--accent-hover)',
+          press: 'var(--accent-press)',
+          wash: 'var(--accent-wash)',
         },
         ok: {
-          DEFAULT: '#1A7F55',
-          bg: '#E4F4EB',
-          ink: '#14633F',
+          DEFAULT: 'var(--ok)',
+          bg: 'var(--ok-bg)',
+          ink: 'var(--ok-ink)',
         },
         warn: {
-          DEFAULT: '#C77700',
-          bg: '#FBF1DC',
-          ink: '#8A5300',
+          DEFAULT: 'var(--warn)',
+          bg: 'var(--warn-bg)',
+          ink: 'var(--warn-ink)',
         },
         err: {
-          DEFAULT: '#B4261E',
-          bg: '#FDECEA',
-          ink: '#8F1D17',
+          DEFAULT: 'var(--err)',
+          bg: 'var(--err-bg)',
+          ink: 'var(--err-ink)',
         },
       },
       borderRadius: {

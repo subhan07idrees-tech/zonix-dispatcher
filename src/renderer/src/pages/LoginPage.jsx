@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import ZonixLogo from '../components/ZonixLogo';
-import { AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, Sun, Moon } from 'lucide-react';
 
 export default function LoginPage() {
   const { login, error } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const [orgId, setOrgId] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -20,12 +22,24 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg p-4 select-none">
+    <div className="relative min-h-screen flex items-center justify-center bg-bg p-4 select-none">
+      <div className="absolute top-4 right-4">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="w-8 h-8 flex items-center justify-center rounded-ctl bg-surface border border-line text-ink-2 hover:text-ink hover:bg-surface-hover transition-colors"
+          title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+          aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+        >
+          {isDark ? <Sun className="w-4 h-4" strokeWidth={1.5} /> : <Moon className="w-4 h-4" strokeWidth={1.5} />}
+        </button>
+      </div>
+
       <div className="w-full max-w-[360px] space-y-6">
         {/* Header with Centered Logo */}
         <div className="flex flex-col items-center text-center">
           <div className="mb-4">
-            <ZonixLogo size={44} showText={false} />
+            <ZonixLogo size={44} showText={false} dark={isDark} />
           </div>
           <h1 className="text-[20px] font-semibold text-ink tracking-tight">
             Sign in to ZONIX

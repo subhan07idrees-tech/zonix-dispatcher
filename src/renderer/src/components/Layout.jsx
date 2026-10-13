@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { WebSocketProvider, useWebSocket } from '../contexts/WebSocketContext';
 import ZonixLogo from './ZonixLogo';
 import {
   LayoutDashboard, Building2, Users, Wifi, Radio, ShieldCheck, FileText,
-  LogOut, PanelLeftClose, PanelLeft
+  LogOut, PanelLeftClose, PanelLeft, Sun, Moon
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -28,6 +29,7 @@ function formatMiddleEllipsis(str, maxLen = 12) {
 function TopBar() {
   const { user, logout } = useAuth();
   const { connected } = useWebSocket();
+  const { isDark, toggleTheme } = useTheme();
   const [utcTime, setUtcTime] = useState('');
   const location = useLocation();
 
@@ -75,6 +77,19 @@ function TopBar() {
         {/* UTC Clock */}
         <div className="px-3 font-mono text-[13px] text-ink-2 tabular-nums border-l border-line h-5 flex items-center">
           {utcTime}
+        </div>
+
+        {/* Theme Switcher */}
+        <div className="px-2 border-l border-line h-full flex items-center">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="w-7 h-7 flex items-center justify-center rounded-ctl text-ink-2 hover:bg-surface-hover hover:text-ink transition-colors"
+            title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+            aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+          >
+            {isDark ? <Sun className="w-3.5 h-3.5" strokeWidth={1.5} /> : <Moon className="w-3.5 h-3.5" strokeWidth={1.5} />}
+          </button>
         </div>
 
         {/* Operator Chip */}
@@ -131,6 +146,7 @@ function TopBar() {
 function Sidebar({ collapsed, onToggle }) {
   const { user, logout } = useAuth();
   const { sessions } = useWebSocket();
+  const { isDark } = useTheme();
   const activeSessionCount = sessions ? sessions.length : 0;
 
   const userInitial = user?.username ? user.username.charAt(0).toUpperCase() : 'U';
@@ -147,7 +163,7 @@ function Sidebar({ collapsed, onToggle }) {
       <div className="h-[56px] px-3.5 flex items-center justify-between border-b border-line flex-shrink-0">
         {!collapsed ? (
           <>
-            <ZonixLogo size={24} showText={true} version="v1.9.15" />
+            <ZonixLogo size={24} showText={true} version="v1.9.16" dark={isDark} />
             <button
               type="button"
               onClick={onToggle}
@@ -167,7 +183,7 @@ function Sidebar({ collapsed, onToggle }) {
               title="Expand sidebar"
               aria-label="Expand sidebar"
             >
-              <ZonixLogo size={24} showText={false} />
+              <ZonixLogo size={24} showText={false} dark={isDark} />
             </button>
           </div>
         )}
