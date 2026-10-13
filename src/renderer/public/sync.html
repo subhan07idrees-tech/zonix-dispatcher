@@ -349,6 +349,12 @@
       background: #232839;
       color: #F1F4F9;
     }
+    body.dark .logo-container svg path:first-child, html.dark .logo-container svg path:first-child {
+      fill: #AEB9CC;
+    }
+    body.dark .logo-container svg path:last-child, html.dark .logo-container svg path:last-child {
+      fill: #4869EE;
+    }
     body.dark .footer-security, html.dark .footer-security {
       color: #626D84;
     }
@@ -358,6 +364,7 @@
       const savedTheme = localStorage.getItem('zonix_theme');
       if (savedTheme === 'dark' || (!savedTheme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.classList.add('dark');
+        window.addEventListener('DOMContentLoaded', () => document.body.classList.add('dark'));
       }
     } catch (e) {}
   </script>

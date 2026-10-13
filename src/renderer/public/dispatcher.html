@@ -10,11 +10,54 @@
       padding: 0;
       box-sizing: border-box;
     }
+
+    :root {
+      --dp-bg: #FFFFFF;
+      --dp-header-bg: #FFFFFF;
+      --dp-tab-bar-bg: #F8FAFC;
+      --dp-tab-bg: #F1F5F9;
+      --dp-tab-hover-bg: #FFFFFF;
+      --dp-tab-active-bg: #FFFFFF;
+      --dp-line: #E2E8F0;
+      --dp-line-soft: #F1F5F9;
+      --dp-ink: #0F172A;
+      --dp-ink-2: #64748B;
+      --dp-ink-3: #94A3B8;
+      --dp-btn-bg: #FFFFFF;
+      --dp-btn-hover: #F8FAFC;
+      --dp-btn-border: #E2E8F0;
+      --dp-badge-bg: #F8FAFC;
+      --dp-badge-border: #E2E8F0;
+      --dp-logo-slate: #3B4A63;
+      --dp-logo-cobalt: #2447D6;
+    }
+
+    html.dark, body.dark {
+      --dp-bg: #0C0E14;
+      --dp-header-bg: #141721;
+      --dp-tab-bar-bg: #0C0E14;
+      --dp-tab-bg: #141721;
+      --dp-tab-hover-bg: #1C202E;
+      --dp-tab-active-bg: #1C202E;
+      --dp-line: #232839;
+      --dp-line-soft: #1C202E;
+      --dp-ink: #F1F4F9;
+      --dp-ink-2: #94A0B8;
+      --dp-ink-3: #626D84;
+      --dp-btn-bg: #1C202E;
+      --dp-btn-hover: #232839;
+      --dp-btn-border: #2D3349;
+      --dp-badge-bg: #1C202E;
+      --dp-badge-border: #2D3349;
+      --dp-logo-slate: #AEB9CC;
+      --dp-logo-cobalt: #4869EE;
+    }
+
     body, html {
       width: 100%;
       height: 100%;
-      background: #FFFFFF;
-      color: #0F172A;
+      background: var(--dp-bg);
+      color: var(--dp-ink);
       font-family: -apple-system, BlinkMacSystemFont, 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
       overflow: hidden;
       display: flex;
@@ -24,8 +67,8 @@
     /* Top Application Bar */
     .header {
       height: 44px;
-      background: #FFFFFF;
-      border-bottom: 1px solid #E2E8F0;
+      background: var(--dp-header-bg);
+      border-bottom: 1px solid var(--dp-line);
       display: flex;
       align-items: center;
       padding-left: 14px;
@@ -34,6 +77,7 @@
       user-select: none;
       flex-shrink: 0;
       z-index: 100;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
     }
 
     .brand-section {
@@ -49,10 +93,20 @@
       flex-shrink: 0;
     }
 
+    .brand-logo-svg path:first-child {
+      fill: var(--dp-logo-slate);
+      transition: fill 0.15s ease;
+    }
+
+    .brand-logo-svg path:last-child {
+      fill: var(--dp-logo-cobalt);
+      transition: fill 0.15s ease;
+    }
+
     .title-text {
       font-size: 13px;
       font-weight: 600;
-      color: #0F172A;
+      color: var(--dp-ink);
       letter-spacing: -0.01em;
     }
 
@@ -61,15 +115,15 @@
       font-weight: 600;
       letter-spacing: 0.02em;
       text-transform: uppercase;
-      color: #475569;
-      background: #F1F5F9;
-      border: 1px solid #E2E8F0;
+      color: var(--dp-ink-2);
+      background: var(--dp-badge-bg);
+      border: 1px solid var(--dp-badge-border);
       padding: 2px 6px;
       border-radius: 4px;
     }
 
     .divider {
-      color: #CBD5E1;
+      color: var(--dp-line);
       font-size: 12px;
       margin: 0 2px;
     }
@@ -88,13 +142,13 @@
     }
 
     .target-badge {
-      background: #F8FAFC;
-      border: 1px solid #E2E8F0;
-      color: #64748B;
+      background: var(--dp-badge-bg);
+      border: 1px solid var(--dp-badge-border);
+      color: var(--dp-ink-2);
     }
 
     .target-badge strong {
-      color: #0F172A;
+      color: var(--dp-ink);
       font-weight: 600;
     }
 
@@ -109,14 +163,24 @@
       font-weight: 600;
     }
 
+    html.dark .proxy-badge, body.dark .proxy-badge {
+      background: rgba(34, 197, 94, 0.14);
+      border-color: rgba(34, 197, 94, 0.25);
+      color: #4ADE80;
+    }
+
+    html.dark .proxy-badge strong, body.dark .proxy-badge strong {
+      color: #4ADE80;
+    }
+
     .operator-badge {
-      background: #F8FAFC;
-      border: 1px solid #E2E8F0;
-      color: #64748B;
+      background: var(--dp-badge-bg);
+      border: 1px solid var(--dp-badge-border);
+      color: var(--dp-ink-2);
     }
 
     .operator-badge strong {
-      color: #0F172A;
+      color: var(--dp-ink);
       font-weight: 600;
     }
 
@@ -143,9 +207,9 @@
     }
 
     .header-btn {
-      background: #FFFFFF;
-      border: 1px solid #E2E8F0;
-      color: #475569;
+      background: var(--dp-btn-bg);
+      border: 1px solid var(--dp-btn-border);
+      color: var(--dp-ink-2);
       font-size: 11px;
       font-weight: 500;
       padding: 4px 10px;
@@ -159,9 +223,17 @@
     }
 
     .header-btn:hover {
-      background: #F8FAFC;
-      color: #0F172A;
-      border-color: #CBD5E1;
+      background: var(--dp-btn-hover);
+      color: var(--dp-ink);
+      border-color: var(--dp-line);
+    }
+
+    .theme-btn {
+      width: 28px;
+      height: 26px;
+      padding: 0;
+      justify-content: center;
+      margin-right: 8px;
     }
 
     .refresh-btn {
@@ -178,6 +250,12 @@
       color: #DC2626;
     }
 
+    html.dark .signout-btn:hover, body.dark .signout-btn:hover {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: #EF4444;
+      color: #F87171;
+    }
+
     .win-btn-container {
       display: flex;
       height: 100%;
@@ -188,7 +266,7 @@
       height: 44px;
       background: transparent;
       border: none;
-      color: #64748B;
+      color: var(--dp-ink-2);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -197,8 +275,8 @@
     }
 
     .win-btn:hover {
-      background: #F1F5F9;
-      color: #0F172A;
+      background: var(--dp-btn-hover);
+      color: var(--dp-ink);
     }
 
     .win-btn-close:hover {
@@ -210,13 +288,14 @@
     .tab-bar {
       display: flex;
       align-items: center;
-      background: #F8FAFC;
-      border-bottom: 1px solid #E2E8F0;
+      background: var(--dp-tab-bar-bg);
+      border-bottom: 1px solid var(--dp-line);
       padding: 0 10px;
       height: 36px;
       -webkit-app-region: no-drag;
       flex-shrink: 0;
       justify-content: space-between;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
     }
 
     .tabs-wrapper {
@@ -242,10 +321,10 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      background: #F1F5F9;
-      border: 1px solid #E2E8F0;
+      background: var(--dp-tab-bg);
+      border: 1px solid var(--dp-line);
       border-bottom: none;
-      color: #64748B;
+      color: var(--dp-ink-2);
       font-size: 11px;
       font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
       padding: 5px 10px;
@@ -260,16 +339,16 @@
     }
 
     .tab:hover {
-      background: #FFFFFF;
-      color: #0F172A;
+      background: var(--dp-tab-hover-bg);
+      color: var(--dp-ink);
     }
 
     .tab.active {
-      background: #FFFFFF;
-      border-color: #E2E8F0;
-      border-top: 2px solid #2447D6;
-      border-bottom: 1px solid #FFFFFF;
-      color: #0F172A;
+      background: var(--dp-tab-active-bg);
+      border-color: var(--dp-line);
+      border-top: 2px solid var(--dp-logo-cobalt);
+      border-bottom: 1px solid var(--dp-tab-active-bg);
+      color: var(--dp-ink);
       font-weight: 600;
       z-index: 2;
       margin-bottom: -1px;
@@ -279,7 +358,7 @@
       width: 5px;
       height: 5px;
       border-radius: 50%;
-      background: #2447D6;
+      background: var(--dp-logo-cobalt);
       flex-shrink: 0;
     }
 
@@ -298,20 +377,20 @@
       justify-content: center;
       border-radius: 3px;
       font-size: 12px;
-      color: #94A3B8;
+      color: var(--dp-ink-3);
       transition: all 0.15s;
       flex-shrink: 0;
     }
 
     .tab-close:hover {
-      background: #F1F5F9;
+      background: var(--dp-btn-hover);
       color: #DC2626;
     }
 
     .add-tab-btn {
-      background: #FFFFFF;
-      border: 1px solid #E2E8F0;
-      color: #64748B;
+      background: var(--dp-btn-bg);
+      border: 1px solid var(--dp-btn-border);
+      color: var(--dp-ink-2);
       font-size: 13px;
       font-weight: 500;
       width: 24px;
@@ -327,17 +406,17 @@
     }
 
     .add-tab-btn:hover {
-      background: #F8FAFC;
-      color: #0F172A;
-      border-color: #CBD5E1;
+      background: var(--dp-btn-hover);
+      color: var(--dp-ink);
+      border-color: var(--dp-line);
     }
 
     .tabs-count-pill {
       font-size: 10px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      color: #64748B;
-      background: #FFFFFF;
-      border: 1px solid #E2E8F0;
+      color: var(--dp-ink-2);
+      background: var(--dp-badge-bg);
+      border: 1px solid var(--dp-badge-border);
       padding: 2px 8px;
       border-radius: 4px;
       flex-shrink: 0;
@@ -371,7 +450,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: #FFFFFF;
+      background: var(--dp-bg);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -413,17 +492,25 @@
       z-index: 2;
     }
 
+    .loading-logo-svg path:first-child {
+      fill: var(--dp-logo-slate);
+    }
+
+    .loading-logo-svg path:last-child {
+      fill: var(--dp-logo-cobalt);
+    }
+
     .loading-title {
       font-size: 14px;
       font-weight: 600;
       letter-spacing: -0.01em;
-      color: #0F172A;
+      color: var(--dp-ink);
       margin-bottom: 4px;
     }
 
     .loading-subtext {
       font-size: 12px;
-      color: #64748B;
+      color: var(--dp-ink-2);
       letter-spacing: normal;
       margin-bottom: 20px;
     }
@@ -431,8 +518,8 @@
     /* Telemetry Card */
     .telemetry-card {
       width: 440px;
-      background: #FFFFFF;
-      border: 1px solid #E2E8F0;
+      background: var(--dp-header-bg);
+      border: 1px solid var(--dp-line);
       border-radius: 12px;
       padding: 14px 16px;
       display: flex;
@@ -440,7 +527,7 @@
       gap: 8px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 11px;
-      box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.05);
+      box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
     }
 
     .telemetry-row {
@@ -448,7 +535,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 4px 0;
-      border-bottom: 1px solid #F1F5F9;
+      border-bottom: 1px solid var(--dp-line-soft);
     }
 
     .telemetry-row:last-child {
@@ -456,26 +543,27 @@
     }
 
     .telemetry-label {
-      color: #64748B;
+      color: var(--dp-ink-2);
       font-weight: 500;
     }
 
     .telemetry-val {
       font-weight: 600;
-      color: #0F172A;
+      color: var(--dp-ink);
       max-width: 260px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    .telemetry-val.cyan { color: #2447D6; }
+    .telemetry-val.cyan { color: var(--dp-logo-cobalt); }
     .telemetry-val.green { color: #15803D; }
+    html.dark .telemetry-val.green, body.dark .telemetry-val.green { color: #4ADE80; }
 
     .shimmer-track {
       width: 440px;
       height: 3px;
-      background: #F1F5F9;
+      background: var(--dp-line-soft);
       border-radius: 9999px;
       margin-top: 14px;
       overflow: hidden;
@@ -485,7 +573,7 @@
     .shimmer-bar {
       width: 40%;
       height: 100%;
-      background: #2447D6;
+      background: var(--dp-logo-cobalt);
       border-radius: 9999px;
       position: absolute;
       animation: shimmerLoop 1.5s infinite;
@@ -529,7 +617,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(255, 255, 255, 0.96);
+      background: var(--dp-header-bg);
       backdrop-filter: blur(8px);
       display: none;
       flex-direction: column;
@@ -548,12 +636,13 @@
       font-size: 16px;
       font-weight: 600;
       letter-spacing: -0.01em;
+      color: var(--dp-ink);
       margin-bottom: 8px;
     }
 
     .overlay-desc {
       font-size: 12px;
-      color: #64748B;
+      color: var(--dp-ink-2);
       max-width: 440px;
       line-height: 1.5;
       margin-bottom: 20px;
@@ -566,7 +655,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(15, 23, 42, 0.4);
+      background: rgba(15, 23, 42, 0.45);
       backdrop-filter: blur(4px);
       display: none;
       align-items: center;
@@ -580,12 +669,12 @@
 
     .modal-card {
       width: 380px;
-      background: #FFFFFF;
-      border: 1px solid #E2E8F0;
+      background: var(--dp-header-bg);
+      border: 1px solid var(--dp-line);
       border-radius: 14px;
       padding: 24px;
       text-align: center;
-      box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.12);
+      box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.35);
       animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
@@ -610,13 +699,13 @@
     .modal-title {
       font-size: 14px;
       font-weight: 600;
-      color: #0F172A;
+      color: var(--dp-ink);
       margin-bottom: 6px;
     }
 
     .modal-desc {
       font-size: 12px;
-      color: #64748B;
+      color: var(--dp-ink-2);
       line-height: 1.5;
       margin-bottom: 20px;
     }
@@ -638,15 +727,15 @@
     }
 
     .modal-btn-cancel {
-      background: #FFFFFF;
-      border: 1px solid #E2E8F0;
-      color: #475569;
+      background: var(--dp-btn-bg);
+      border: 1px solid var(--dp-btn-border);
+      color: var(--dp-ink-2);
     }
 
     .modal-btn-cancel:hover {
-      background: #F8FAFC;
-      color: #0F172A;
-      border-color: #CBD5E1;
+      background: var(--dp-btn-hover);
+      color: var(--dp-ink);
+      border-color: var(--dp-line);
     }
 
     .modal-btn-confirm {
@@ -656,131 +745,6 @@
 
     .modal-btn-confirm:hover {
       background: #B91C1C;
-    }
-
-    /* Dark Mode (Linear Dark standard) */
-    body.dark, html.dark body {
-      background: #0C0E14;
-      color: #F1F4F9;
-    }
-    body.dark .header, html.dark .header {
-      background: #141721;
-      border-bottom-color: #232839;
-    }
-    body.dark .title-text, html.dark .title-text {
-      color: #F1F4F9;
-    }
-    body.dark .gateway-pill, html.dark .gateway-pill {
-      background: #1C202E;
-      border-color: #2D3349;
-      color: #94A0B8;
-    }
-    body.dark .divider, html.dark .divider {
-      color: #384252;
-    }
-    body.dark .target-badge, html.dark .target-badge,
-    body.dark .operator-badge, html.dark .operator-badge {
-      background: #1C202E;
-      border-color: #2D3349;
-      color: #94A0B8;
-    }
-    body.dark .target-badge strong, html.dark .target-badge strong,
-    body.dark .operator-badge strong, html.dark .operator-badge strong {
-      color: #F1F4F9;
-    }
-    body.dark .proxy-badge, html.dark .proxy-badge {
-      background: rgba(34, 197, 94, 0.12);
-      border-color: rgba(34, 197, 94, 0.25);
-      color: #4ADE80;
-    }
-    body.dark .proxy-badge strong, html.dark .proxy-badge strong {
-      color: #4ADE80;
-    }
-    body.dark .window-control, html.dark .window-control {
-      color: #94A0B8;
-    }
-    body.dark .window-control:hover, html.dark .window-control:hover {
-      background: #1C202E;
-      color: #F1F4F9;
-    }
-    body.dark .navigation-bar, html.dark .navigation-bar {
-      background: #141721;
-      border-bottom-color: #232839;
-    }
-    body.dark .nav-button, html.dark .nav-button {
-      background: #1C202E;
-      border-color: #2D3349;
-      color: #94A0B8;
-    }
-    body.dark .nav-button:hover:not(:disabled), html.dark .nav-button:hover:not(:disabled) {
-      background: #232839;
-      color: #F1F4F9;
-    }
-    body.dark .url-bar-container, html.dark .url-bar-container {
-      background: #1C202E;
-      border-color: #2D3349;
-    }
-    body.dark .url-input, html.dark .url-input {
-      color: #F1F4F9;
-    }
-    body.dark .tabs-bar, html.dark .tabs-bar {
-      background: #0C0E14;
-      border-bottom-color: #232839;
-    }
-    body.dark .tab-pill, html.dark .tab-pill {
-      background: #141721;
-      border-color: #232839;
-      color: #94A0B8;
-    }
-    body.dark .tab-pill.active, html.dark .tab-pill.active {
-      background: #1C202E;
-      border-color: #2D3349;
-      color: #F1F4F9;
-    }
-    body.dark .add-tab-btn, html.dark .add-tab-btn {
-      background: #141721;
-      border-color: #232839;
-      color: #94A0B8;
-    }
-    body.dark .add-tab-btn:hover, html.dark .add-tab-btn:hover {
-      background: #1C202E;
-      color: #F1F4F9;
-    }
-    body.dark .tabs-count-pill, html.dark .tabs-count-pill {
-      background: #141721;
-      border-color: #232839;
-      color: #94A0B8;
-    }
-    body.dark .webview-container, html.dark .webview-container {
-      background: #0C0E14;
-    }
-    body.dark .loading-overlay, html.dark .loading-overlay {
-      background: #0C0E14;
-    }
-    body.dark .loading-title, html.dark .loading-title {
-      color: #F1F4F9;
-    }
-    body.dark .loading-subtitle, html.dark .loading-subtitle {
-      color: #94A0B8;
-    }
-    body.dark .telemetry-val, html.dark .telemetry-val {
-      color: #F1F4F9;
-    }
-    body.dark .modal-card, html.dark .modal-card {
-      background: #141721;
-      border-color: #232839;
-      box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.5);
-    }
-    body.dark .modal-title, html.dark .modal-title {
-      color: #F1F4F9;
-    }
-    body.dark .modal-desc, html.dark .modal-desc {
-      color: #94A0B8;
-    }
-    body.dark .modal-btn-cancel, html.dark .modal-btn-cancel {
-      background: #1C202E;
-      border-color: #2D3349;
-      color: #94A0B8;
     }
   </style>
   <script>
@@ -833,6 +797,16 @@
 
     <!-- Right Controls -->
     <div class="control-section">
+      <!-- Theme Switcher -->
+      <button class="header-btn theme-btn" id="themeToggleBtn" title="Switch Theme (Dark / Light)">
+        <svg id="themeIconSun" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+          <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+        </svg>
+        <svg id="themeIconMoon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+
       <button class="header-btn refresh-btn" id="refreshBtn" title="Reload Target Application">
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
@@ -991,6 +965,45 @@
   </div>
 
   <script>
+    // Theme Management
+    function applyAppTheme(isDark) {
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        document.body && document.body.classList.add('dark');
+        const sun = document.getElementById('themeIconSun');
+        const moon = document.getElementById('themeIconMoon');
+        if (sun) sun.style.display = 'block';
+        if (moon) moon.style.display = 'none';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.body && document.body.classList.remove('dark');
+        const sun = document.getElementById('themeIconSun');
+        const moon = document.getElementById('themeIconMoon');
+        if (sun) sun.style.display = 'none';
+        if (moon) moon.style.display = 'block';
+      }
+    }
+
+    function toggleAppTheme() {
+      const isDark = document.documentElement.classList.contains('dark');
+      const newDark = !isDark;
+      applyAppTheme(newDark);
+      try {
+        localStorage.setItem('zonix_theme', newDark ? 'dark' : 'light');
+      } catch (e) {}
+    }
+
+    const savedTheme = localStorage.getItem('zonix_theme');
+    const isDarkInit = savedTheme === 'dark' || (!savedTheme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    applyAppTheme(isDarkInit);
+
+    document.getElementById('themeToggleBtn')?.addEventListener('click', toggleAppTheme);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'zonix_theme') {
+        applyAppTheme(e.newValue === 'dark');
+      }
+    });
+
     // Extract query parameters
     const params = new URLSearchParams(window.location.search);
     const partition = params.get('partition') || '';

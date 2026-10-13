@@ -27,6 +27,20 @@
       --r-card: 12px;
       --focus: 0 0 0 2px #FFFFFF, 0 0 0 4px #2447D6;
     }
+    html.dark, body.dark {
+      --bg: #0C0E14;
+      --surface: #141721;
+      --surface-hover: #1C202E;
+      --line: #232839;
+      --line-input: #2D3349;
+      --ink: #F1F4F9;
+      --ink-2: #94A0B8;
+      --ink-3: #626D84;
+      --accent: #4869EE;
+      --accent-hover: #3B5CE5;
+      --accent-press: #2F4FD8;
+      --focus: 0 0 0 2px #141721, 0 0 0 4px #4869EE;
+    }
     * {
       margin: 0;
       padding: 0;
@@ -288,7 +302,23 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    html.dark .brand-mark svg path:first-child, body.dark .brand-mark svg path:first-child {
+      fill: #AEB9CC;
+    }
+    html.dark .brand-mark svg path:last-child, body.dark .brand-mark svg path:last-child {
+      fill: #4869EE;
+    }
   </style>
+  <script>
+    try {
+      const savedTheme = localStorage.getItem('zonix_theme');
+      if (savedTheme === 'dark' || (!savedTheme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        window.addEventListener('DOMContentLoaded', () => document.body.classList.add('dark'));
+      }
+    } catch (e) {}
+  </script>
 </head>
 <body>
   <!-- Title bar -->
@@ -439,10 +469,11 @@
 
           api.setConfig('orgId', result.orgId);
           api.setConfig('userId', userId);
+          const isDark = document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
           document.body.innerHTML = `
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#F7F7F5;color:#14161B;font-family:system-ui,sans-serif;gap:12px;">
-              <div class="spinner" style="border-color:#2447D6;border-top-color:transparent;width:24px;height:24px;"></div>
-              <div style="font-size:13px;font-weight:500;color:#5B606B;">Authenticated · Initializing console…</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:${isDark ? '#0C0E14' : '#F7F7F5'};color:${isDark ? '#F1F4F9' : '#14161B'};font-family:system-ui,sans-serif;gap:12px;">
+              <div class="spinner" style="border-color:${isDark ? '#4869EE' : '#2447D6'};border-top-color:transparent;width:24px;height:24px;"></div>
+              <div style="font-size:13px;font-weight:500;color:${isDark ? '#94A0B8' : '#5B606B'};">Authenticated · Initializing console…</div>
             </div>
           `;
         } else {

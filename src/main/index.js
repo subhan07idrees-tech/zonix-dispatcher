@@ -422,13 +422,10 @@ function createSyncWindow(orgId, userId, targetUrl) {
   });
 
   syncWindow.on('closed', () => {
+    const isHandingOff = syncWindow && syncWindow.isHandingOff;
     syncWindow = null;
-    if (activeSessions.size === 0 && !mainWindow) {
-      if (!authWindow || authWindow.isDestroyed()) {
-        createAuthWindow();
-      } else {
-        authWindow.show();
-      }
+    if (!isHandingOff && activeSessions.size === 0 && !mainWindow) {
+      createAuthWindow();
     }
   });
 
@@ -588,7 +585,10 @@ async function createDispatchWindow(sessionId, config) {
       dispatchWindow.maximize();
       dispatchWindow.show();
     }
-    if (authWindow) authWindow.hide();
+    if (authWindow && !authWindow.isDestroyed()) {
+      authWindow.destroy();
+      authWindow = null;
+    }
   });
 
   // ALSO show on failed load (proxy auth error, DNS failure, etc.) so window is
@@ -1219,8 +1219,9 @@ function registerIPC() {
           } catch (err) {
             console.error('[ZONIX Main] Failed to transition after login:', err.message);
           } finally {
-            if (authWindow) {
-              authWindow.close();
+            if (authWindow && !authWindow.isDestroyed()) {
+              authWindow.destroy();
+              authWindow = null;
             }
           }
         }, 50);
@@ -1394,7 +1395,8 @@ function registerIPC() {
         hardwareProfile
       });
 
-      if (syncWindow) {
+      if (syncWindow && !syncWindow.isDestroyed()) {
+        syncWindow.isHandingOff = true;
         syncWindow.close();
         syncWindow = null;
       }
@@ -1818,10 +1820,8 @@ function registerIPC() {
     if (win) {
       if (win === syncWindow) {
         syncWindow = null;
-        if (!authWindow || authWindow.isDestroyed()) {
+        if (activeSessions.size === 0 && !mainWindow) {
           createAuthWindow();
-        } else {
-          authWindow.show();
         }
       }
       win.close();
@@ -1947,7 +1947,7 @@ function setupAutoUpdater() {
 
   autoUpdater.on('update-not-available', () => {
     console.log('[Updater] Launch Gate: Up to date.');
-    if (!isUpdateGateActive && !authWindow && !mainWindow) {
+    if (!isUpdateGateActive && !authWindow && !mainWindow && activeSessions.size === 0 && !syncWindow) {
       createAuthWindow();
     }
   });
@@ -1956,7 +1956,7 @@ function setupAutoUpdater() {
     console.error('[Updater] Error:', err.message);
     if (updateWindow && !updateWindow.isDestroyed()) {
       updateWindow.webContents.send('update:error', err.message || 'Download failed');
-    } else if (!isUpdateGateActive && !authWindow && !mainWindow) {
+    } else if (!isUpdateGateActive && !authWindow && !mainWindow && activeSessions.size === 0 && !syncWindow) {
       // If error occurred during startup check, safely proceed to auth window
       createAuthWindow();
     }
@@ -2019,7 +2019,7 @@ app.whenReady().then(async () => {
   // If no update exists (or check times out in 3.5s), launch createAuthWindow().
   let hasChecked = false;
   startupLaunchTimeout = setTimeout(() => {
-    if (!hasChecked && !isUpdateGateActive && !authWindow) {
+    if (!hasChecked && !isUpdateGateActive && !authWindow && !mainWindow && activeSessions.size === 0 && !syncWindow) {
       hasChecked = true;
       console.log('[ZONIX] Startup update check timeout. Proceeding to auth window...');
       createAuthWindow();
@@ -2031,7 +2031,7 @@ app.whenReady().then(async () => {
   }).catch((err) => {
     hasChecked = true;
     console.error('[ZONIX] Startup update check failed:', err.message);
-    if (!isUpdateGateActive && !authWindow) {
+    if (!isUpdateGateActive && !authWindow && !mainWindow && activeSessions.size === 0 && !syncWindow) {
       createAuthWindow();
     }
   });
