@@ -12,9 +12,9 @@
     }
 
     body {
-      background: #070A11;
-      color: #F8FAFC;
-      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+      background: #FAFAFA;
+      color: #0F172A;
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
       height: 100vh;
       display: flex;
       align-items: center;
@@ -25,76 +25,79 @@
     }
 
     .card {
-      width: 460px;
-      padding: 36px 32px 32px;
-      background: #0B0F19;
-      border: 1px solid #1E293B;
+      width: 440px;
+      padding: 32px 28px 28px;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
       border-radius: 16px;
       box-shadow:
-        0 20px 50px rgba(0, 0, 0, 0.8),
-        0 0 0 1px rgba(56, 189, 248, 0.1);
+        0 20px 40px -12px rgba(15, 23, 42, 0.08),
+        0 1px 3px rgba(15, 23, 42, 0.04);
       text-align: center;
       position: relative;
       overflow: hidden;
-      animation: cardIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: cardIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       -webkit-app-region: no-drag;
     }
 
     @keyframes cardIn {
-      from { opacity: 0; transform: scale(0.96) translateY(8px); }
+      from { opacity: 0; transform: scale(0.97) translateY(6px); }
       to   { opacity: 1; transform: scale(1) translateY(0); }
     }
 
     .logo-container {
-      width: 56px;
-      height: 56px;
-      border-radius: 14px;
-      background: #0F172A;
-      border: 1px solid #1E293B;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0 auto 14px auto;
-      box-shadow: 0 4px 20px rgba(37, 99, 235, 0.25);
     }
 
     .logo-svg {
-      width: 32px;
-      height: 32px;
+      width: 26px;
+      height: 26px;
     }
 
     .header h1 {
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      color: #F8FAFC;
-      text-transform: uppercase;
-      margin-bottom: 4px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: #0F172A;
+      margin-bottom: 3px;
     }
 
     .header p {
-      font-size: 11px;
-      color: #94A3B8;
-      letter-spacing: 0.3px;
+      font-size: 12px;
+      color: #64748B;
+      letter-spacing: normal;
       margin-bottom: 16px;
     }
 
     .session-meta-pill {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      background: #070A11;
-      border: 1px solid #1E293B;
-      padding: 6px 14px;
-      border-radius: 20px;
+      gap: 8px;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      padding: 4px 12px;
+      border-radius: 9999px;
       margin-bottom: 22px;
       font-size: 11px;
-      color: #94A3B8;
+      color: #64748B;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
 
     .session-meta-pill strong {
-      color: #38BDF8;
+      color: #0F172A;
+      font-weight: 600;
+    }
+
+    .meta-divider {
+      color: #CBD5E1;
     }
 
     .meta-dot {
@@ -102,17 +105,17 @@
       height: 6px;
       border-radius: 50%;
       background: #10B981;
-      box-shadow: 0 0 8px #10B981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
     }
 
     /* Steps list */
     .steps {
       list-style: none;
       text-align: left;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
       display: flex;
       flex-direction: column;
-      gap: 9px;
+      gap: 8px;
     }
 
     .steps li {
@@ -121,52 +124,54 @@
       gap: 10px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 11px;
-      color: #475569;
-      transition: all 0.25s ease;
+      color: #94A3B8;
+      transition: all 0.2s ease;
     }
 
     .steps li.active {
-      color: #38BDF8;
-      text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+      color: #2447D6;
+      font-weight: 500;
     }
 
     .steps li.done {
-      color: #94A3B8;
+      color: #334155;
+      font-weight: 450;
     }
 
     .steps li.error {
-      color: #EF4444;
+      color: #DC2626;
+      font-weight: 500;
     }
 
     /* Indicator dot */
     .status-dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background: #1E293B;
+      background: #E2E8F0;
       flex-shrink: 0;
-      transition: all 0.25s ease;
+      transition: all 0.2s ease;
     }
 
     .steps li.active .status-dot {
-      background: #38BDF8;
-      box-shadow: 0 0 8px #38BDF8;
-      animation: dotPulse 1s ease-in-out infinite;
+      background: #2447D6;
+      box-shadow: 0 0 0 3px rgba(36, 71, 214, 0.15);
+      animation: dotPulse 1.2s ease-in-out infinite;
     }
 
     .steps li.done .status-dot {
       background: #10B981;
-      box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+      box-shadow: none;
     }
 
     .steps li.error .status-dot {
-      background: #EF4444;
-      box-shadow: 0 0 8px #EF4444;
+      background: #DC2626;
+      box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
     }
 
     @keyframes dotPulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%      { opacity: 0.4; transform: scale(1.2); }
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.2); opacity: 0.8; }
     }
 
     /* Progress bar */
@@ -176,17 +181,17 @@
 
     .progress-track {
       height: 4px;
-      background: #1E293B;
-      border-radius: 4px;
+      background: #F1F5F9;
+      border-radius: 9999px;
       overflow: hidden;
     }
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #2563EB, #38BDF8);
-      border-radius: 4px;
+      background: #2447D6;
+      border-radius: 9999px;
       width: 0%;
-      transition: width 0.3s ease;
+      transition: width 0.25s ease;
     }
 
     /* Error View */
@@ -197,88 +202,85 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: #0B0F19;
+      background: #FFFFFF;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 32px;
+      padding: 32px 28px;
       z-index: 10;
       border-radius: 16px;
     }
 
     .error-icon {
-      width: 48px;
-      height: 48px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.25);
+      background: #FEF2F2;
+      border: 1px solid #FEE2E2;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 14px;
-      color: #EF4444;
+      margin-bottom: 12px;
+      color: #DC2626;
     }
 
     .error-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: #EF4444;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #0F172A;
+      margin-bottom: 6px;
     }
 
     .error-msg {
-      font-size: 11px;
-      color: #94A3B8;
+      font-size: 12px;
+      color: #64748B;
       line-height: 1.5;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       max-width: 320px;
       text-align: center;
     }
 
     .error-actions {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
-      max-width: 280px;
+      max-width: 260px;
     }
 
     .btn-retry {
       flex: 1;
-      padding: 9px 0;
-      border-radius: 8px;
-      border: 1px solid #2563EB;
-      background: #2563EB;
+      padding: 8px 0;
+      border-radius: 6px;
+      border: 1px solid #2447D6;
+      background: #2447D6;
       color: #FFFFFF;
-      font-size: 11px;
-      font-weight: 600;
+      font-size: 12px;
+      font-weight: 500;
       cursor: pointer;
-      letter-spacing: 0.5px;
-      transition: all 0.2s;
+      transition: background-color 0.15s ease;
     }
 
     .btn-retry:hover {
-      background: #1D4ED8;
+      background: #1D3BB8;
     }
 
     .btn-cancel {
       flex: 1;
-      padding: 9px 0;
-      border-radius: 8px;
-      border: 1px solid #1E293B;
-      background: #0F172A;
-      color: #94A3B8;
-      font-size: 11px;
-      font-weight: 600;
+      padding: 8px 0;
+      border-radius: 6px;
+      border: 1px solid #E2E8F0;
+      background: #FFFFFF;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 500;
       cursor: pointer;
-      letter-spacing: 0.5px;
-      transition: all 0.2s;
+      transition: all 0.15s ease;
     }
 
     .btn-cancel:hover {
-      background: #1E293B;
-      color: #F8FAFC;
+      background: #F8FAFC;
+      color: #0F172A;
+      border-color: #CBD5E1;
     }
   </style>
 </head>
@@ -286,19 +288,19 @@
   <div class="card">
     <div class="header">
       <div class="logo-container">
-        <svg width="32" height="32" viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0 0H150L57 120L0 150L22 120L89 30H0V0Z" fill="#AEB9CC"/>
-          <path d="M57 120H150V150H0L57 120Z" fill="#5B7CFF"/>
+        <svg width="26" height="26" viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0 0H150L57 120L0 150L22 120L89 30H0V0Z" fill="#3B4A63"/>
+          <path d="M57 120H150V150H0L57 120Z" fill="#2447D6"/>
         </svg>
       </div>
-      <h1>PROVISIONING SECURE SESSION</h1>
+      <h1>Provisioning secure session</h1>
       <p>Synchronizing session vault and hardware profile</p>
     </div>
 
     <div class="session-meta-pill" id="sessionMetaPill">
       <span class="meta-dot"></span>
       <span>TARGET: <strong id="metaTargetDomain">ONE.DAT.COM</strong></span>
-      <span>|</span>
+      <span class="meta-divider">|</span>
       <span>OPERATOR: <strong id="metaUsername">USER</strong></span>
     </div>
 
@@ -334,19 +336,19 @@
     <!-- Error View -->
     <div id="errorView">
       <div class="error-icon">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="12" y1="8" x2="12" y2="12"></line>
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
       </div>
-      <div class="error-title">SESSION SYNC FAILED</div>
+      <div class="error-title">Session initialization failed</div>
       <p id="errorMsg" class="error-msg">
         The secure session could not be established. Please verify your connection or retry.
       </p>
       <div class="error-actions">
-        <button id="retryBtn" class="btn-retry">RETRY</button>
-        <button id="cancelBtn" class="btn-cancel">CLOSE</button>
+        <button id="retryBtn" class="btn-retry">Retry</button>
+        <button id="cancelBtn" class="btn-cancel">Close</button>
       </div>
     </div>
   </div>

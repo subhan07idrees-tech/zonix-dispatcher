@@ -13,9 +13,9 @@
     body, html {
       width: 100%;
       height: 100%;
-      background: #070A11;
-      color: #F8FAFC;
-      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+      background: #FFFFFF;
+      color: #0F172A;
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -23,9 +23,9 @@
 
     /* Top Application Bar */
     .header {
-      height: 46px;
-      background: #0B0F19;
-      border-bottom: 1px solid #1E293B;
+      height: 44px;
+      background: #FFFFFF;
+      border-bottom: 1px solid #E2E8F0;
       display: flex;
       align-items: center;
       padding-left: 14px;
@@ -39,38 +39,38 @@
     .brand-section {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       -webkit-app-region: no-drag;
     }
 
     .brand-logo-svg {
-      width: 22px;
-      height: 22px;
+      width: 18px;
+      height: 18px;
       flex-shrink: 0;
     }
 
     .title-text {
       font-size: 13px;
-      font-weight: 800;
-      color: #F8FAFC;
-      letter-spacing: 1px;
+      font-weight: 600;
+      color: #0F172A;
+      letter-spacing: -0.01em;
     }
 
     .gateway-pill {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.8px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
       text-transform: uppercase;
-      color: #38BDF8;
-      background: rgba(56, 189, 248, 0.1);
-      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #475569;
+      background: #F1F5F9;
+      border: 1px solid #E2E8F0;
       padding: 2px 6px;
       border-radius: 4px;
     }
 
     .divider {
-      color: #334155;
-      font-size: 13px;
+      color: #CBD5E1;
+      font-size: 12px;
       margin: 0 2px;
     }
 
@@ -81,43 +81,42 @@
       gap: 6px;
       font-size: 11px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      padding: 3px 9px;
+      padding: 3px 8px;
       border-radius: 6px;
-      font-weight: 500;
       white-space: nowrap;
-      transition: all 0.2s;
+      transition: all 0.15s ease;
     }
 
     .target-badge {
-      background: rgba(16, 185, 129, 0.08);
-      border: 1px solid rgba(16, 185, 129, 0.25);
-      color: #10B981;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      color: #64748B;
     }
 
     .target-badge strong {
-      color: #34D399;
-      font-weight: 700;
+      color: #0F172A;
+      font-weight: 600;
     }
 
     .proxy-badge {
-      background: rgba(56, 189, 248, 0.08);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      color: #38BDF8;
+      background: #F0FDF4;
+      border: 1px solid #DCFCE7;
+      color: #166534;
     }
 
     .proxy-badge strong {
-      color: #7DD3FC;
-      font-weight: 700;
+      color: #15803D;
+      font-weight: 600;
     }
 
     .operator-badge {
-      background: rgba(148, 163, 184, 0.08);
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      color: #94A3B8;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      color: #64748B;
     }
 
     .operator-badge strong {
-      color: #F8FAFC;
+      color: #0F172A;
       font-weight: 600;
     }
 
@@ -127,13 +126,13 @@
       border-radius: 50%;
       background-color: #10B981;
       display: inline-block;
-      box-shadow: 0 0 8px #10B981;
-      animation: beaconPulse 1.8s infinite;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+      animation: beaconPulse 2s infinite;
     }
 
     @keyframes beaconPulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%      { opacity: 0.35; transform: scale(1.15); }
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.15); opacity: 0.6; }
     }
 
     .control-section {
@@ -144,25 +143,25 @@
     }
 
     .header-btn {
-      background: #0F172A;
-      border: 1px solid #1E293B;
-      color: #94A3B8;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      color: #475569;
       font-size: 11px;
-      font-weight: 600;
-      padding: 5px 12px;
+      font-weight: 500;
+      padding: 4px 10px;
       border-radius: 6px;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       transition: all 0.15s ease;
       user-select: none;
     }
 
     .header-btn:hover {
-      background: #1E293B;
-      color: #F8FAFC;
-      border-color: #334155;
+      background: #F8FAFC;
+      color: #0F172A;
+      border-color: #CBD5E1;
     }
 
     .refresh-btn {
@@ -170,13 +169,13 @@
     }
 
     .signout-btn {
-      margin-right: 14px;
+      margin-right: 12px;
     }
 
     .signout-btn:hover {
-      background: #EF4444;
-      border-color: #EF4444;
-      color: #FFFFFF;
+      background: #FEF2F2;
+      border-color: #FCA5A5;
+      color: #DC2626;
     }
 
     .win-btn-container {
@@ -186,10 +185,10 @@
 
     .win-btn {
       width: 44px;
-      height: 46px;
+      height: 44px;
       background: transparent;
       border: none;
-      color: #94A3B8;
+      color: #64748B;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -198,8 +197,8 @@
     }
 
     .win-btn:hover {
-      background: #1E293B;
-      color: #FFFFFF;
+      background: #F1F5F9;
+      color: #0F172A;
     }
 
     .win-btn-close:hover {
@@ -211,10 +210,10 @@
     .tab-bar {
       display: flex;
       align-items: center;
-      background: #06080E;
-      border-bottom: 1px solid #1E293B;
-      padding: 0 12px;
-      height: 38px;
+      background: #F8FAFC;
+      border-bottom: 1px solid #E2E8F0;
+      padding: 0 10px;
+      height: 36px;
       -webkit-app-region: no-drag;
       flex-shrink: 0;
       justify-content: space-between;
@@ -243,43 +242,44 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      background: #0B0F19;
-      border: 1px solid #1E293B;
+      background: #F1F5F9;
+      border: 1px solid #E2E8F0;
       border-bottom: none;
-      color: #94A3B8;
+      color: #64748B;
       font-size: 11px;
       font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
-      padding: 6px 12px;
+      padding: 5px 10px;
       border-top-left-radius: 6px;
       border-top-right-radius: 6px;
       cursor: pointer;
       max-width: 220px;
-      min-width: 130px;
+      min-width: 120px;
       position: relative;
       transition: all 0.15s ease;
-      height: 32px;
+      height: 30px;
     }
 
     .tab:hover {
-      background: #111726;
-      color: #E2E8F0;
+      background: #FFFFFF;
+      color: #0F172A;
     }
 
     .tab.active {
-      background: #070A11;
-      border-color: #334155;
-      border-top: 2px solid #38BDF8;
-      border-bottom: 1px solid #070A11;
-      color: #FFFFFF;
+      background: #FFFFFF;
+      border-color: #E2E8F0;
+      border-top: 2px solid #2447D6;
+      border-bottom: 1px solid #FFFFFF;
+      color: #0F172A;
       font-weight: 600;
       z-index: 2;
+      margin-bottom: -1px;
     }
 
     .tab-dot {
       width: 5px;
       height: 5px;
       border-radius: 50%;
-      background: #38BDF8;
+      background: #2447D6;
       flex-shrink: 0;
     }
 
@@ -298,27 +298,27 @@
       justify-content: center;
       border-radius: 3px;
       font-size: 12px;
-      color: #64748B;
+      color: #94A3B8;
       transition: all 0.15s;
       flex-shrink: 0;
     }
 
     .tab-close:hover {
-      background: #EF4444;
-      color: #FFFFFF;
+      background: #F1F5F9;
+      color: #DC2626;
     }
 
     .add-tab-btn {
-      background: #0B0F19;
-      border: 1px solid #1E293B;
-      color: #94A3B8;
-      font-size: 14px;
-      font-weight: 600;
-      width: 26px;
-      height: 26px;
-      margin-left: 6px;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      color: #64748B;
+      font-size: 13px;
+      font-weight: 500;
+      width: 24px;
+      height: 24px;
+      margin-left: 4px;
       margin-bottom: 3px;
-      border-radius: 6px;
+      border-radius: 5px;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -327,17 +327,17 @@
     }
 
     .add-tab-btn:hover {
-      background: #1E293B;
-      color: #FFFFFF;
-      border-color: #334155;
+      background: #F8FAFC;
+      color: #0F172A;
+      border-color: #CBD5E1;
     }
 
     .tabs-count-pill {
       font-size: 10px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       color: #64748B;
-      background: #0B0F19;
-      border: 1px solid #1E293B;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
       padding: 2px 8px;
       border-radius: 4px;
       flex-shrink: 0;
@@ -347,7 +347,7 @@
     .webview-container {
       flex: 1;
       width: 100%;
-      background: #000000;
+      background: #FFFFFF;
       position: relative;
     }
 
@@ -364,36 +364,36 @@
       top: -99999px !important;
     }
 
-    /* Cyber Loading Overlay */
+    /* Loading Overlay */
     .loading-overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: radial-gradient(circle at center, #0F172A 0%, #070A11 100%);
+      background: #FFFFFF;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 50;
-      transition: opacity 0.3s ease;
+      transition: opacity 0.25s ease;
     }
 
     .shield-radar-box {
       position: relative;
-      width: 90px;
-      height: 90px;
+      width: 72px;
+      height: 72px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 22px;
+      margin-bottom: 18px;
     }
 
     .radar-ring {
       position: absolute;
       border-radius: 50%;
-      border: 1px solid rgba(56, 189, 248, 0.25);
+      border: 1px solid rgba(36, 71, 214, 0.15);
       animation: radarExpand 2.2s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
     }
 
@@ -402,47 +402,45 @@
     }
 
     @keyframes radarExpand {
-      0%   { width: 30px; height: 30px; opacity: 1; border-color: rgba(56, 189, 248, 0.6); }
-      100% { width: 110px; height: 110px; opacity: 0; border-color: rgba(37, 99, 235, 0); }
+      0%   { width: 24px; height: 24px; opacity: 1; border-color: rgba(36, 71, 214, 0.4); }
+      100% { width: 90px; height: 90px; opacity: 0; border-color: rgba(36, 71, 214, 0); }
     }
 
     .loading-logo-svg {
-      width: 48px;
-      height: 48px;
+      width: 36px;
+      height: 36px;
       position: relative;
       z-index: 2;
-      filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.4));
     }
 
     .loading-title {
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #F8FAFC;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: #0F172A;
       margin-bottom: 4px;
     }
 
     .loading-subtext {
-      font-size: 11px;
-      color: #94A3B8;
-      letter-spacing: 0.3px;
-      margin-bottom: 24px;
+      font-size: 12px;
+      color: #64748B;
+      letter-spacing: normal;
+      margin-bottom: 20px;
     }
 
-    /* Live Telemetry Info Box */
+    /* Telemetry Card */
     .telemetry-card {
       width: 440px;
-      background: #0B0F19;
-      border: 1px solid #1E293B;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
       border-radius: 12px;
-      padding: 16px;
+      padding: 14px 16px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 11px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.05);
     }
 
     .telemetry-row {
@@ -450,7 +448,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 4px 0;
-      border-bottom: 1px solid #131A2B;
+      border-bottom: 1px solid #F1F5F9;
     }
 
     .telemetry-row:last-child {
@@ -463,22 +461,22 @@
     }
 
     .telemetry-val {
-      font-weight: 700;
-      color: #F8FAFC;
+      font-weight: 600;
+      color: #0F172A;
       max-width: 260px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    .telemetry-val.cyan { color: #38BDF8; }
-    .telemetry-val.green { color: #10B981; }
+    .telemetry-val.cyan { color: #2447D6; }
+    .telemetry-val.green { color: #15803D; }
 
     .shimmer-track {
       width: 440px;
       height: 3px;
-      background: #1E293B;
-      border-radius: 3px;
+      background: #F1F5F9;
+      border-radius: 9999px;
       margin-top: 14px;
       overflow: hidden;
       position: relative;
@@ -487,7 +485,8 @@
     .shimmer-bar {
       width: 40%;
       height: 100%;
-      background: linear-gradient(90deg, transparent, #38BDF8, transparent);
+      background: #2447D6;
+      border-radius: 9999px;
       position: absolute;
       animation: shimmerLoop 1.5s infinite;
     }
@@ -501,11 +500,11 @@
     .load-error-box {
       display: none;
       margin-top: 16px;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
+      background: #FEF2F2;
+      border: 1px solid #FEE2E2;
       padding: 12px 16px;
       border-radius: 8px;
-      color: #EF4444;
+      color: #DC2626;
       font-size: 12px;
       text-align: center;
       max-width: 440px;
@@ -513,13 +512,13 @@
 
     .retry-load-btn {
       margin-top: 8px;
-      background: #EF4444;
+      background: #DC2626;
       border: none;
       color: #FFFFFF;
       padding: 6px 14px;
       border-radius: 6px;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 500;
       cursor: pointer;
     }
 
@@ -530,8 +529,8 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(7, 10, 17, 0.95);
-      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
       display: none;
       flex-direction: column;
       align-items: center;
@@ -547,16 +546,16 @@
 
     .overlay-title {
       font-size: 16px;
-      font-weight: 800;
-      letter-spacing: 1px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
       margin-bottom: 8px;
     }
 
     .overlay-desc {
       font-size: 12px;
-      color: #94A3B8;
-      max-width: 460px;
-      line-height: 1.6;
+      color: #64748B;
+      max-width: 440px;
+      line-height: 1.5;
       margin-bottom: 20px;
     }
 
@@ -567,7 +566,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.75);
+      background: rgba(15, 23, 42, 0.4);
       backdrop-filter: blur(4px);
       display: none;
       align-items: center;
@@ -581,44 +580,43 @@
 
     .modal-card {
       width: 380px;
-      background: #0B0F19;
-      border: 1px solid #1E293B;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
       border-radius: 14px;
       padding: 24px;
       text-align: center;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+      box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.12);
       animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
     @keyframes modalPop {
-      from { transform: scale(0.95); opacity: 0; }
+      from { transform: scale(0.96); opacity: 0; }
       to   { transform: scale(1); opacity: 1; }
     }
 
     .modal-icon {
       width: 44px;
       height: 44px;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.25);
+      background: #FEF2F2;
+      border: 1px solid #FEE2E2;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0 auto 14px auto;
-      color: #EF4444;
+      color: #DC2626;
     }
 
     .modal-title {
       font-size: 14px;
-      font-weight: 700;
-      color: #FFFFFF;
-      letter-spacing: 0.5px;
+      font-weight: 600;
+      color: #0F172A;
       margin-bottom: 6px;
     }
 
     .modal-desc {
       font-size: 12px;
-      color: #94A3B8;
+      color: #64748B;
       line-height: 1.5;
       margin-bottom: 20px;
     }
@@ -630,33 +628,34 @@
 
     .modal-btn {
       flex: 1;
-      padding: 9px;
+      padding: 8px;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 500;
       border-radius: 6px;
       cursor: pointer;
       border: none;
-      transition: all 0.15s;
+      transition: all 0.15s ease;
     }
 
     .modal-btn-cancel {
-      background: #0F172A;
-      border: 1px solid #1E293B;
-      color: #94A3B8;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      color: #475569;
     }
 
     .modal-btn-cancel:hover {
-      background: #1E293B;
-      color: #FFFFFF;
+      background: #F8FAFC;
+      color: #0F172A;
+      border-color: #CBD5E1;
     }
 
     .modal-btn-confirm {
-      background: #EF4444;
+      background: #DC2626;
       color: #FFFFFF;
     }
 
     .modal-btn-confirm:hover {
-      background: #DC2626;
+      background: #B91C1C;
     }
   </style>
 </head>
@@ -664,20 +663,10 @@
   <!-- Top Application Bar -->
   <div class="header">
     <div class="brand-section">
-      <!-- Bespoke ZONIX Vector Shield -->
-      <svg viewBox="0 0 32 32" class="brand-logo-svg" fill="none">
-        <defs>
-          <linearGradient id="hdrShieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#38BDF8"/>
-            <stop offset="100%" stop-color="#2563EB"/>
-          </linearGradient>
-          <linearGradient id="hdrZGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#FFFFFF"/>
-            <stop offset="100%" stop-color="#93C5FD"/>
-          </linearGradient>
-        </defs>
-        <polygon points="16,2 29,8 29,22 16,30 3,22 3,8" fill="#0B0F19" stroke="url(#hdrShieldGrad)" stroke-width="2.2" stroke-linejoin="round"/>
-        <path d="M11 11 H21 L13 21 H21" stroke="url(#hdrZGrad)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <!-- Bespoke ZONIX Vector Brand Mark -->
+      <svg viewBox="0 0 150 150" class="brand-logo-svg" fill="none">
+        <path d="M0 0H150L57 120L0 150L22 120L89 30H0V0Z" fill="#3B4A63"/>
+        <path d="M57 120H150V150H0L57 120Z" fill="#2447D6"/>
       </svg>
 
       <span class="title-text">ZONIX</span>
@@ -756,23 +745,13 @@
       <div class="shield-radar-box">
         <div class="radar-ring"></div>
         <div class="radar-ring"></div>
-        <svg viewBox="0 0 32 32" class="loading-logo-svg" fill="none">
-          <defs>
-            <linearGradient id="ldShieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#38BDF8"/>
-              <stop offset="100%" stop-color="#2563EB"/>
-            </linearGradient>
-            <linearGradient id="ldZGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#FFFFFF"/>
-              <stop offset="100%" stop-color="#93C5FD"/>
-            </linearGradient>
-          </defs>
-          <polygon points="16,2 29,8 29,22 16,30 3,22 3,8" fill="#0B0F19" stroke="url(#ldShieldGrad)" stroke-width="2.2" stroke-linejoin="round"/>
-          <path d="M11 11 H21 L13 21 H21" stroke="url(#ldZGrad)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <svg viewBox="0 0 150 150" class="loading-logo-svg" fill="none">
+          <path d="M0 0H150L57 120L0 150L22 120L89 30H0V0Z" fill="#3B4A63"/>
+          <path d="M57 120H150V150H0L57 120Z" fill="#2447D6"/>
         </svg>
       </div>
 
-      <div class="loading-title">INITIALIZING SECURE GATEWAY</div>
+      <div class="loading-title">Initializing secure gateway</div>
       <div class="loading-subtext" id="loadingStatusText">Connecting dedicated proxy tunnel &amp; locking session vault...</div>
 
       <!-- Live Telemetry Card -->
@@ -819,24 +798,24 @@
       <p style="color: #EF4444; font-size: 11px; font-family: ui-monospace, monospace; letter-spacing: 1px; margin-bottom: 20px;">
         RECONNECTING SECURE TUNNEL...
       </p>
-      <button id="outageCloseBtn" class="header-btn" style="background:#EF4444;color:#FFFFFF;border:none;padding:10px 24px;font-size:11px;font-weight:700;letter-spacing:0.5px;box-shadow:0 0 15px rgba(239,68,68,0.4);">
-        CLOSE SESSION SAFELY
+      <button id="outageCloseBtn" class="header-btn" style="background:#DC2626;color:#FFFFFF;border:none;padding:8px 20px;font-size:12px;font-weight:500;border-radius:6px;cursor:pointer;">
+        Close session safely
       </button>
     </div>
 
     <!-- Session Paused Overlay -->
     <div class="overlay-shield" id="sessionPausedOverlay">
-      <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:16px;">
+      <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="#2447D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:14px;">
         <circle cx="12" cy="12" r="10"/>
         <line x1="10" y1="15" x2="10" y2="9"/>
         <line x1="14" y1="15" x2="14" y2="9"/>
       </svg>
-      <h3 class="overlay-title" style="color: #38BDF8;">SESSION PAUSED</h3>
+      <h3 class="overlay-title" style="color: #0F172A;">Session paused</h3>
       <p class="overlay-desc">
         An administrator is synchronizing session tokens for this node. Viewport access is temporarily suspended.
       </p>
-      <p style="color: #38BDF8; font-size: 11px; font-family: ui-monospace, monospace; letter-spacing: 1px;">
-        AWAITING UPDATED VAULT TOKENS...
+      <p style="color: #2447D6; font-size: 11px; font-family: ui-monospace, monospace; letter-spacing: 0.5px;">
+        Awaiting updated vault tokens...
       </p>
     </div>
   </div>
@@ -845,13 +824,13 @@
   <div id="confirmModal" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-icon">
-        <svg viewBox="0 0 24 24" width="22" height="22" stroke="#EF4444" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="#DC2626" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
           <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
           <line x1="12" y1="9" x2="12" y2="13"></line>
           <line x1="12" y1="17" x2="12.01" y2="17"></line>
         </svg>
       </div>
-      <div class="modal-title">END SECURE SESSION</div>
+      <div class="modal-title">End secure session</div>
       <div class="modal-desc">Are you sure you want to log out of the dispatch gateway?</div>
       <div class="modal-actions">
         <button id="cancelConfirmBtn" class="modal-btn modal-btn-cancel">Cancel</button>
@@ -863,17 +842,17 @@
   <!-- Tab Limit Alert Modal -->
   <div id="alertModal" class="modal-overlay">
     <div class="modal-card">
-      <div class="modal-icon" style="background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.25); color: #38BDF8;">
-        <svg viewBox="0 0 24 24" width="22" height="22" stroke="#38BDF8" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <div class="modal-icon" style="background: rgba(36, 71, 214, 0.08); border-color: rgba(36, 71, 214, 0.2); color: #2447D6;">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="#2447D6" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="12" y1="16" x2="12" y2="12"></line>
           <line x1="12" y1="8" x2="12.01" y2="8"></line>
         </svg>
       </div>
-      <div class="modal-title" id="alertModalTitle">SEAT LIMIT REACHED</div>
+      <div class="modal-title" id="alertModalTitle">Seat limit reached</div>
       <div class="modal-desc" id="alertModalDesc">You have reached the maximum allowed tab seat limit for this session.</div>
       <div class="modal-actions">
-        <button id="okAlertBtn" class="modal-btn modal-btn-cancel" style="background:#2563EB;color:#FFFFFF;border:none;">Understood</button>
+        <button id="okAlertBtn" class="modal-btn modal-btn-cancel" style="background:#2447D6;color:#FFFFFF;border:none;">Understood</button>
       </div>
     </div>
   </div>
