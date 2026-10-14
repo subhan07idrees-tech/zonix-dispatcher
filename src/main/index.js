@@ -272,6 +272,27 @@ function createMainWindow() {
   disableDevTools(mainWindow);
 }
 
+function filterRelevantSessionCookies(allCookies, targetUrl) {
+  let targetHost = '';
+  try {
+    targetHost = new URL(targetUrl).hostname.toLowerCase();
+  } catch (e) {
+    targetHost = 'one.dat.com';
+  }
+  const parts = targetHost.split('.');
+  const rootDomain = parts.length >= 2 ? parts.slice(-2).join('.') : targetHost;
+
+  return (allCookies || []).filter((c) => {
+    const rawDom = (c.domain || '').toLowerCase().replace(/^\./, '');
+    if (!rawDom) return true;
+
+    const isTarget = rawDom === rootDomain || rawDom.endsWith('.' + rootDomain) || rawDom === targetHost || rawDom.endsWith('.' + targetHost);
+    const isAuth = rawDom === 'auth0.com' || rawDom.endsWith('.auth0.com') || rawDom === 'okta.com' || rawDom.endsWith('.okta.com');
+
+    return isTarget || isAuth;
+  });
+}
+
 async function verifyCookieSync(sess, originalCookies, targetUrl, retries = 3) {
   let attempt = 0;
   while (attempt < retries) {
@@ -395,8 +416,8 @@ function createSyncWindow(orgId, userId, targetUrl) {
   // Start prefetching cookies and proxy nodes concurrently
   const token = getAuthToken();
   const effectiveTarget = (targetUrl && targetUrl.trim() !== '' && !targetUrl.includes('app.example.com')) 
-    ? targetUrl 
-    : (store.get('targetUrl') || 'https://one.dat.com');
+    ? (targetUrl === 'https://one.dat.com' || targetUrl === 'https://one.dat.com/' ? 'https://one.dat.com/search-loads' : targetUrl)
+    : (store.get('targetUrl') || 'https://one.dat.com/search-loads');
   let targetDomain = '';
   try {
     targetDomain = new URL(effectiveTarget).hostname;
@@ -1310,8 +1331,8 @@ function registerIPC() {
     const token = getAuthToken();
     const sessionId = uuidv4();
     const effectiveTargetUrl = (options.targetUrl && options.targetUrl.trim() !== '' && !options.targetUrl.includes('app.example.com'))
-      ? options.targetUrl
-      : (store.get('targetUrl') || 'https://one.dat.com');
+      ? (options.targetUrl === 'https://one.dat.com' || options.targetUrl === 'https://one.dat.com/' ? 'https://one.dat.com/search-loads' : options.targetUrl)
+      : (store.get('targetUrl') || 'https://one.dat.com/search-loads');
 
     console.log(`[ZONIX Main] dispatch:launch orgId=${orgId}, userId=${userId}, targetUrl=${effectiveTargetUrl}`);
 
@@ -1591,10 +1612,12 @@ function registerIPC() {
       }
     });
 
-    captureWindow.setMenu(null);
+    const effectiveCaptureUrl = (targetUrl === 'https://one.dat.com' || targetUrl === 'https://one.dat.com/')
+      ? 'https://one.dat.com/search-loads'
+      : targetUrl;
 
     try {
-      await captureWindow.loadURL(targetUrl);
+      await captureWindow.loadURL(effectiveCaptureUrl);
     } catch (loadErr) {
       console.error('[ZONIX Main] Capture window failed to load URL:', loadErr.message);
     }
@@ -1606,7 +1629,8 @@ function registerIPC() {
       try {
         if (!sess) return;
         const allCookies = await sess.cookies.get({});
-        const serializedCookies = allCookies.map(c => {
+        const relevantCookies = filterRelevantSessionCookies(allCookies, effectiveCaptureUrl);
+        const serializedCookies = relevantCookies.map(c => {
           const scheme = c.secure ? 'https://' : 'http://';
           const cleanDomain = c.domain.startsWith('.') ? c.domain.substring(1) : c.domain;
           const cookieUrl = `${scheme}${cleanDomain}${c.path || '/'}`;
@@ -1755,7 +1779,8 @@ function registerIPC() {
 
 
 
-    const serializedCookies = allCookies.map(c => {
+    const relevantCookies = filterRelevantSessionCookies(allCookies, effectiveCaptureUrl);
+    const serializedCookies = relevantCookies.map(c => {
       const scheme = c.secure ? 'https://' : 'http://';
       const cleanDomain = c.domain.startsWith('.') ? c.domain.substring(1) : c.domain;
       const cookieUrl = `${scheme}${cleanDomain}${c.path || '/'}`;

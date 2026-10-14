@@ -395,7 +395,10 @@ export default function UsersPage() {
       id: selectedOrg,
       targetUrl: 'https://one.dat.com/search-loads'
     };
-    const targetUrl = targetOrg.targetUrl || 'https://one.dat.com/search-loads';
+    let targetUrl = targetOrg.targetUrl || 'https://one.dat.com/search-loads';
+    if (targetUrl === 'https://one.dat.com' || targetUrl === 'https://one.dat.com/') {
+      targetUrl = 'https://one.dat.com/search-loads';
+    }
 
     let displayUsername = 'Organization-wide';
     if (targetUserId !== 'system') {
