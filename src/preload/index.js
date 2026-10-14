@@ -822,14 +822,14 @@ try {
       'logout'
     ];
 
-    const getCopySVG = (color) => `
-      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+    const getCopySVG = (color = '#64748b') => `
+      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
       </svg>
     `;
     const getCheckSVG = () => `
-      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
         <polyline points="20 6 9 17 4 12"></polyline>
       </svg>
     `;
@@ -843,26 +843,37 @@ try {
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        border: 1px solid #334155;
-        background: #1e293b;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
         border-radius: 4px;
-        padding: 4px;
+        padding: 0;
         margin-left: 6px;
-        width: 22px;
-        height: 22px;
+        width: 20px;
+        height: 20px;
         vertical-align: middle;
-        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        transition: all 0.15s ease-in-out;
+        flex-shrink: 0;
+        box-sizing: border-box;
       `;
       
-      btn.innerHTML = getCopySVG('#94a3b8');
+      btn.innerHTML = getCopySVG('#64748b');
       
       btn.addEventListener('mouseenter', () => {
-        btn.style.background = '#334155';
-        btn.style.borderColor = '#475569';
+        if (!btn.dataset.copied) {
+          btn.style.background = '#ffffff';
+          btn.style.borderColor = '#cbd5e1';
+          btn.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.06)';
+          btn.innerHTML = getCopySVG('#2447d6');
+        }
       });
       btn.addEventListener('mouseleave', () => {
-        btn.style.background = '#1e293b';
-        btn.style.borderColor = '#334155';
+        if (!btn.dataset.copied) {
+          btn.style.background = '#f8fafc';
+          btn.style.borderColor = '#e2e8f0';
+          btn.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.04)';
+          btn.innerHTML = getCopySVG('#64748b');
+        }
       });
       
       btn.addEventListener('click', (e) => {
@@ -871,15 +882,19 @@ try {
         
         const text = getTextFn();
         navigator.clipboard.writeText(text).then(() => {
+          btn.dataset.copied = 'true';
           btn.innerHTML = getCheckSVG();
-          btn.style.borderColor = '#10b981';
-          btn.style.background = '#064e3b';
+          btn.style.borderColor = '#86efac';
+          btn.style.background = '#f0fdf4';
+          btn.style.boxShadow = '0 1px 2px rgba(22, 163, 74, 0.1)';
           
           setTimeout(() => {
-            btn.innerHTML = getCopySVG('#94a3b8');
-            btn.style.borderColor = '#334155';
-            btn.style.background = '#1e293b';
-          }, 1000);
+            delete btn.dataset.copied;
+            btn.innerHTML = getCopySVG('#64748b');
+            btn.style.borderColor = '#e2e8f0';
+            btn.style.background = '#f8fafc';
+            btn.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.04)';
+          }, 1200);
         }).catch(err => {
           console.error('[ZONIX] Copy failed:', err);
         });
@@ -1005,16 +1020,26 @@ try {
       }
     };
 
-    // Real-Time MutationObserver for Instant <10ms UI Restrictions
+    let passScheduled = false;
+    const scheduleLockdownPass = () => {
+      if (passScheduled) return;
+      passScheduled = true;
+      requestAnimationFrame(() => {
+        passScheduled = false;
+        applyLockdownPass();
+      });
+    };
+
+    // Real-Time MutationObserver with 60fps frame batching
     const observer = new MutationObserver(() => {
-      applyLockdownPass();
+      scheduleLockdownPass();
     });
 
     if (document.documentElement) {
       observer.observe(document.documentElement, { childList: true, subtree: true });
     }
     document.addEventListener('DOMContentLoaded', applyLockdownPass);
-    setInterval(applyLockdownPass, 1000);
+    setInterval(scheduleLockdownPass, 2000);
 
     console.log('[ZONIX] DAT One real-time interface lockdown engine active');
   } catch (err) {
