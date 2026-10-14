@@ -121,7 +121,20 @@ app.on('web-contents-created', (event, contents) => {
       return { action: 'deny' };
     }
     if (lowerUrl.startsWith('http:') || lowerUrl.startsWith('https:')) {
-      if (!lowerUrl.includes('dat.com') && !lowerUrl.includes('truckstop.com') && !lowerUrl.includes('123loadboard.com')) {
+      const allowedDomains = [
+        'dat.com',
+        'truckstop.com',
+        '123loadboard.com',
+        'auth0.com',
+        'okta.com',
+        'google.com',
+        'microsoft.com',
+        'microsoftonline.com',
+        'live.com',
+        'cloudflare.com'
+      ];
+      const isAllowed = allowedDomains.some((d) => lowerUrl.includes(d));
+      if (!isAllowed) {
         return { action: 'deny' };
       }
     }

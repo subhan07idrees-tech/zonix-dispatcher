@@ -417,13 +417,14 @@ export default function UsersPage() {
           }
         } catch (pe) {}
 
+        showToast('Opening secure authentication window...', 'ok');
         await captureFn({
           orgId: selectedOrg,
           userId: targetUserId,
           targetUrl,
           proxy: proxyToUse
         });
-        showToast(`Capture window launched for ${displayUsername}`, 'ok');
+        showToast(`Session authenticated & vault updated for ${displayUsername}`, 'ok');
       } else {
         showToast('Capture window is only available inside the ZONIX Desktop Application (not in web browser mode)', 'warn');
       }
