@@ -946,30 +946,46 @@ try {
         }
       });
 
-      // Inject Route Copy Button ONLY in the Detail Header
+      // Inject Location & Route Copy Button (Origin & Destination)
       (() => {
+        // Collect all city-state pairs in the details pane
+        const cityStateRegex = /([A-Za-z][A-Za-z\s\.\'-]{1,35}),\s*([A-Za-z]{2})\b/g;
+
         const viewRouteBtn = Array.from(document.querySelectorAll('button, a')).find(el => {
           const t = (el.textContent || '').trim().toUpperCase();
           return t === 'VIEW ROUTE' || t === 'VIEW MAP';
         });
-        if (!viewRouteBtn) return; // No details pane open - do nothing
 
-        let sectionEl = viewRouteBtn;
-        for (let i = 0; i < 8; i++) {
-          if (!sectionEl.parentElement || sectionEl.parentElement === document.body) break;
-          sectionEl = sectionEl.parentElement;
+        let paneRoot = document.body;
+        if (viewRouteBtn) {
+          let curr = viewRouteBtn;
+          for (let i = 0; i < 10; i++) {
+            if (!curr.parentElement || curr.parentElement === document.body) break;
+            curr = curr.parentElement;
+          }
+          paneRoot = curr;
         }
 
-        const cityStateRegex = /([A-Za-z][A-Za-z\s\.\'-]*),\s*([A-Za-z]{2})(?:\s|$)/g;
-        const allEls = Array.from(sectionEl.querySelectorAll('h1, h2, h3, h4, [class*="header"], [class*="title"], [class*="heading"]'));
-        const directChildren = Array.from(sectionEl.children).slice(0, 3);
-        const candidates = [...allEls, ...directChildren];
+        // Strategy A: Find the big location header (e.g., "Spartanburg, SC ... Lebanon, OH 453 mi")
+        const allHeadings = Array.from(document.querySelectorAll('h1, h2, h3, h4, [class*="header"], [class*="title"], [class*="heading"], [class*="summary"], [class*="route"]'));
+        
+        const candidateElements = new Set([
+          ...allHeadings,
+          ...Array.from(paneRoot.querySelectorAll('*')).filter(el => {
+            const text = (el.textContent || '').trim();
+            return text.length >= 10 && text.length <= 160 && (text.includes('mi') || text.includes('➔') || text.includes('→') || text.includes('..') || text.includes('to'));
+          })
+        ]);
 
-        for (const el of candidates) {
-          if (el.querySelector('.zonix-route-copy-btn') || el.querySelector('.zonix-quick-copy-btn')) continue;
+        let foundLocations = [];
 
-          const rawText = (el.textContent || '').trim();
-          if (rawText.length < 5 || rawText.length > 200) continue;
+        for (const el of candidateElements) {
+          if (el.querySelector('.zonix-route-copy-btn')) continue;
+
+          if (el.children.length > 8) continue;
+
+          const rawText = (el.textContent || '').replace(/\s+/g, ' ').trim();
+          if (rawText.length < 8 || rawText.length > 200) continue;
 
           cityStateRegex.lastIndex = 0;
           const matches = [];
@@ -980,14 +996,46 @@ try {
           }
 
           if (matches.length >= 2) {
+            foundLocations = matches;
+            const origin = matches[0];
+            const dest = matches[1];
+
             const copyBtn = createStyledCopyButton(
-              () => `${matches[0]} ➔ ${matches[1]}`,
-              'Copy Route'
+              () => `${origin} to ${dest}`,
+              `Copy: ${origin} to ${dest}`
             );
             copyBtn.className = 'zonix-quick-copy-btn zonix-route-copy-btn';
             copyBtn.style.marginLeft = '8px';
+            copyBtn.style.verticalAlign = 'middle';
+            
             el.appendChild(copyBtn);
             break;
+          }
+        }
+
+        // Strategy B: If big header wasn't hooked, inject right next to the "VIEW ROUTE" button
+        if (viewRouteBtn && !viewRouteBtn.parentNode.querySelector('.zonix-route-copy-btn')) {
+          if (foundLocations.length < 2) {
+            const paneText = (paneRoot.textContent || '').replace(/\s+/g, ' ');
+            cityStateRegex.lastIndex = 0;
+            let m;
+            while ((m = cityStateRegex.exec(paneText)) !== null) {
+              const loc = `${m[1].trim()}, ${m[2].trim().toUpperCase()}`;
+              if (!foundLocations.includes(loc)) foundLocations.push(loc);
+              if (foundLocations.length >= 2) break;
+            }
+          }
+
+          if (foundLocations.length >= 2) {
+            const origin = foundLocations[0];
+            const dest = foundLocations[1];
+            const copyBtn = createStyledCopyButton(
+              () => `${origin} to ${dest}`,
+              `Copy: ${origin} to ${dest}`
+            );
+            copyBtn.className = 'zonix-quick-copy-btn zonix-route-copy-btn';
+            copyBtn.style.marginLeft = '8px';
+            viewRouteBtn.parentNode.insertBefore(copyBtn, viewRouteBtn.nextSibling);
           }
         }
       })();

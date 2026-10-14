@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function ZonixLogo({ size = 24, showText = true, className = '', dark = false, version = 'v1.9.21' }) {
+export default function ZonixLogo({ size = 24, showText = true, className = '', dark = false, version = 'v1.9.22' }) {
   const slateColor = dark ? '#AEB9CC' : '#3B4A63';
   const cobaltColor = dark ? '#5B7CFF' : '#2447D6';
 

@@ -642,21 +642,36 @@ async function createDispatchWindow(sessionId, config) {
     if (isClosed) return;
     e.preventDefault();
 
+    // 1. Instantly hide window for 0ms perceived lag
+    try {
+      if (dispatchWindow && !dispatchWindow.isDestroyed()) {
+        dispatchWindow.hide();
+      }
+    } catch (err) {}
+
     proxyManager.stopHealthCheck(sessionId);
     proxyManager.clearKillSwitch(sessionId);
     activeSessions.delete(sessionId);
     sessionLocalStorageMap.delete(partitionId);
     broadcastSessionUpdate();
 
+    // 2. Notify backend with 800ms race timeout so slow network never hangs window close
     try {
       console.log(`[ZONIX] Notifying backend of session termination for ${sessionId}...`);
-      await endSessionOnBackend(sessionId);
+      await Promise.race([
+        endSessionOnBackend(sessionId),
+        new Promise(resolve => setTimeout(resolve, 800))
+      ]);
     } catch (err) {
-      console.error(`[ZONIX] Failed to notify backend of session termination:`, err.message);
+      console.error(`[ZONIX] Session backend termination note:`, err.message);
     }
 
     isClosed = true;
-    dispatchWindow.close();
+    try {
+      if (dispatchWindow && !dispatchWindow.isDestroyed()) {
+        dispatchWindow.close();
+      }
+    } catch (e) {}
   });
 
   const lsData = localStorageData || '{}';
@@ -929,9 +944,34 @@ function connectWebSocket() {
 
 function forceLogout() {
   console.warn('[ZONIX] Force-logout command received. Evicting local session.');
-  
-  createAuthWindow('session_expired');
 
+  // 1. Immediately hide and destroy all active dispatch session windows
+  activeSessions.forEach((sessionData) => {
+    try {
+      if (sessionData.window && !sessionData.window.isDestroyed()) {
+        sessionData.window.hide();
+        sessionData.window.destroy();
+      }
+    } catch (e) {}
+  });
+  activeSessions.clear();
+
+  // 2. Hide and destroy any other non-auth windows (e.g. capture or dispatch wrappers)
+  BrowserWindow.getAllWindows().forEach((win) => {
+    try {
+      if (win && !win.isDestroyed() && win !== authWindow) {
+        win.hide();
+        win.destroy();
+      }
+    } catch (e) {}
+  });
+
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.destroy();
+    mainWindow = null;
+  }
+
+  // 3. Clear auth store and tokens
   setAuthToken(null);
   store.delete('orgId');
   store.delete('userId');
@@ -945,17 +985,8 @@ function forceLogout() {
     wsConnection = null;
   }
 
-  activeSessions.forEach((sessionData) => {
-    try {
-      sessionData.window.destroy();
-    } catch (e) {}
-  });
-  activeSessions.clear();
-
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.destroy();
-    mainWindow = null;
-  }
+  // 4. NOW create the auth window with session_expired message
+  createAuthWindow('session_expired');
 }
 
 function handleWSMessage(msg) {
@@ -1297,10 +1328,11 @@ function registerIPC() {
 
   ipcMain.handle('dispatch:logout', async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
-    if (win) {
+    if (win && !win.isDestroyed()) {
+      win.hide();
       win.close();
     }
-    if (authWindow) {
+    if (authWindow && !authWindow.isDestroyed()) {
       authWindow.show();
     } else {
       createAuthWindow();

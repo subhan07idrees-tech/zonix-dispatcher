@@ -1489,6 +1489,8 @@
 
     document.getElementById('okConfirmBtn').addEventListener('click', async () => {
       confirmModal.classList.remove('show');
+      document.body.style.opacity = '0.1';
+      document.body.style.pointerEvents = 'none';
       await window.zonixAPI.logoutDispatcher();
     });
 
