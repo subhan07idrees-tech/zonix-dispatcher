@@ -904,26 +904,39 @@ try {
       return btn;
     };
 
+    let isPerformingPass = false;
+
     const applyLockdownPass = () => {
-      // Hide sidebar/menu items - expanded scanning including drawer/footer elements
-      const selectors = 'nav a, nav button, nav li, header a, header button, footer a, footer button, footer li, aside a, aside button, aside li, [role="navigation"] a, [role="navigation"] button, [class*="sidebar"] a, [class*="sidebar"] button, [class*="sidebar"] li, [class*="drawer"] a, [class*="drawer"] button, [class*="footer"] a, [class*="footer"] button, [class*="account"] a, [class*="account"] button';
-      const elements = Array.from(document.querySelectorAll(selectors));
-      
-      elements.forEach(el => {
-        const text = (el.innerText || el.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim();
-        if (!text) return;
+      if (isPerformingPass) return;
+      isPerformingPass = true;
+
+      try {
+        // Hide sidebar/menu items - fast textContent scanning without layout thrashing
+        const selectors = 'nav a, nav button, nav li, header a, header button, footer a, footer button, footer li, aside a, aside button, aside li, [role="navigation"] a, [role="navigation"] button, [class*="sidebar"] a, [class*="sidebar"] button, [class*="sidebar"] li, [class*="drawer"] a, [class*="drawer"] button, [class*="footer"] a, [class*="footer"] button, [class*="account"] a, [class*="account"] button';
+        const elements = document.querySelectorAll(selectors);
         
-        blockLabels.forEach(label => {
-          if (text === label || text.startsWith(label) || (text.includes(label) && text.length < label.length + 15)) {
-            el.style.setProperty('display', 'none', 'important');
-            el.style.setProperty('pointer-events', 'none', 'important');
-            if (el.parentElement && (el.parentElement.tagName === 'LI' || el.parentElement.classList.toString().includes('item'))) {
-              el.parentElement.style.setProperty('display', 'none', 'important');
-              el.parentElement.style.setProperty('pointer-events', 'none', 'important');
+        for (let i = 0; i < elements.length; i++) {
+          const el = elements[i];
+          if (el.dataset.zonixBlocked === 'true' || el.style.display === 'none') continue;
+          
+          const text = (el.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim();
+          if (!text) continue;
+          
+          for (let j = 0; j < blockLabels.length; j++) {
+            const label = blockLabels[j];
+            if (text === label || text.startsWith(label) || (text.includes(label) && text.length < label.length + 15)) {
+              el.dataset.zonixBlocked = 'true';
+              el.style.setProperty('display', 'none', 'important');
+              el.style.setProperty('pointer-events', 'none', 'important');
+              if (el.parentElement && (el.parentElement.tagName === 'LI' || el.parentElement.classList.toString().includes('item'))) {
+                el.parentElement.dataset.zonixBlocked = 'true';
+                el.parentElement.style.setProperty('display', 'none', 'important');
+                el.parentElement.style.setProperty('pointer-events', 'none', 'important');
+              }
+              break;
             }
           }
-        });
-      });
+        }
 
       // Intercept and cancel clicks on mailto: links & inject Copy Email button
       const mailtoLinks = document.querySelectorAll('a[href^="mailto:"]');
@@ -956,6 +969,12 @@ try {
         const rows = document.querySelectorAll('tr, [role="row"], dat-table-row, [class*="load-row"], [class*="table-row"]');
         for (let r = 0; r < rows.length; r++) {
           const row = rows[r];
+          
+          // 0ms INSTANT SKIP: If row already processed and button still in DOM, skip immediately
+          if (row.dataset.zonixRowHooked === 'true' && row.querySelector('.zonix-route-copy-btn')) {
+            continue;
+          }
+
           const rowText = (row.textContent || '').replace(/\s+/g, ' ');
           if (rowText.length < 10) continue;
 
@@ -975,56 +994,47 @@ try {
 
           const origin = matches[0];
           const dest = matches[1];
-          const routeKey = `${cleanStr(origin.city)}_${origin.state}_${cleanStr(dest.city)}_${dest.state}`;
 
-          const existingBtn = row.querySelector('.zonix-route-copy-btn');
-          if (existingBtn) {
-            if (existingBtn.dataset.routeKey === routeKey) {
-              continue; // Already hooked with correct route
-            }
-            existingBtn.remove(); // Clean up stale button from virtual scroll recycling
-          }
+          // Check if button already exists in row
+          let copyBtn = row.querySelector('.zonix-route-copy-btn');
+          if (!copyBtn) {
+            copyBtn = createStyledCopyButton(
+              () => `${origin.full} to ${dest.full}`,
+              `Copy: ${origin.full} to ${dest.full}`
+            );
+            copyBtn.className = 'zonix-quick-copy-btn zonix-route-copy-btn';
+            copyBtn.style.marginLeft = '6px';
+            copyBtn.style.verticalAlign = 'middle';
+            copyBtn.style.display = 'inline-flex';
 
-          // Locate the destination text inside the row to place the button directly after it
-          const allEls = Array.from(row.querySelectorAll('*'));
-          const cleanDestCity = cleanStr(dest.city);
-          const cleanDestState = dest.state;
+            // Find destination element in row using targeted candidate elements
+            const cleanDestCity = cleanStr(dest.city);
+            const cleanDestState = dest.state;
+            const candidates = row.querySelectorAll('span, div, td, [role="cell"]');
+            let targetEl = null;
 
-          // Priority A: Leaf element containing the destination city
-          let targetEl = allEls.find(el => {
-            if (el.children.length > 2) return false;
-            const t = cleanStr(el.textContent);
-            return t.includes(cleanDestCity) && (t.includes(cleanDestState) || t.length <= cleanDestCity.length + 6);
-          });
-
-          // Priority B: Container containing both origin and destination (Lane column)
-          if (!targetEl) {
-            targetEl = allEls.find(el => {
-              if (el.children.length > 5) return false;
+            for (let i = 0; i < candidates.length; i++) {
+              const el = candidates[i];
+              if (el.children.length > 2) continue;
               const t = cleanStr(el.textContent);
-              return t.includes(cleanStr(origin.city)) && t.includes(cleanDestCity);
-            });
-          }
-
-          const copyBtn = createStyledCopyButton(
-            () => `${origin.full} to ${dest.full}`,
-            `Copy: ${origin.full} to ${dest.full}`
-          );
-          copyBtn.className = 'zonix-quick-copy-btn zonix-route-copy-btn';
-          copyBtn.dataset.routeKey = routeKey;
-          copyBtn.style.marginLeft = '6px';
-          copyBtn.style.verticalAlign = 'middle';
-          copyBtn.style.display = 'inline-flex';
-
-          if (targetEl) {
-            if (targetEl.nextSibling) {
-              targetEl.parentNode.insertBefore(copyBtn, targetEl.nextSibling);
-            } else {
-              targetEl.parentNode.appendChild(copyBtn);
+              if (t.includes(cleanDestCity) && (t.includes(cleanDestState) || t.length <= cleanDestCity.length + 6)) {
+                targetEl = el;
+                break;
+              }
             }
-          } else {
-            row.appendChild(copyBtn);
+
+            if (targetEl) {
+              if (targetEl.nextSibling) {
+                targetEl.parentNode.insertBefore(copyBtn, targetEl.nextSibling);
+              } else {
+                targetEl.parentNode.appendChild(copyBtn);
+              }
+            } else {
+              row.appendChild(copyBtn);
+            }
           }
+
+          row.dataset.zonixRowHooked = 'true';
         }
 
         // 2. DETAIL PANE: Header / Route overview (e.g., "Spartanburg, SC ... Lebanon, OH 453 mi")
@@ -1124,28 +1134,49 @@ try {
           }
         });
       }
+      } catch (err) {
+        console.error('[ZONIX] Lockdown pass error:', err.message);
+      } finally {
+        setTimeout(() => {
+          isPerformingPass = false;
+        }, 50);
+      }
     };
 
-    let passScheduled = false;
+    // Debounced Scheduler: Prevents event loop choking during heavy load board search updates
+    let debounceTimer = null;
     const scheduleLockdownPass = () => {
-      if (passScheduled) return;
-      passScheduled = true;
-      requestAnimationFrame(() => {
-        passScheduled = false;
+      if (isPerformingPass) return;
+      if (debounceTimer) return;
+      
+      debounceTimer = setTimeout(() => {
+        debounceTimer = null;
         applyLockdownPass();
-      });
+      }, 100);
     };
 
-    // Real-Time MutationObserver with 60fps frame batching
-    const observer = new MutationObserver(() => {
-      scheduleLockdownPass();
+    // Real-Time MutationObserver with addedNodes filtering (breaks feedback loop)
+    const observer = new MutationObserver((mutations) => {
+      if (isPerformingPass) return;
+      
+      let hasAddedNodes = false;
+      for (let i = 0; i < mutations.length; i++) {
+        if (mutations[i].addedNodes && mutations[i].addedNodes.length > 0) {
+          hasAddedNodes = true;
+          break;
+        }
+      }
+
+      if (hasAddedNodes) {
+        scheduleLockdownPass();
+      }
     });
 
     if (document.documentElement) {
       observer.observe(document.documentElement, { childList: true, subtree: true });
     }
     document.addEventListener('DOMContentLoaded', applyLockdownPass);
-    setInterval(scheduleLockdownPass, 2000);
+    setInterval(scheduleLockdownPass, 2500);
 
     console.log('[ZONIX] DAT One real-time interface lockdown engine active');
   } catch (err) {
