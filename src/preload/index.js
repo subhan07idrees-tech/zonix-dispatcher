@@ -965,76 +965,61 @@ try {
         const cityStateRegex = /([A-Za-z][A-Za-z\s\.\'-]{1,35}),\s*([A-Za-z]{2})\b/g;
         const cleanStr = (s) => (s || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
 
-        // 1. FAST BATCH SCAN: Search Results Table Rows (Instant across all rows)
-        const rows = document.querySelectorAll('tr, [role="row"], dat-table-row, [class*="load-row"], [class*="table-row"]');
-        for (let r = 0; r < rows.length; r++) {
-          const row = rows[r];
-          
-          // 0ms INSTANT SKIP: If row already processed and button still in DOM, skip immediately
-          if (row.dataset.zonixRowHooked === 'true' && row.querySelector('.zonix-route-copy-btn')) {
-            continue;
+        // 1. DIRECT DESTINATION COLUMN HOOK (Zero-lag CSS selector, identical to mailto: strategy)
+        const destSelectors = '.cdk-column-destination, .mat-column-destination, [class*="column-destination"], [class*="column-dest"], [data-column="destination"], [data-field="destination"]';
+        const destCells = document.querySelectorAll(destSelectors);
+        
+        for (let i = 0; i < destCells.length; i++) {
+          const destCell = destCells[i];
+          if (destCell.querySelector('.zonix-route-copy-btn')) continue;
+
+          const destText = (destCell.textContent || '').replace(/\s+/g, ' ').trim();
+          if (!destText || destText.length < 2) continue;
+
+          // Find Origin cell in the same row
+          const row = destCell.closest('tr, [role="row"], dat-table-row, [class*="row"]');
+          let originText = '';
+          if (row) {
+            const originCell = row.querySelector('.cdk-column-origin, .mat-column-origin, [class*="column-origin"], [class*="column-orig"], [data-column="origin"], [data-field="origin"]');
+            if (originCell) originText = (originCell.textContent || '').replace(/\s+/g, ' ').trim();
           }
 
-          const rowText = (row.textContent || '').replace(/\s+/g, ' ');
-          if (rowText.length < 10) continue;
+          const copyText = originText ? `${originText} to ${destText}` : destText;
+          const copyBtn = createStyledCopyButton(() => copyText, `Copy: ${copyText}`);
+          copyBtn.className = 'zonix-quick-copy-btn zonix-route-copy-btn';
+          copyBtn.style.marginLeft = '6px';
+          copyBtn.style.verticalAlign = 'middle';
+          copyBtn.style.display = 'inline-flex';
+          destCell.appendChild(copyBtn);
+        }
+
+        // Fallback: Combined Lane / Route Column (For views with grouped origin & destination)
+        const laneSelectors = '.cdk-column-lane, .mat-column-lane, .cdk-column-route, .mat-column-route, [class*="column-lane"], [class*="column-route"]';
+        const laneCells = document.querySelectorAll(laneSelectors);
+
+        for (let i = 0; i < laneCells.length; i++) {
+          const cell = laneCells[i];
+          if (cell.querySelector('.zonix-route-copy-btn')) continue;
+          const txt = (cell.textContent || '').replace(/\s+/g, ' ').trim();
+          if (txt.length < 6) continue;
 
           cityStateRegex.lastIndex = 0;
           const matches = [];
           let m;
-          while ((m = cityStateRegex.exec(rowText)) !== null) {
-            matches.push({
-              city: m[1].trim(),
-              state: m[2].trim().toUpperCase(),
-              full: `${m[1].trim()}, ${m[2].trim().toUpperCase()}`
-            });
+          while ((m = cityStateRegex.exec(txt)) !== null) {
+            matches.push(`${m[1].trim()}, ${m[2].trim().toUpperCase()}`);
             if (matches.length >= 2) break;
           }
 
-          if (matches.length < 2) continue;
-
-          const origin = matches[0];
-          const dest = matches[1];
-
-          // Check if button already exists in row
-          let copyBtn = row.querySelector('.zonix-route-copy-btn');
-          if (!copyBtn) {
-            copyBtn = createStyledCopyButton(
-              () => `${origin.full} to ${dest.full}`,
-              `Copy: ${origin.full} to ${dest.full}`
-            );
+          if (matches.length >= 2) {
+            const copyText = `${matches[0]} to ${matches[1]}`;
+            const copyBtn = createStyledCopyButton(() => copyText, `Copy: ${copyText}`);
             copyBtn.className = 'zonix-quick-copy-btn zonix-route-copy-btn';
             copyBtn.style.marginLeft = '6px';
             copyBtn.style.verticalAlign = 'middle';
             copyBtn.style.display = 'inline-flex';
-
-            // Find destination element in row using targeted candidate elements
-            const cleanDestCity = cleanStr(dest.city);
-            const cleanDestState = dest.state;
-            const candidates = row.querySelectorAll('span, div, td, [role="cell"]');
-            let targetEl = null;
-
-            for (let i = 0; i < candidates.length; i++) {
-              const el = candidates[i];
-              if (el.children.length > 2) continue;
-              const t = cleanStr(el.textContent);
-              if (t.includes(cleanDestCity) && (t.includes(cleanDestState) || t.length <= cleanDestCity.length + 6)) {
-                targetEl = el;
-                break;
-              }
-            }
-
-            if (targetEl) {
-              if (targetEl.nextSibling) {
-                targetEl.parentNode.insertBefore(copyBtn, targetEl.nextSibling);
-              } else {
-                targetEl.parentNode.appendChild(copyBtn);
-              }
-            } else {
-              row.appendChild(copyBtn);
-            }
+            cell.appendChild(copyBtn);
           }
-
-          row.dataset.zonixRowHooked = 'true';
         }
 
         // 2. DETAIL PANE: Header / Route overview (e.g., "Spartanburg, SC ... Lebanon, OH 453 mi")
