@@ -1290,52 +1290,33 @@
 
           const blockerScript = `
             (function() {
-              function purgeShadowRoot(root) {
-                if (!root) return;
-                var targets = root.querySelectorAll('div, section, aside, form, dialog');
-                for (var i = 0; i < targets.length; i++) {
-                  var t = targets[i];
-                  var text = (t.textContent || '').toUpperCase();
-                  var cls = (t.className || '').toString().toLowerCase();
-                  if (cls.includes('send-email') || cls.includes('1-click') || text.includes('SEND EMAILS FASTER') || text.includes('SIGN IN WITH GOOGLE')) {
-                    t.style.setProperty('display', 'none', 'important');
-                    t.style.setProperty('visibility', 'hidden', 'important');
+              function purgePopups() {
+                try {
+                  var popups = document.querySelectorAll('.dat-modal, .modal-backdrop, [class*="send-email" i], [class*="1-click" i]');
+                  for (var i = 0; i < popups.length; i++) {
+                    var p = popups[i];
+                    var txt = (p.textContent || '').toUpperCase();
+                    if (txt.includes('SEND EMAILS FASTER') || txt.includes('SIGN IN WITH GOOGLE')) {
+                      p.style.setProperty('display', 'none', 'important');
+                      p.style.setProperty('visibility', 'hidden', 'important');
+                    }
                   }
-                }
-                var children = root.querySelectorAll('*');
-                for (var k = 0; k < children.length; k++) {
-                  if (children[k].shadowRoot) {
-                    purgeShadowRoot(children[k]);
-                  }
-                }
+                } catch (e) {}
               }
 
-              function scanAllRoots() {
-                purgeShadowRoot(document.body);
-              }
-
-              scanAllRoots();
-              setInterval(scanAllRoots, 1200);
+              purgePopups();
+              setInterval(purgePopups, 3000);
 
               window.addEventListener('click', function(e) {
                 var target = e.target;
-                while (target && target !== document.body) {
-                  var text = (target.textContent || '').toUpperCase();
-                  var aria = (target.getAttribute && (target.getAttribute('aria-label') || target.getAttribute('title') || '')) .toLowerCase();
-                  var outer = (target.outerHTML || '').toLowerCase();
-                  
-                  if (aria.includes('email') || 
-                      aria.includes('mail') || 
-                      outer.includes('envelope') ||
-                      text.includes('SIGN IN WITH GOOGLE') || 
-                      text.includes('SIGN IN WITH MICROSOFT') || 
-                      text.includes('SEND EMAILS FASTER')) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    scanAllRoots();
-                    return false;
-                  }
-                  target = target.parentElement;
+                if (!target || !target.closest) return;
+
+                var restricted = target.closest('a[href^="mailto:"], button[aria-label*="email" i], button[aria-label*="mail" i], [data-testid*="email"], [data-testid*="mail"], button[title*="email" i]');
+                if (restricted) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  purgePopups();
+                  return false;
                 }
               }, true);
             })();

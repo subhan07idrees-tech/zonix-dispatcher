@@ -19,11 +19,15 @@ const { contextBridge, ipcRenderer } = require('electron');
     }
 
     console.log = function(...args) {
-      sendToMain('INFO', args);
+      if (args[0] && typeof args[0] === 'string' && args[0].startsWith('[ZONIX')) {
+        sendToMain('INFO', args);
+      }
       originalLog.apply(console, args);
     };
     console.warn = function(...args) {
-      sendToMain('WARN', args);
+      if (args[0] && typeof args[0] === 'string' && args[0].startsWith('[ZONIX')) {
+        sendToMain('WARN', args);
+      }
       originalWarn.apply(console, args);
     };
     console.error = function(...args) {
@@ -917,16 +921,18 @@ try {
         
         for (let i = 0; i < elements.length; i++) {
           const el = elements[i];
-          if (el.dataset.zonixBlocked === 'true' || el.style.display === 'none') continue;
+          if (el.dataset.zonixBlocked === 'true' || el.dataset.zonixChecked === 'true' || el.style.display === 'none') continue;
           
           const text = (el.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim();
           if (!text) continue;
 
           // Guard: Never touch elements inside search bars, filters, forms, or data tables
           if (el.closest('form, [class*="search"], [class*="filter"], [class*="table"], [role="table"], [role="grid"]')) {
+            el.dataset.zonixChecked = 'true';
             continue;
           }
 
+          let matched = false;
           for (let j = 0; j < blockLabels.length; j++) {
             const label = blockLabels[j];
             if (text === label || text === label + 's' || text.startsWith(label + ' ') || text.endsWith(' ' + label)) {
@@ -938,8 +944,12 @@ try {
                 el.parentElement.style.setProperty('display', 'none', 'important');
                 el.parentElement.style.setProperty('pointer-events', 'none', 'important');
               }
+              matched = true;
               break;
             }
+          }
+          if (!matched) {
+            el.dataset.zonixChecked = 'true';
           }
         }
 
@@ -1003,28 +1013,36 @@ try {
       }
     };
 
-    // 60fps Native Frame-batched Scheduler (Zero lag, never drops a frame)
-    let rAFScheduled = false;
+    // Debounced Native Scheduler (Zero CPU overhead, batches DOM checks)
+    let debounceTimer = null;
     const scheduleLockdownPass = () => {
-      if (rAFScheduled) return;
-      rAFScheduled = true;
-      requestAnimationFrame(() => {
-        rAFScheduled = false;
+      if (debounceTimer) return;
+      debounceTimer = setTimeout(() => {
+        debounceTimer = null;
         applyLockdownPass();
-      });
+      }, 200);
     };
 
-    // Real-Time MutationObserver
-    const observer = new MutationObserver(() => {
+    // Real-Time MutationObserver - triggers only when new elements are inserted into the DOM
+    const observer = new MutationObserver((mutations) => {
       if (isMutatingOurself) return;
-      scheduleLockdownPass();
+      let hasAdded = false;
+      for (let i = 0; i < mutations.length; i++) {
+        if (mutations[i].addedNodes && mutations[i].addedNodes.length > 0) {
+          hasAdded = true;
+          break;
+        }
+      }
+      if (hasAdded) {
+        scheduleLockdownPass();
+      }
     });
 
     if (document.documentElement) {
       observer.observe(document.documentElement, { childList: true, subtree: true });
     }
     document.addEventListener('DOMContentLoaded', applyLockdownPass);
-    setInterval(scheduleLockdownPass, 1500);
+    setInterval(scheduleLockdownPass, 3000);
 
     console.log('[ZONIX] DAT One real-time interface lockdown engine active');
   } catch (err) {
