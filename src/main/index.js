@@ -549,23 +549,6 @@ async function createDispatchWindow(sessionId, config) {
 
   securityEngine.applyInterceptors(sess, orgId, sessionId, proxyManager);
 
-  // IMMEDIATE NETWORK-LEVEL TRIPWIRE (0ms detection directly from Chromium network service):
-  sess.webRequest.onErrorOccurred({ urls: ['*://*/*'] }, (details) => {
-    const err = details.error || '';
-    if (
-      err.includes('ERR_PROXY') ||
-      err.includes('ERR_TUNNEL') ||
-      err.includes('ERR_SOCKS') ||
-      err.includes('ERR_TIMED_OUT') ||
-      err.includes('ERR_CONNECTION_RESET')
-    ) {
-      console.warn(`[ZONIX Zero-Leak Shield] 🚨 Immediate network proxy failure (${err}) for URL: ${details.url}. Activating kill-switch immediately!`);
-      if (proxyManager) {
-        proxyManager.activateKillSwitch(sessionId, dispatchWindow, partitionId);
-      }
-    }
-  });
-
   const dispatchWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -600,10 +583,10 @@ async function createDispatchWindow(sessionId, config) {
       guestWebContentsMap.delete(webContents.id);
     });
 
-    // Instant tripwire if guest webview encounters proxy drop
+    // Instant tripwire if guest webview encounters fatal proxy drop
     webContents.on('did-fail-load', (e, errorCode, errorDesc) => {
-      if (errorCode === -130 || errorCode === -111 || errorCode === -136 || errorCode === -115) {
-        console.warn(`[ZONIX Zero-Leak Shield] 🚨 Guest webview proxy error (${errorCode} ${errorDesc}). Activating kill-switch!`);
+      if (errorCode === -130 || errorCode === -111 || errorCode === -136) {
+        console.warn(`[ZONIX Zero-Leak Shield] 🚨 Guest webview fatal proxy error (${errorCode} ${errorDesc}). Activating kill-switch!`);
         if (proxyManager) {
           proxyManager.activateKillSwitch(sessionId, dispatchWindow, partitionId);
         }
@@ -669,7 +652,7 @@ async function createDispatchWindow(sessionId, config) {
     isClosed = true;
     try {
       if (dispatchWindow && !dispatchWindow.isDestroyed()) {
-        dispatchWindow.close();
+        dispatchWindow.destroy();
       }
     } catch (e) {}
   });
@@ -845,6 +828,7 @@ function startHeartbeatMonitor(sessionId) {
 
       if (response.status === 410 || response.status === 404) {
         console.warn(`[ZONIX] Session ${sessionId} terminated by admin (status: ${response.status}). Closing dispatcher...`);
+        clearInterval(sessionData.heartbeatTimer);
         killSession(sessionId);
         return;
       }
@@ -853,6 +837,7 @@ function startHeartbeatMonitor(sessionId) {
 
       if (result.status === 'KILLED' || result.status === 'ENDED' || result.success === false) {
         console.warn(`[ZONIX] Session ${sessionId} marked ${result.status} by backend. Closing dispatcher...`);
+        clearInterval(sessionData.heartbeatTimer);
         killSession(sessionId);
         return;
       }
@@ -1003,13 +988,19 @@ function forceLogout() {
 function handleWSMessage(msg) {
   switch (msg.type) {
     case 'command:kill':
-      killSession(msg.sessionId);
+      if (msg.sessionId && activeSessions.has(msg.sessionId)) {
+        killSession(msg.sessionId);
+      }
       break;
     case 'command:restart':
-      restartSession(msg.sessionId);
+      if (msg.sessionId && activeSessions.has(msg.sessionId)) {
+        restartSession(msg.sessionId);
+      }
       break;
     case 'command:refreshCookies':
-      refreshSessionCookies(msg.sessionId);
+      if (msg.sessionId && activeSessions.has(msg.sessionId)) {
+        refreshSessionCookies(msg.sessionId);
+      }
       break;
     case 'command:logout':
       forceLogout();
@@ -1037,27 +1028,9 @@ async function endSessionOnBackend(sessionId) {
 }
 
 function killSession(sessionId) {
-  let sessionData = activeSessions.get(sessionId);
+  const sessionData = activeSessions.get(sessionId);
   if (!sessionData) {
-    if (activeSessions.size > 0) {
-      for (const [id, sData] of activeSessions.entries()) {
-        clearInterval(sData.heartbeatTimer);
-        proxyManager.stopHealthCheck(id);
-        proxyManager.clearKillSwitch(id);
-        try {
-          if (sData.window && !sData.window.isDestroyed()) {
-            sData.window.close();
-          }
-        } catch (e) {}
-        activeSessions.delete(id);
-      }
-      broadcastSessionUpdate();
-      if (!authWindow || authWindow.isDestroyed()) {
-        createAuthWindow();
-      } else {
-        authWindow.show();
-      }
-    }
+    // This session does not belong to this client instance; do not touch local sessions!
     return;
   }
 
@@ -1066,7 +1039,7 @@ function killSession(sessionId) {
   proxyManager.clearKillSwitch(sessionId);
   try {
     if (sessionData.window && !sessionData.window.isDestroyed()) {
-      sessionData.window.close();
+      sessionData.window.destroy();
     }
   } catch (e) {}
   activeSessions.delete(sessionId);
