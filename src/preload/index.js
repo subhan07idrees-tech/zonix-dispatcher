@@ -881,7 +881,7 @@ try {
         e.preventDefault();
         e.stopPropagation();
         
-        const text = getTextFn();
+        const text = btn._getTextFn ? btn._getTextFn() : getTextFn();
         navigator.clipboard.writeText(text).then(() => {
           btn.dataset.copied = 'true';
           btn.innerHTML = getCheckSVG();
@@ -901,16 +901,16 @@ try {
         });
       });
       
+      btn._getTextFn = getTextFn;
       return btn;
     };
 
-    let isPerformingPass = false;
+    let isMutatingOurself = false;
 
     const applyLockdownPass = () => {
-      if (isPerformingPass) return;
-      isPerformingPass = true;
-
       try {
+        isMutatingOurself = true;
+
         // Hide sidebar/menu items - fast textContent scanning without layout thrashing
         const selectors = 'nav a, nav button, nav li, header a, header button, footer a, footer button, footer li, aside a, aside button, aside li, [role="navigation"] a, [role="navigation"] button, [class*="sidebar"] a, [class*="sidebar"] button, [class*="sidebar"] li, [class*="drawer"] a, [class*="drawer"] button, [class*="footer"] a, [class*="footer"] button, [class*="account"] a, [class*="account"] button';
         const elements = document.querySelectorAll(selectors);
@@ -962,67 +962,124 @@ try {
 
       // Inject Location & Route Copy Button (Origin & Destination)
       (() => {
-        const cityStateRegex = /([A-Za-z][A-Za-z\s\.\'-]{1,35}),\s*([A-Za-z]{2})\b/g;
+        const cityStateRegex = /\b([A-Za-z][A-Za-z\s\.\'-]{1,35}),\s*([A-Za-z]{2})\b/g;
         const cleanStr = (s) => (s || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
 
-        // 1. DIRECT DESTINATION COLUMN HOOK (Zero-lag CSS selector, identical to mailto: strategy)
-        const destSelectors = '.cdk-column-destination, .mat-column-destination, [class*="column-destination"], [class*="column-dest"], [data-column="destination"], [data-field="destination"]';
-        const destCells = document.querySelectorAll(destSelectors);
-        
-        for (let i = 0; i < destCells.length; i++) {
-          const destCell = destCells[i];
-          if (destCell.querySelector('.zonix-route-copy-btn')) continue;
+        // 1. FAST BATCH SEARCH TABLE ROWS (Visible virtual rows only)
+        const rows = document.querySelectorAll('tr, [role="row"], dat-table-row, [class*="load-row"], [class*="table-row"]');
+        for (let r = 0; r < rows.length; r++) {
+          const row = rows[r];
+          // Skip header rows
+          if (row.closest('thead') || row.querySelector('th, [role="columnheader"]')) continue;
 
-          const destText = (destCell.textContent || '').replace(/\s+/g, ' ').trim();
-          if (!destText || destText.length < 2) continue;
+          // Find all cells inside the row
+          const cells = Array.from(row.querySelectorAll('td, [role="cell"], [class*="cell"]'));
+          if (cells.length === 0) continue;
 
-          // Find Origin cell in the same row
-          const row = destCell.closest('tr, [role="row"], dat-table-row, [class*="row"]');
-          let originText = '';
-          if (row) {
-            const originCell = row.querySelector('.cdk-column-origin, .mat-column-origin, [class*="column-origin"], [class*="column-orig"], [data-column="origin"], [data-field="origin"]');
-            if (originCell) originText = (originCell.textContent || '').replace(/\s+/g, ' ').trim();
+          let origin = null;
+          let dest = null;
+          let destCell = null;
+
+          // Strategy A: Cell-by-cell inspection (Guarantees PU is 1st, Destination is 2nd)
+          const matchedLocations = [];
+          for (let c = 0; c < cells.length; c++) {
+            const cell = cells[c];
+            const text = (cell.textContent || '').replace(/\s+/g, ' ').trim();
+            // Skip non-location cells: emails, rates, weights, numeric metrics
+            if (text.length < 5 || text.length > 80) continue;
+            if (text.startsWith('$') || text.includes('@') || /^\d+\s*(lbs|ft|mi)?$/i.test(text)) continue;
+
+            cityStateRegex.lastIndex = 0;
+            let m;
+            while ((m = cityStateRegex.exec(text)) !== null) {
+              matchedLocations.push({
+                city: m[1].trim(),
+                state: m[2].trim().toUpperCase(),
+                full: `${m[1].trim()}, ${m[2].trim().toUpperCase()}`,
+                cell: cell
+              });
+              if (matchedLocations.length >= 2) break;
+            }
+            if (matchedLocations.length >= 2) break;
           }
 
-          const copyText = originText ? `${originText} to ${destText}` : destText;
-          const copyBtn = createStyledCopyButton(() => copyText, `Copy: ${copyText}`);
+          if (matchedLocations.length >= 2) {
+            origin = matchedLocations[0]; // Guaranteed 1st location: ORIGIN (PU)
+            dest = matchedLocations[1];   // Guaranteed 2nd location: DESTINATION (Drop)
+            destCell = dest.cell;
+          } else {
+            // Strategy B: Fallback to full row text if lane is grouped into a single combined cell
+            const rowText = (row.textContent || '').replace(/\s+/g, ' ');
+            cityStateRegex.lastIndex = 0;
+            const matches = [];
+            let m;
+            while ((m = cityStateRegex.exec(rowText)) !== null) {
+              matches.push({
+                city: m[1].trim(),
+                state: m[2].trim().toUpperCase(),
+                full: `${m[1].trim()}, ${m[2].trim().toUpperCase()}`
+              });
+              if (matches.length >= 2) break;
+            }
+
+            if (matches.length >= 2) {
+              origin = matches[0];
+              dest = matches[1];
+              const cleanDestCity = cleanStr(dest.city);
+              destCell = cells.find(c => {
+                const t = cleanStr(c.textContent);
+                return t.includes(cleanDestCity);
+              }) || cells[Math.min(6, cells.length - 1)];
+            }
+          }
+
+          if (!origin || !dest || !destCell) continue;
+
+          const routeKey = `${cleanStr(origin.full)}__${cleanStr(dest.full)}`;
+          const copyText = `${origin.full} to ${dest.full}`;
+          const titleText = `Copy: ${copyText}`;
+
+          const existingBtn = row.querySelector('.zonix-route-copy-btn');
+          if (existingBtn) {
+            if (existingBtn.dataset.routeKey === routeKey) {
+              continue; // Route matches cached button, skip
+            }
+            // Virtual-scroll recycled row: update existing button callback in 0ms
+            existingBtn.dataset.routeKey = routeKey;
+            existingBtn._getTextFn = () => copyText;
+            existingBtn.title = titleText;
+            continue;
+          }
+
+          // Create styled copy button and attach directly inside the Destination cell
+          const copyBtn = createStyledCopyButton(() => copyText, titleText);
           copyBtn.className = 'zonix-quick-copy-btn zonix-route-copy-btn';
+          copyBtn.dataset.routeKey = routeKey;
           copyBtn.style.marginLeft = '6px';
           copyBtn.style.verticalAlign = 'middle';
           copyBtn.style.display = 'inline-flex';
-          destCell.appendChild(copyBtn);
-        }
+          copyBtn.style.flexShrink = '0';
 
-        // Fallback: Combined Lane / Route Column (For views with grouped origin & destination)
-        const laneSelectors = '.cdk-column-lane, .mat-column-lane, .cdk-column-route, .mat-column-route, [class*="column-lane"], [class*="column-route"]';
-        const laneCells = document.querySelectorAll(laneSelectors);
+          // Insert directly next to the destination text element inside destCell
+          const cleanDestCity = cleanStr(dest.city);
+          const leafEls = Array.from(destCell.querySelectorAll('span, div, a, b, strong, p'));
+          const textEl = leafEls.find(el => {
+            if (el.children.length > 2) return false;
+            return cleanStr(el.textContent).includes(cleanDestCity);
+          });
 
-        for (let i = 0; i < laneCells.length; i++) {
-          const cell = laneCells[i];
-          if (cell.querySelector('.zonix-route-copy-btn')) continue;
-          const txt = (cell.textContent || '').replace(/\s+/g, ' ').trim();
-          if (txt.length < 6) continue;
-
-          cityStateRegex.lastIndex = 0;
-          const matches = [];
-          let m;
-          while ((m = cityStateRegex.exec(txt)) !== null) {
-            matches.push(`${m[1].trim()}, ${m[2].trim().toUpperCase()}`);
-            if (matches.length >= 2) break;
-          }
-
-          if (matches.length >= 2) {
-            const copyText = `${matches[0]} to ${matches[1]}`;
-            const copyBtn = createStyledCopyButton(() => copyText, `Copy: ${copyText}`);
-            copyBtn.className = 'zonix-quick-copy-btn zonix-route-copy-btn';
-            copyBtn.style.marginLeft = '6px';
-            copyBtn.style.verticalAlign = 'middle';
-            copyBtn.style.display = 'inline-flex';
-            cell.appendChild(copyBtn);
+          if (textEl && textEl.parentNode) {
+            if (textEl.nextSibling) {
+              textEl.parentNode.insertBefore(copyBtn, textEl.nextSibling);
+            } else {
+              textEl.parentNode.appendChild(copyBtn);
+            }
+          } else {
+            destCell.appendChild(copyBtn);
           }
         }
 
-        // 2. DETAIL PANE: Header / Route overview (e.g., "Spartanburg, SC ... Lebanon, OH 453 mi")
+        // 2. DETAIL PANE: Header / Route overview (e.g., "Ontario, CA o..> San Bernardino, CA 27 mi")
         const detailHeaders = document.querySelectorAll('h1, h2, h3, h4, [class*="header"], [class*="title"], [class*="summary"], [class*="route"]');
         for (let h = 0; h < detailHeaders.length; h++) {
           const hdr = detailHeaders[h];
@@ -1064,7 +1121,7 @@ try {
         if (viewRouteBtn && !viewRouteBtn.parentNode.querySelector('.zonix-route-copy-btn')) {
           viewRouteBtn.dataset.zonixRouteHooked = 'true';
           let paneRoot = viewRouteBtn;
-          for (let i = 0; i < 10; i++) {
+          for (let i = 0; i < 8; i++) {
             if (!paneRoot.parentElement || paneRoot.parentElement === document.body) break;
             paneRoot = paneRoot.parentElement;
           }
@@ -1122,46 +1179,34 @@ try {
       } catch (err) {
         console.error('[ZONIX] Lockdown pass error:', err.message);
       } finally {
-        setTimeout(() => {
-          isPerformingPass = false;
-        }, 50);
+        Promise.resolve().then(() => {
+          isMutatingOurself = false;
+        });
       }
     };
 
-    // Debounced Scheduler: Prevents event loop choking during heavy load board search updates
-    let debounceTimer = null;
+    // 60fps Native Frame-batched Scheduler (Zero lag, never drops a frame)
+    let rAFScheduled = false;
     const scheduleLockdownPass = () => {
-      if (isPerformingPass) return;
-      if (debounceTimer) return;
-      
-      debounceTimer = setTimeout(() => {
-        debounceTimer = null;
+      if (rAFScheduled) return;
+      rAFScheduled = true;
+      requestAnimationFrame(() => {
+        rAFScheduled = false;
         applyLockdownPass();
-      }, 100);
+      });
     };
 
-    // Real-Time MutationObserver with addedNodes filtering (breaks feedback loop)
-    const observer = new MutationObserver((mutations) => {
-      if (isPerformingPass) return;
-      
-      let hasAddedNodes = false;
-      for (let i = 0; i < mutations.length; i++) {
-        if (mutations[i].addedNodes && mutations[i].addedNodes.length > 0) {
-          hasAddedNodes = true;
-          break;
-        }
-      }
-
-      if (hasAddedNodes) {
-        scheduleLockdownPass();
-      }
+    // Real-Time MutationObserver
+    const observer = new MutationObserver(() => {
+      if (isMutatingOurself) return;
+      scheduleLockdownPass();
     });
 
     if (document.documentElement) {
       observer.observe(document.documentElement, { childList: true, subtree: true });
     }
     document.addEventListener('DOMContentLoaded', applyLockdownPass);
-    setInterval(scheduleLockdownPass, 2500);
+    setInterval(scheduleLockdownPass, 1500);
 
     console.log('[ZONIX] DAT One real-time interface lockdown engine active');
   } catch (err) {
