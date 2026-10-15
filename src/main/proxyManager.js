@@ -6,9 +6,9 @@ class ProxyManager {
     this.killSwitchActive = new Set();
     this.proxyLatencies = new Map();
     this.partitionSessions = new Map();
-    this.PROXY_CHECK_INTERVAL = 1500; // Ultra-fast 1.5s heartbeat
-    this.MAX_LATENCY_MS = 2000;       // Aggressive 2s timeout for immediate failover
-    this.FAILURE_THRESHOLD = 1;       // IMMEDIATE: Single failure trips kill-switch instantly
+    this.PROXY_CHECK_INTERVAL = 3000; // Balanced 3s heartbeat
+    this.MAX_LATENCY_MS = 4000;       // 4s timeout (accommodates proxy latency jitter without false alarms)
+    this.FAILURE_THRESHOLD = 2;       // Requires 2 consecutive failures before tripping kill-switch
     this.proxyFailures = new Map();
   }
 

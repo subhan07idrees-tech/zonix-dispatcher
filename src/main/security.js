@@ -179,16 +179,15 @@ class SecurityEngine {
           headerMap[key.toLowerCase()] = key;
         }
 
-        // 1. Content Security Policy adjustments
+        // 1. Content Security Policy adjustments (strip reporting endpoints to avoid telemetry leak without restricting fonts/styles)
         const cspOriginalKey = headerMap['content-security-policy'];
         if (cspOriginalKey) {
           const existingCSP = headers[cspOriginalKey];
+          const cleanCSP = (csp) => csp.replace(/report-uri[^;]*(;|$)/gi, '').replace(/report-to[^;]*(;|$)/gi, '');
           if (Array.isArray(existingCSP)) {
-            headers[cspOriginalKey] = existingCSP.map(csp =>
-              csp.replace(/report-uri[^;]*/gi, '')
-                 .replace(/report-to[^;]*/gi, '')
-                 .replace(/connect-src/gi, "connect-src 'self'")
-            );
+            headers[cspOriginalKey] = existingCSP.map(cleanCSP);
+          } else if (typeof existingCSP === 'string') {
+            headers[cspOriginalKey] = cleanCSP(existingCSP);
           }
         }
 

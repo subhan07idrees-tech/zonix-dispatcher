@@ -843,7 +843,19 @@ function startHeartbeatMonitor(sessionId) {
         })
       });
 
+      if (response.status === 410 || response.status === 404) {
+        console.warn(`[ZONIX] Session ${sessionId} terminated by admin (status: ${response.status}). Closing dispatcher...`);
+        killSession(sessionId);
+        return;
+      }
+
       const result = await response.json();
+
+      if (result.status === 'KILLED' || result.status === 'ENDED' || result.success === false) {
+        console.warn(`[ZONIX] Session ${sessionId} marked ${result.status} by backend. Closing dispatcher...`);
+        killSession(sessionId);
+        return;
+      }
 
       if (result.proxyStatus === 'unreachable') {
         console.warn(`[ZONIX] Proxy failure detected for session ${sessionId}. Activating kill-switch...`);
@@ -859,8 +871,7 @@ function startHeartbeatMonitor(sessionId) {
         });
       }
     } catch (err) {
-      console.error(`[ZONIX] Heartbeat failed for session ${sessionId}:`, err.message);
-      proxyManager.activateKillSwitch(sessionId, sessionData.window, sessionData.partitionId);
+      console.warn(`[ZONIX] Heartbeat ping notice for session ${sessionId}:`, err.message);
     }
   }, CONFIG.HEARTBEAT_INTERVAL);
 }
@@ -1026,19 +1037,50 @@ async function endSessionOnBackend(sessionId) {
 }
 
 function killSession(sessionId) {
-  const sessionData = activeSessions.get(sessionId);
-  if (!sessionData) return;
+  let sessionData = activeSessions.get(sessionId);
+  if (!sessionData) {
+    if (activeSessions.size > 0) {
+      for (const [id, sData] of activeSessions.entries()) {
+        clearInterval(sData.heartbeatTimer);
+        proxyManager.stopHealthCheck(id);
+        proxyManager.clearKillSwitch(id);
+        try {
+          if (sData.window && !sData.window.isDestroyed()) {
+            sData.window.close();
+          }
+        } catch (e) {}
+        activeSessions.delete(id);
+      }
+      broadcastSessionUpdate();
+      if (!authWindow || authWindow.isDestroyed()) {
+        createAuthWindow();
+      } else {
+        authWindow.show();
+      }
+    }
+    return;
+  }
 
   clearInterval(sessionData.heartbeatTimer);
   proxyManager.stopHealthCheck(sessionId);
   proxyManager.clearKillSwitch(sessionId);
   try {
-    sessionData.window.close();
+    if (sessionData.window && !sessionData.window.isDestroyed()) {
+      sessionData.window.close();
+    }
   } catch (e) {}
   activeSessions.delete(sessionId);
   broadcastSessionUpdate();
   endSessionOnBackend(sessionId);
   console.log(`[ZONIX] Session ${sessionId} terminated by command`);
+
+  if (activeSessions.size === 0) {
+    if (!authWindow || authWindow.isDestroyed()) {
+      createAuthWindow();
+    } else {
+      authWindow.show();
+    }
+  }
 }
 
 async function restartSession(sessionId) {

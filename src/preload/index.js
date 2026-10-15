@@ -921,10 +921,15 @@ try {
           
           const text = (el.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim();
           if (!text) continue;
-          
+
+          // Guard: Never touch elements inside search bars, filters, forms, or data tables
+          if (el.closest('form, [class*="search"], [class*="filter"], [class*="table"], [role="table"], [role="grid"]')) {
+            continue;
+          }
+
           for (let j = 0; j < blockLabels.length; j++) {
             const label = blockLabels[j];
-            if (text === label || text.startsWith(label) || (text.includes(label) && text.length < label.length + 15)) {
+            if (text === label || text === label + 's' || text.startsWith(label + ' ') || text.endsWith(' ' + label)) {
               el.dataset.zonixBlocked = 'true';
               el.style.setProperty('display', 'none', 'important');
               el.style.setProperty('pointer-events', 'none', 'important');
