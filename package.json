@@ -68,7 +68,7 @@
       "createStartMenuShortcut": true,
       "shortcutName": "ZONIX Dispatcher",
       "runAfterFinish": true,
-      "include": "build/installer.nsh"
+      "include": "assets/installer.nsh"
     },
     "mac": {
       "target": "dmg",
