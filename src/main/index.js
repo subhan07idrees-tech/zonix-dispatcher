@@ -152,6 +152,25 @@ app.on('web-contents-created', (event, contents) => {
 let mainWindow = null;
 let authWindow = null;
 let syncWindow = null;
+
+// Enforce single-instance lock across the operating system
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (authWindow && !authWindow.isDestroyed()) {
+      if (authWindow.isMinimized()) authWindow.restore();
+      authWindow.focus();
+    } else if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    } else if (syncWindow && !syncWindow.isDestroyed()) {
+      if (syncWindow.isMinimized()) syncWindow.restore();
+      syncWindow.focus();
+    }
+  });
+}
 let tray = null;
 let activeSessions = new Map();
 // Maps partitionId -> localStorageData (JSON string). Used for O(1) lookup in IPC handler.
@@ -205,6 +224,12 @@ function createTray() {
 }
 
 function createAuthWindow(errorType = '') {
+  if (authWindow && !authWindow.isDestroyed()) {
+    if (authWindow.isMinimized()) authWindow.restore();
+    authWindow.focus();
+    return authWindow;
+  }
+
   const iconPath = path.join(__dirname, 'logo.png');
  
   authWindow = new BrowserWindow({
@@ -1289,6 +1314,10 @@ function registerIPC() {
         store.set('maxTabs', result.organization.maxTabs || 5);
         connectWebSocket();
         
+        // Hide auth window immediately so it instantly vanishes from screen before next window opens
+        if (authWindow && !authWindow.isDestroyed()) {
+          authWindow.hide();
+        }
         setTimeout(() => {
           try {
             if (result.user.role === 'DISPATCHER') {
@@ -2032,6 +2061,10 @@ function setupAutoUpdater() {
 
   autoUpdater.on('update-not-available', () => {
     console.log('[Updater] Launch Gate: Up to date.');
+    if (startupLaunchTimeout) {
+      clearTimeout(startupLaunchTimeout);
+      startupLaunchTimeout = null;
+    }
     if (!isUpdateGateActive && !authWindow && !mainWindow && activeSessions.size === 0 && !syncWindow) {
       createAuthWindow();
     }
@@ -2113,8 +2146,16 @@ app.whenReady().then(async () => {
 
   autoUpdater.checkForUpdates().then(() => {
     hasChecked = true;
+    if (startupLaunchTimeout) {
+      clearTimeout(startupLaunchTimeout);
+      startupLaunchTimeout = null;
+    }
   }).catch((err) => {
     hasChecked = true;
+    if (startupLaunchTimeout) {
+      clearTimeout(startupLaunchTimeout);
+      startupLaunchTimeout = null;
+    }
     console.error('[ZONIX] Startup update check failed:', err.message);
     if (!isUpdateGateActive && !authWindow && !mainWindow && activeSessions.size === 0 && !syncWindow) {
       createAuthWindow();
