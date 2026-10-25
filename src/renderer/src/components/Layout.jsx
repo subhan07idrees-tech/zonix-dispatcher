@@ -164,7 +164,7 @@ function Sidebar({ collapsed, onToggle }) {
       <div className="h-[56px] px-3.5 flex items-center justify-between border-b border-line flex-shrink-0">
         {!collapsed ? (
           <>
-            <ZonixLogo size={24} showText={true} version="v1.9.31" dark={isDark} />
+            <ZonixLogo size={24} showText={true} version={window.zonixAPI?.appVersion ? `v${window.zonixAPI.appVersion}` : 'v2.0.1'} dark={isDark} />
             <button
               type="button"
               onClick={onToggle}

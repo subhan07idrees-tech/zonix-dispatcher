@@ -746,6 +746,435 @@
     .modal-btn-confirm:hover {
       background: #B91C1C;
     }
+
+    /* Smart Quick Email Drawer & Toolbar */
+    .header-btn.email-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 10px;
+      font-weight: 500;
+      color: var(--dp-ink);
+    }
+    .header-btn.email-btn:hover {
+      background: var(--dp-btn-hover);
+      border-color: var(--dp-logo-cobalt);
+    }
+    .email-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #EAB308;
+      transition: background-color 0.2s, box-shadow 0.2s;
+    }
+    .email-status-dot.connected {
+      background: #10B981;
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+    }
+
+    .email-drawer-overlay {
+      position: fixed;
+      top: 44px;
+      bottom: 0;
+      right: 0;
+      left: 0;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(2px);
+      z-index: 999;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.18s ease-in-out;
+    }
+    .email-drawer-overlay.active {
+      display: block;
+      opacity: 1;
+    }
+    .email-drawer {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      width: 440px;
+      max-width: 90vw;
+      background: var(--dp-bg);
+      border-left: 1px solid var(--dp-line);
+      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .email-drawer-overlay.active .email-drawer {
+      transform: translateX(0);
+    }
+
+    .email-drawer-header {
+      padding: 14px 16px 0 16px;
+      background: var(--dp-header-bg);
+      border-bottom: 1px solid var(--dp-line);
+      flex-shrink: 0;
+    }
+    .email-drawer-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .email-drawer-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--dp-ink);
+    }
+    .email-close-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--dp-ink-2);
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.12s;
+    }
+    .email-close-btn:hover {
+      background: var(--dp-btn-hover);
+      color: var(--dp-ink);
+      border-color: var(--dp-line);
+    }
+
+    .email-drawer-tabs {
+      display: flex;
+      gap: 4px;
+    }
+    .email-tab-btn {
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--dp-ink-2);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .email-tab-btn:hover {
+      color: var(--dp-ink);
+    }
+    .email-tab-btn.active {
+      color: var(--dp-logo-cobalt);
+      border-bottom-color: var(--dp-logo-cobalt);
+    }
+
+    .email-drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+    .email-tab-content {
+      display: none;
+    }
+    .email-tab-content.active {
+      display: block;
+    }
+
+    .email-form-group {
+      margin-bottom: 12px;
+    }
+    .email-form-row {
+      display: flex;
+      gap: 10px;
+    }
+    .email-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--dp-ink-2);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .email-label .req {
+      color: #EF4444;
+    }
+    .email-link-btn {
+      background: none;
+      border: none;
+      color: var(--dp-logo-cobalt);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: none;
+    }
+    .email-link-btn:hover {
+      text-decoration: underline;
+    }
+    .email-input, .email-select, .email-textarea {
+      width: 100%;
+      background: var(--dp-btn-bg);
+      border: 1px solid var(--dp-line);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12.5px;
+      color: var(--dp-ink);
+      font-family: inherit;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.12s, box-shadow 0.12s;
+    }
+    .email-input:focus, .email-select:focus, .email-textarea:focus {
+      border-color: var(--dp-logo-cobalt);
+      box-shadow: 0 0 0 2px rgba(36, 71, 214, 0.15);
+    }
+    .email-textarea {
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    .email-primary-btn {
+      width: 100%;
+      padding: 10px 14px;
+      background: #2447D6;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background-color 0.15s, transform 0.08s;
+      margin-top: 10px;
+    }
+    .email-primary-btn:hover {
+      background: #1C39B0;
+    }
+    .email-primary-btn:active {
+      transform: scale(0.99);
+    }
+    .email-primary-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .email-danger-btn {
+      padding: 8px 12px;
+      background: #DC2626;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .email-danger-btn:hover {
+      background: #B91C1C;
+    }
+
+    .email-mini-btn {
+      padding: 4px 8px;
+      background: var(--dp-btn-bg);
+      border: 1px solid var(--dp-line);
+      border-radius: 4px;
+      color: var(--dp-ink);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .email-mini-btn:hover {
+      background: var(--dp-btn-hover);
+      border-color: var(--dp-logo-cobalt);
+      color: var(--dp-logo-cobalt);
+    }
+
+    .email-alert-banner {
+      background: rgba(234, 179, 8, 0.1);
+      border: 1px solid rgba(234, 179, 8, 0.3);
+      border-radius: 6px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .email-alert-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .email-alert-text {
+      flex: 1;
+      font-size: 11.5px;
+      color: var(--dp-ink);
+      line-height: 1.35;
+    }
+
+    .email-feedback-box {
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin: 8px 0;
+      line-height: 1.35;
+    }
+    .email-feedback-box.success {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #059669;
+    }
+    .email-feedback-box.error {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #DC2626;
+    }
+
+    .email-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #FFFFFF;
+      border-radius: 50%;
+      animation: emailSpin 0.7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes emailSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    .token-pills-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 6px;
+    }
+    .token-pill {
+      background: rgba(36, 71, 214, 0.08);
+      border: 1px solid rgba(36, 71, 214, 0.2);
+      color: var(--dp-logo-cobalt);
+      font-size: 11px;
+      font-family: monospace;
+      padding: 2px 7px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.12s;
+    }
+    .token-pill:hover {
+      background: var(--dp-logo-cobalt);
+      color: #FFFFFF;
+    }
+
+    .templates-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .template-card {
+      background: var(--dp-btn-bg);
+      border: 1px solid var(--dp-line);
+      border-radius: 6px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      transition: border-color 0.12s;
+    }
+    .template-card:hover {
+      border-color: var(--dp-logo-cobalt);
+    }
+    .template-card-main {
+      flex: 1;
+      min-width: 0;
+    }
+    .template-card-title {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--dp-ink);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+    .template-card-subject {
+      font-size: 11.5px;
+      color: var(--dp-ink-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .template-default-badge {
+      font-size: 9.5px;
+      background: rgba(16, 185, 129, 0.12);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .template-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .template-editor-box {
+      background: var(--dp-btn-bg);
+      border: 1px solid var(--dp-line);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 8px;
+    }
+
+    .gmail-status-card, .gmail-connect-card {
+      background: var(--dp-btn-bg);
+      border: 1px solid var(--dp-line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .gmail-connected-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #10B981;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    .gmail-address-chip {
+      background: var(--dp-header-bg);
+      border: 1px solid var(--dp-line);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 12.5px;
+      color: var(--dp-ink);
+      margin-bottom: 14px;
+    }
+
+    .flex-between { display: flex; align-items: center; justify-content: space-between; }
+    .flex-items-center { display: flex; align-items: center; }
+    .flex-1 { flex: 1; }
+    .text-sm { font-size: 13px; }
+    .text-xs { font-size: 11.5px; }
+    .text-muted { color: var(--dp-ink-2); }
+    .mb-1 { margin-bottom: 4px; }
+    .mb-2 { margin-bottom: 8px; }
+    .mb-3 { margin-bottom: 12px; }
+    .mt-1 { margin-top: 4px; }
+    .cursor-pointer { cursor: pointer; }
   </style>
   <script>
     try {
@@ -797,6 +1226,16 @@
 
     <!-- Right Controls -->
     <div class="control-section">
+      <!-- Quick Email Button -->
+      <button class="header-btn email-btn" id="emailToggleBtn" title="Quick Email Broker (Alt+E)">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+        </svg>
+        <span class="email-status-dot" id="emailStatusDot"></span>
+        <span id="emailBtnLabel">Email</span>
+      </button>
+
       <!-- Theme Switcher -->
       <button class="header-btn theme-btn" id="themeToggleBtn" title="Switch Theme (Dark / Light)">
         <svg id="themeIconSun" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
@@ -960,6 +1399,204 @@
       <div class="modal-desc" id="alertModalDesc">You have reached the maximum allowed tab seat limit for this session.</div>
       <div class="modal-actions">
         <button id="okAlertBtn" class="modal-btn modal-btn-cancel" style="background:#2447D6;color:#FFFFFF;border:none;">Understood</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Smart Quick Email Drawer Overlay -->
+  <div id="emailDrawerOverlay" class="email-drawer-overlay">
+    <div id="emailDrawer" class="email-drawer">
+      <!-- Drawer Header -->
+      <div class="email-drawer-header">
+        <div class="email-drawer-title-row">
+          <div class="email-drawer-title">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2447D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+            </svg>
+            <span>QUICK EMAIL DISPATCH</span>
+          </div>
+          <button id="emailDrawerCloseBtn" class="email-close-btn" type="button" title="Close Drawer (Esc)">✕</button>
+        </div>
+        
+        <!-- Drawer Navigation Tabs -->
+        <div class="email-drawer-tabs">
+          <button class="email-tab-btn active" type="button" data-tab="sendTab">⚡ Quick Send</button>
+          <button class="email-tab-btn" type="button" data-tab="templatesTab">📋 My Templates</button>
+          <button class="email-tab-btn" type="button" data-tab="connectTab">⚙️ Gmail Connect</button>
+        </div>
+      </div>
+
+      <!-- Drawer Body -->
+      <div class="email-drawer-body">
+        <!-- TAB 1: QUICK SEND -->
+        <div id="sendTab" class="email-tab-content active">
+          <!-- Disconnected Warning Banner -->
+          <div id="emailNotConnectedBanner" class="email-alert-banner" style="display:none;">
+            <div class="email-alert-icon">⚠️</div>
+            <div class="email-alert-text">
+              <strong>Gmail not connected.</strong> Connect your Gmail to send emails directly to brokers.
+            </div>
+            <button id="bannerConnectBtn" class="email-mini-btn" type="button">Connect</button>
+          </div>
+
+          <div class="email-form-group">
+            <label class="email-label">
+              <span>Broker Email <span class="req">*</span></span>
+              <button id="pasteEmailBtn" class="email-link-btn" type="button">📋 Paste Clipboard</button>
+            </label>
+            <input type="email" id="emailToInput" class="email-input" placeholder="broker@logistics.com" autocomplete="off" />
+          </div>
+
+          <div class="email-form-row">
+            <div class="email-form-group flex-1">
+              <label class="email-label">Origin (City, ST)</label>
+              <input type="text" id="emailOriginInput" class="email-input" placeholder="e.g. Chicago, IL" />
+            </div>
+            <div class="email-form-group flex-1">
+              <label class="email-label">Destination (City, ST)</label>
+              <input type="text" id="emailDestInput" class="email-input" placeholder="e.g. Atlanta, GA" />
+            </div>
+          </div>
+
+          <div class="email-form-row">
+            <div class="email-form-group flex-1">
+              <label class="email-label">Offer / Rate</label>
+              <input type="text" id="emailRateInput" class="email-input" placeholder="e.g. $2,400" />
+            </div>
+            <div class="email-form-group flex-1">
+              <label class="email-label">Equipment</label>
+              <input type="text" id="emailEquipmentInput" class="email-input" placeholder="e.g. 53' Reefer" />
+            </div>
+          </div>
+
+          <div class="email-form-group">
+            <div class="flex-between">
+              <label class="email-label">Select Template</label>
+              <button id="manageTemplatesShortcutBtn" class="email-link-btn" type="button">Edit Templates ↗</button>
+            </div>
+            <select id="emailTemplateSelect" class="email-select">
+              <option value="">— Select Template —</option>
+            </select>
+          </div>
+
+          <div class="email-form-group">
+            <label class="email-label">Subject</label>
+            <input type="text" id="emailSubjectInput" class="email-input" placeholder="Load Inquiry..." />
+          </div>
+
+          <div class="email-form-group">
+            <label class="email-label">Body Text (Live Preview)</label>
+            <textarea id="emailBodyInput" class="email-textarea" rows="6" placeholder="Email body..."></textarea>
+          </div>
+
+          <div id="sendFeedback" class="email-feedback-box" style="display:none;"></div>
+
+          <button id="sendEmailSubmitBtn" class="email-primary-btn" type="button">
+            <span id="sendBtnSpinner" class="email-spinner" style="display:none;"></span>
+            <span id="sendBtnIcon">🚀</span>
+            <span id="sendBtnText">Send Email via Gmail</span>
+          </button>
+        </div>
+
+        <!-- TAB 2: MY TEMPLATES -->
+        <div id="templatesTab" class="email-tab-content">
+          <div class="flex-between mb-2">
+            <span class="email-section-title text-sm" style="font-weight:700;">Saved Templates</span>
+            <button id="newTemplateBtn" class="email-mini-btn" type="button">+ New Template</button>
+          </div>
+
+          <div id="templatesListContainer" class="templates-list">
+            <div class="email-muted-text text-xs">Loading templates...</div>
+          </div>
+
+          <!-- Template Editor Card -->
+          <div id="templateEditorBox" class="template-editor-box" style="display:none;">
+            <div class="flex-between mb-2">
+              <strong id="templateEditorTitle" class="text-sm">Edit Template</strong>
+              <button id="cancelTemplateEditBtn" class="email-link-btn" type="button">Cancel</button>
+            </div>
+            <input type="hidden" id="editTemplateId" value="" />
+            
+            <div class="email-form-group">
+              <label class="email-label">Template Name</label>
+              <input type="text" id="editTemplateName" class="email-input" placeholder="e.g. Reefer Rate Intro" />
+            </div>
+            <div class="email-form-group">
+              <label class="email-label">Subject Line</label>
+              <input type="text" id="editTemplateSubject" class="email-input" placeholder="e.g. Load {{origin}} to {{destination}}" />
+            </div>
+            
+            <div class="email-form-group">
+              <label class="email-label">Insert Token (Click to Add)</label>
+              <div class="token-pills-row">
+                <button class="token-pill" type="button" data-token="{{origin}}">+ origin</button>
+                <button class="token-pill" type="button" data-token="{{destination}}">+ destination</button>
+                <button class="token-pill" type="button" data-token="{{rate}}">+ rate</button>
+                <button class="token-pill" type="button" data-token="{{equipment}}">+ equipment</button>
+                <button class="token-pill" type="button" data-token="{{broker_name}}">+ broker</button>
+                <button class="token-pill" type="button" data-token="{{dispatcher_name}}">+ my name</button>
+              </div>
+            </div>
+
+            <div class="email-form-group">
+              <label class="email-label">Body Text</label>
+              <textarea id="editTemplateBody" class="email-textarea" rows="5"></textarea>
+            </div>
+
+            <div class="email-form-group flex-items-center gap-2">
+              <input type="checkbox" id="editTemplateDefault" />
+              <label for="editTemplateDefault" class="text-xs cursor-pointer" style="margin-left:6px;">Set as default 1-click template</label>
+            </div>
+
+            <div id="templateSaveFeedback" class="email-feedback-box" style="display:none;"></div>
+
+            <button id="saveTemplateBtn" class="email-primary-btn" type="button">
+              Save Template
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB 3: GMAIL CONNECT -->
+        <div id="connectTab" class="email-tab-content">
+          <div id="gmailConnectedState" class="gmail-status-card" style="display:none;">
+            <div class="gmail-connected-badge">
+              <span class="beacon-dot"></span>
+              <strong>Gmail Connected</strong>
+            </div>
+            <p class="text-xs text-muted mb-2">All dispatch emails are sent directly through your verified Google SMTP server.</p>
+            <div class="gmail-address-chip" id="connectedGmailDisplay">user@gmail.com</div>
+            <button id="disconnectGmailBtn" class="email-danger-btn" type="button">Disconnect Gmail</button>
+          </div>
+
+          <div id="gmailDisconnectedState" class="gmail-connect-card">
+            <div class="email-section-title mb-1" style="font-weight:700;font-size:13px;">Connect Your Gmail</div>
+            <p class="text-xs text-muted mb-3">
+              Use your Gmail address and a 16-character Google App Password. 100% safe, no DAT interaction, direct Google SMTP.
+            </p>
+
+            <div class="email-form-group">
+              <label class="email-label">Gmail Address</label>
+              <input type="email" id="gmailAddressInput" class="email-input" placeholder="dispatcher@gmail.com" />
+            </div>
+
+            <div class="email-form-group">
+              <div class="flex-between">
+                <label class="email-label">Google App Password (16 chars)</label>
+                <a href="https://myaccount.google.com/apppasswords" target="_blank" class="email-link-btn" title="Open Google App Passwords">Get App Password ↗</a>
+              </div>
+              <input type="password" id="gmailAppPasswordInput" class="email-input" placeholder="xxxx xxxx xxxx xxxx" />
+              <div class="text-xs text-muted mt-1">Google Account → Security → 2-Step Verification → App Passwords</div>
+            </div>
+
+            <div id="gmailConnectFeedback" class="email-feedback-box" style="display:none;"></div>
+
+            <button id="connectGmailSubmitBtn" class="email-primary-btn" type="button">
+              <span id="connectBtnSpinner" class="email-spinner" style="display:none;"></span>
+              <span>Verify & Connect Gmail</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1541,6 +2178,516 @@
         window.zonixAPI.closeWindow();
       }
     });
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // ⚡ SMART QUICK EMAIL DISPATCHER SYSTEM
+    // ─────────────────────────────────────────────────────────────────────────
+    (function initQuickEmailSystem() {
+      const BACKEND_URL = 'https://zonix-backend-0ggt.onrender.com';
+      let userToken = '';
+      let effectiveOrgId = '';
+      let emailConnected = false;
+      let connectedEmailAddress = '';
+      let templates = [];
+      let activeTemplate = null;
+
+      const overlay = document.getElementById('emailDrawerOverlay');
+      const drawer = document.getElementById('emailDrawer');
+      const toggleBtn = document.getElementById('emailToggleBtn');
+      const closeBtn = document.getElementById('emailDrawerCloseBtn');
+      const statusDot = document.getElementById('emailStatusDot');
+      const btnLabel = document.getElementById('emailBtnLabel');
+
+      // Elements
+      const templateSelect = document.getElementById('emailTemplateSelect');
+      const toInput = document.getElementById('emailToInput');
+      const originInput = document.getElementById('emailOriginInput');
+      const destInput = document.getElementById('emailDestInput');
+      const rateInput = document.getElementById('emailRateInput');
+      const equipmentInput = document.getElementById('emailEquipmentInput');
+      const subjectInput = document.getElementById('emailSubjectInput');
+      const bodyInput = document.getElementById('emailBodyInput');
+      const sendBtn = document.getElementById('sendEmailSubmitBtn');
+      const sendFeedback = document.getElementById('sendFeedback');
+      const notConnectedBanner = document.getElementById('emailNotConnectedBanner');
+
+      // Templates Elements
+      const templatesListContainer = document.getElementById('templatesListContainer');
+      const templateEditorBox = document.getElementById('templateEditorBox');
+      const newTemplateBtn = document.getElementById('newTemplateBtn');
+      const cancelTemplateEditBtn = document.getElementById('cancelTemplateEditBtn');
+      const saveTemplateBtn = document.getElementById('saveTemplateBtn');
+      const editTemplateId = document.getElementById('editTemplateId');
+      const editTemplateName = document.getElementById('editTemplateName');
+      const editTemplateSubject = document.getElementById('editTemplateSubject');
+      const editTemplateBody = document.getElementById('editTemplateBody');
+      const editTemplateDefault = document.getElementById('editTemplateDefault');
+      const templateSaveFeedback = document.getElementById('templateSaveFeedback');
+
+      // Connect Elements
+      const gmailConnectedState = document.getElementById('gmailConnectedState');
+      const gmailDisconnectedState = document.getElementById('gmailDisconnectedState');
+      const connectedGmailDisplay = document.getElementById('connectedGmailDisplay');
+      const disconnectGmailBtn = document.getElementById('disconnectGmailBtn');
+      const connectGmailSubmitBtn = document.getElementById('connectGmailSubmitBtn');
+      const gmailAddressInput = document.getElementById('gmailAddressInput');
+      const gmailAppPasswordInput = document.getElementById('gmailAppPasswordInput');
+      const gmailConnectFeedback = document.getElementById('gmailConnectFeedback');
+
+      function openDrawer(tabName) {
+        if (!overlay) return;
+        overlay.classList.add('active');
+        if (tabName) switchDrawerTab(tabName);
+        // Try to auto-populate clipboard email if input is empty
+        if (!toInput.value.trim() && navigator.clipboard && navigator.clipboard.readText) {
+          navigator.clipboard.readText().then(text => {
+            const trimmed = text.trim();
+            const match = trimmed.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+            if (match && toInput && !toInput.value.trim()) {
+              toInput.value = match[0];
+            }
+          }).catch(() => {});
+        }
+      }
+
+      function closeDrawer() {
+        if (overlay) overlay.classList.remove('active');
+      }
+
+      function toggleDrawer() {
+        if (overlay && overlay.classList.contains('active')) {
+          closeDrawer();
+        } else {
+          openDrawer();
+        }
+      }
+
+      function switchDrawerTab(targetTabId) {
+        document.querySelectorAll('.email-tab-btn').forEach(b => {
+          b.classList.toggle('active', b.getAttribute('data-tab') === targetTabId);
+        });
+        document.querySelectorAll('.email-tab-content').forEach(c => {
+          c.classList.toggle('active', c.id === targetTabId);
+        });
+      }
+
+      // Event Listeners for drawer controls
+      toggleBtn?.addEventListener('click', toggleDrawer);
+      closeBtn?.addEventListener('click', closeDrawer);
+      overlay?.addEventListener('click', (e) => {
+        if (e.target === overlay) closeDrawer();
+      });
+
+      document.querySelectorAll('.email-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          switchDrawerTab(btn.getAttribute('data-tab'));
+        });
+      });
+
+      document.getElementById('bannerConnectBtn')?.addEventListener('click', () => {
+        switchDrawerTab('connectTab');
+      });
+
+      document.getElementById('manageTemplatesShortcutBtn')?.addEventListener('click', () => {
+        switchDrawerTab('templatesTab');
+      });
+
+      document.getElementById('pasteEmailBtn')?.addEventListener('click', async () => {
+        try {
+          const text = (await navigator.clipboard.readText()).trim();
+          if (text) {
+            const match = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+            toInput.value = match ? match[0] : text;
+          }
+        } catch(e) {}
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.altKey && (e.key === 'e' || e.key === 'E')) {
+          e.preventDefault();
+          toggleDrawer();
+        }
+        if (e.key === 'Escape' && overlay?.classList.contains('active')) {
+          closeDrawer();
+        }
+      });
+
+      // Token Pills Insertion into Template Editor
+      document.querySelectorAll('.token-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const token = btn.getAttribute('data-token');
+          if (!editTemplateBody) return;
+          const start = editTemplateBody.selectionStart;
+          const end = editTemplateBody.selectionEnd;
+          const val = editTemplateBody.value;
+          editTemplateBody.value = val.substring(0, start) + token + val.substring(end);
+          editTemplateBody.focus();
+          editTemplateBody.selectionStart = editTemplateBody.selectionEnd = start + token.length;
+        });
+      });
+
+      // Live Token Replacement
+      function compileTemplate(text) {
+        if (!text) return '';
+        const originVal = (originInput?.value || '').trim();
+        const destVal = (destInput?.value || '').trim();
+        const rateVal = (rateInput?.value || '').trim();
+        const equipVal = (equipmentInput?.value || '').trim();
+        const brokerVal = (toInput?.value || '').split('@')[0] || 'Broker';
+        const dispatcherName = operatorUser || 'Dispatcher';
+        const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+        return text
+          .replace(/\{\{origin\}\}/gi, originVal || '...')
+          .replace(/\{\{destination\}\}/gi, destVal || '...')
+          .replace(/\{\{rate\}\}/gi, rateVal || '')
+          .replace(/\{\{equipment\}\}/gi, equipVal || '')
+          .replace(/\{\{broker_name\}\}/gi, brokerVal)
+          .replace(/\{\{dispatcher_name\}\}/gi, dispatcherName)
+          .replace(/\{\{date\}\}/gi, today)
+          .replace(/\{\{load_id\}\}/gi, '');
+      }
+
+      function applyActiveTemplate() {
+        if (!activeTemplate) return;
+        subjectInput.value = compileTemplate(activeTemplate.subject);
+        bodyInput.value = compileTemplate(activeTemplate.bodyText);
+      }
+
+      [originInput, destInput, rateInput, equipmentInput].forEach(inp => {
+        inp?.addEventListener('input', () => {
+          if (activeTemplate) {
+            applyActiveTemplate();
+          }
+        });
+      });
+
+      templateSelect?.addEventListener('change', () => {
+        const id = templateSelect.value;
+        activeTemplate = templates.find(t => t.id === id) || null;
+        if (activeTemplate) {
+          applyActiveTemplate();
+        }
+      });
+
+      // API Helpers
+      async function authFetch(endpoint, options = {}) {
+        const headers = options.headers || {};
+        headers['Content-Type'] = 'application/json';
+        if (userToken) {
+          headers['Authorization'] = `Bearer ${userToken}`;
+        }
+        return fetch(`${BACKEND_URL}${endpoint}`, { ...options, headers });
+      }
+
+      // Load Email Settings & Status
+      async function loadEmailSettings() {
+        try {
+          const res = await authFetch('/api/email-settings');
+          if (res.ok) {
+            const data = await res.json();
+            emailConnected = !!data.connected;
+            connectedEmailAddress = data.gmailAddress || '';
+
+            if (emailConnected) {
+              statusDot?.classList.add('connected');
+              if (btnLabel) btnLabel.textContent = 'Email';
+              if (toggleBtn) toggleBtn.title = `Quick Email Broker • Connected (${connectedEmailAddress}) [Alt+E]`;
+              if (notConnectedBanner) notConnectedBanner.style.display = 'none';
+              if (gmailConnectedState) gmailConnectedState.style.display = 'block';
+              if (gmailDisconnectedState) gmailDisconnectedState.style.display = 'none';
+              if (connectedGmailDisplay) connectedGmailDisplay.textContent = connectedEmailAddress;
+            } else {
+              statusDot?.classList.remove('connected');
+              if (btnLabel) btnLabel.textContent = 'Connect Email';
+              if (toggleBtn) toggleBtn.title = 'Connect Gmail for Quick Email [Alt+E]';
+              if (notConnectedBanner) notConnectedBanner.style.display = 'flex';
+              if (gmailConnectedState) gmailConnectedState.style.display = 'none';
+              if (gmailDisconnectedState) gmailDisconnectedState.style.display = 'block';
+            }
+          }
+        } catch (e) {
+          console.warn('[QuickEmail] Error checking email status:', e.message);
+        }
+      }
+
+      // Load Templates
+      async function loadTemplates() {
+        if (!effectiveOrgId) return;
+        try {
+          const res = await authFetch(`/api/templates/${effectiveOrgId}`);
+          if (res.ok) {
+            const data = await res.json();
+            templates = data.templates || [];
+            renderTemplatesDropdown();
+            renderTemplatesList();
+          }
+        } catch (e) {
+          console.warn('[QuickEmail] Error loading templates:', e.message);
+        }
+      }
+
+      function renderTemplatesDropdown() {
+        if (!templateSelect) return;
+        templateSelect.innerHTML = '<option value="">— Select Template —</option>';
+        let defaultTpl = null;
+        templates.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t.id;
+          opt.textContent = `${t.name} ${t.isDefault ? '★ (Default)' : ''}`;
+          templateSelect.appendChild(opt);
+          if (t.isDefault) defaultTpl = t;
+        });
+
+        if (defaultTpl) {
+          templateSelect.value = defaultTpl.id;
+          activeTemplate = defaultTpl;
+          applyActiveTemplate();
+        }
+      }
+
+      function renderTemplatesList() {
+        if (!templatesListContainer) return;
+        if (templates.length === 0) {
+          templatesListContainer.innerHTML = '<div class="text-xs text-muted" style="padding:10px 0;">No templates saved yet. Click "+ New Template" to create one.</div>';
+          return;
+        }
+
+        templatesListContainer.innerHTML = '';
+        templates.forEach(t => {
+          const card = document.createElement('div');
+          card.className = 'template-card';
+          card.innerHTML = `
+            <div class="template-card-main">
+              <div class="template-card-title">
+                <span>${t.name}</span>
+                ${t.isDefault ? '<span class="template-default-badge">Default</span>' : ''}
+              </div>
+              <div class="template-card-subject">${t.subject}</div>
+            </div>
+            <div class="template-actions">
+              <button class="email-mini-btn btn-edit" data-id="${t.id}">Edit</button>
+              <button class="email-mini-btn btn-del" data-id="${t.id}" style="color:#DC2626;">✕</button>
+            </div>
+          `;
+          templatesListContainer.appendChild(card);
+        });
+
+        templatesListContainer.querySelectorAll('.btn-edit').forEach(b => {
+          b.addEventListener('click', () => {
+            const id = b.getAttribute('data-id');
+            const t = templates.find(x => x.id === id);
+            if (t) showTemplateEditor(t);
+          });
+        });
+
+        templatesListContainer.querySelectorAll('.btn-del').forEach(b => {
+          b.addEventListener('click', async () => {
+            const id = b.getAttribute('data-id');
+            if (confirm('Delete this template?')) {
+              await deleteTemplate(id);
+            }
+          });
+        });
+      }
+
+      function showTemplateEditor(tpl = null) {
+        if (!templateEditorBox) return;
+        templateEditorBox.style.display = 'block';
+        document.getElementById('templateEditorTitle').textContent = tpl ? 'Edit Template' : 'New Template';
+        editTemplateId.value = tpl ? tpl.id : '';
+        editTemplateName.value = tpl ? tpl.name : '';
+        editTemplateSubject.value = tpl ? tpl.subject : '';
+        editTemplateBody.value = tpl ? tpl.bodyText : '';
+        editTemplateDefault.checked = tpl ? !!tpl.isDefault : false;
+        templateSaveFeedback.style.display = 'none';
+        editTemplateName.focus();
+      }
+
+      function hideTemplateEditor() {
+        if (templateEditorBox) templateEditorBox.style.display = 'none';
+      }
+
+      newTemplateBtn?.addEventListener('click', () => showTemplateEditor(null));
+      cancelTemplateEditBtn?.addEventListener('click', hideTemplateEditor);
+
+      saveTemplateBtn?.addEventListener('click', async () => {
+        const id = editTemplateId.value.trim();
+        const name = editTemplateName.value.trim();
+        const subject = editTemplateSubject.value.trim();
+        const bodyText = editTemplateBody.value.trim();
+        const isDefault = editTemplateDefault.checked;
+
+        if (!name || !subject || !bodyText) {
+          showFeedback(templateSaveFeedback, 'All fields are required.', 'error');
+          return;
+        }
+
+        saveTemplateBtn.disabled = true;
+        try {
+          const url = id ? `/api/templates/${effectiveOrgId}/${id}` : `/api/templates/${effectiveOrgId}`;
+          const method = id ? 'PUT' : 'POST';
+          const res = await authFetch(url, {
+            method,
+            body: JSON.stringify({ name, subject, bodyText, isDefault })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Failed to save template');
+
+          showFeedback(templateSaveFeedback, 'Template saved successfully!', 'success');
+          setTimeout(() => {
+            hideTemplateEditor();
+            loadTemplates();
+          }, 800);
+        } catch (err) {
+          showFeedback(templateSaveFeedback, err.message, 'error');
+        } finally {
+          saveTemplateBtn.disabled = false;
+        }
+      });
+
+      async function deleteTemplate(id) {
+        try {
+          const res = await authFetch(`/api/templates/${effectiveOrgId}/${id}`, { method: 'DELETE' });
+          if (res.ok) {
+            loadTemplates();
+          }
+        } catch (e) {
+          alert('Failed to delete template: ' + e.message);
+        }
+      }
+
+      // Connect Gmail Action
+      connectGmailSubmitBtn?.addEventListener('click', async () => {
+        const gmailAddress = gmailAddressInput.value.trim();
+        const appPassword = gmailAppPasswordInput.value.trim();
+
+        if (!gmailAddress || !appPassword) {
+          showFeedback(gmailConnectFeedback, 'Please enter your Gmail and App Password.', 'error');
+          return;
+        }
+
+        connectGmailSubmitBtn.disabled = true;
+        document.getElementById('connectBtnSpinner').style.display = 'inline-block';
+        gmailConnectFeedback.style.display = 'none';
+
+        try {
+          const res = await authFetch('/api/email-settings/connect', {
+            method: 'POST',
+            body: JSON.stringify({ gmailAddress, appPassword })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Failed to connect Gmail');
+
+          showFeedback(gmailConnectFeedback, '✅ Gmail connected and verified with Google!', 'success');
+          gmailAppPasswordInput.value = '';
+          await loadEmailSettings();
+          setTimeout(() => {
+            switchDrawerTab('sendTab');
+          }, 1200);
+        } catch (err) {
+          showFeedback(gmailConnectFeedback, err.message, 'error');
+        } finally {
+          connectGmailSubmitBtn.disabled = false;
+          document.getElementById('connectBtnSpinner').style.display = 'none';
+        }
+      });
+
+      // Disconnect Gmail Action
+      disconnectGmailBtn?.addEventListener('click', async () => {
+        if (!confirm('Disconnect your Gmail from ZONIX?')) return;
+        try {
+          const res = await authFetch('/api/email-settings/disconnect', { method: 'POST' });
+          if (res.ok) {
+            await loadEmailSettings();
+          }
+        } catch (e) {}
+      });
+
+      // Send Email Action
+      sendBtn?.addEventListener('click', async () => {
+        const to = (toInput?.value || '').trim();
+        const subject = (subjectInput?.value || '').trim();
+        const body = (bodyInput?.value || '').trim();
+
+        if (!emailConnected) {
+          showFeedback(sendFeedback, 'Please connect your Gmail account first (Tab 3).', 'error');
+          switchDrawerTab('connectTab');
+          return;
+        }
+
+        if (!to || !to.includes('@')) {
+          showFeedback(sendFeedback, 'Please enter a valid broker email address.', 'error');
+          toInput?.focus();
+          return;
+        }
+
+        if (!subject || !body) {
+          showFeedback(sendFeedback, 'Subject and Body cannot be empty.', 'error');
+          return;
+        }
+
+        sendBtn.disabled = true;
+        document.getElementById('sendBtnSpinner').style.display = 'inline-block';
+        document.getElementById('sendBtnIcon').style.display = 'none';
+        document.getElementById('sendBtnText').textContent = 'Sending via Gmail...';
+        sendFeedback.style.display = 'none';
+
+        try {
+          const res = await authFetch('/api/email-settings/send', {
+            method: 'POST',
+            body: JSON.stringify({ to, subject, body })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Failed to send email');
+
+          showFeedback(sendFeedback, `✅ Email successfully sent to ${to}!`, 'success');
+          // Clear recipient and load inputs for next email
+          toInput.value = '';
+          originInput.value = '';
+          destInput.value = '';
+          rateInput.value = '';
+          equipmentInput.value = '';
+          if (activeTemplate) applyActiveTemplate();
+        } catch (err) {
+          showFeedback(sendFeedback, `❌ ${err.message}`, 'error');
+        } finally {
+          sendBtn.disabled = false;
+          document.getElementById('sendBtnSpinner').style.display = 'none';
+          document.getElementById('sendBtnIcon').style.display = 'inline';
+          document.getElementById('sendBtnText').textContent = 'Send Email via Gmail';
+        }
+      });
+
+      function showFeedback(box, msg, type) {
+        if (!box) return;
+        box.className = `email-feedback-box ${type}`;
+        box.textContent = msg;
+        box.style.display = 'block';
+      }
+
+      // Initialize System Credentials
+      async function bootstrap() {
+        try {
+          if (window.zonixAPI?.getConfig) {
+            userToken = (await window.zonixAPI.getConfig('authToken')) || '';
+            const storedOrg = (await window.zonixAPI.getConfig('orgId')) || '';
+            effectiveOrgId = params.get('org') || storedOrg;
+          }
+        } catch (e) {
+          console.warn('[QuickEmail] Config retrieval failed:', e.message);
+        }
+
+        if (userToken) {
+          await loadEmailSettings();
+          if (effectiveOrgId) {
+            await loadTemplates();
+          }
+        }
+      }
+
+      bootstrap();
+    })();
   </script>
 </body>
 </html>
