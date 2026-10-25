@@ -6,7 +6,7 @@ import { WebSocketProvider, useWebSocket } from '../contexts/WebSocketContext';
 import ZonixLogo from './ZonixLogo';
 import {
   LayoutDashboard, Building2, Users, Wifi, Radio, ShieldCheck, FileText,
-  LogOut, PanelLeftClose, PanelLeft, Sun, Moon
+  LogOut, PanelLeftClose, PanelLeft, Sun, Moon, Mail
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { path: '/users', label: 'User registry', icon: Users },
   { path: '/proxies', label: 'Proxy nodes', icon: Wifi },
   { path: '/sessions', label: 'Active sessions', icon: Radio },
+  { path: '/email', label: 'Email', icon: Mail },
   { path: '/diagnostics', label: 'Diagnostics', icon: ShieldCheck },
   { path: '/logs', label: 'System logs', icon: FileText },
 ];

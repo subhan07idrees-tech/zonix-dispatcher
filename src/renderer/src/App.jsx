@@ -12,6 +12,7 @@ import ProxiesPage from './pages/ProxiesPage';
 import SessionsPage from './pages/SessionsPage';
 import LogsPage from './pages/LogsPage';
 import DiagnosticsPage from './pages/DiagnosticsPage';
+import EmailPage from './pages/EmailPage';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -54,6 +55,7 @@ function AppRoutes() {
         <Route path="sessions" element={<SessionsPage />} />
         <Route path="logs" element={<LogsPage />} />
         <Route path="diagnostics" element={<DiagnosticsPage />} />
+        <Route path="email" element={<EmailPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
