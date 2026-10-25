@@ -1175,6 +1175,83 @@
     .mb-3 { margin-bottom: 12px; }
     .mt-1 { margin-top: 4px; }
     .cursor-pointer { cursor: pointer; }
+
+    /* Live DAT Auto-Detection Banner */
+    .dat-sync-banner {
+      background: rgba(36, 71, 214, 0.06);
+      border: 1px solid rgba(36, 71, 214, 0.2);
+      border-radius: 6px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+      transition: all 0.2s;
+    }
+    .dat-sync-banner.detected {
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    .dat-sync-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .dat-sync-pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #EAB308;
+      flex-shrink: 0;
+      transition: background-color 0.2s, box-shadow 0.2s;
+    }
+    .dat-sync-banner.detected .dat-sync-pulse-dot {
+      background: #10B981;
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
+    }
+    .dat-sync-info {
+      min-width: 0;
+    }
+    .dat-sync-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--dp-ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dat-sync-banner.detected .dat-sync-title {
+      color: #059669;
+    }
+    .dat-sync-details {
+      font-size: 10.5px;
+      color: var(--dp-ink-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dat-sync-btn {
+      padding: 4px 8px;
+      background: var(--dp-btn-bg);
+      border: 1px solid var(--dp-line);
+      border-radius: 4px;
+      color: var(--dp-logo-cobalt);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      transition: all 0.12s;
+    }
+    .dat-sync-btn:hover {
+      background: var(--dp-logo-cobalt);
+      color: #FFFFFF;
+      border-color: var(--dp-logo-cobalt);
+    }
   </style>
   <script>
     try {
@@ -1438,6 +1515,23 @@
               <strong>Gmail not connected.</strong> Connect your Gmail to send emails directly to brokers.
             </div>
             <button id="bannerConnectBtn" class="email-mini-btn" type="button">Connect</button>
+          </div>
+
+          <!-- Live DAT Auto-Detection Banner -->
+          <div id="datSyncBanner" class="dat-sync-banner">
+            <div class="dat-sync-left">
+              <div class="dat-sync-pulse-dot" id="datSyncDot"></div>
+              <div class="dat-sync-info">
+                <div class="dat-sync-title" id="datSyncTitle">⚡ Click any load on DAT to auto-detect</div>
+                <div class="dat-sync-details" id="datSyncDetails">Auto-syncs broker email, origin, destination, rate</div>
+              </div>
+            </div>
+            <button id="reDetectDatBtn" class="dat-sync-btn" type="button" title="Scan active DAT load">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+              </svg>
+              <span>Sync DAT</span>
+            </button>
           </div>
 
           <div class="email-form-group">
@@ -2227,17 +2321,290 @@
       // Connect Elements
       const gmailConnectedState = document.getElementById('gmailConnectedState');
       const gmailDisconnectedState = document.getElementById('gmailDisconnectedState');
-      const connectedGmailDisplay = document.getElementById('connectedGmailDisplay');
       const disconnectGmailBtn = document.getElementById('disconnectGmailBtn');
       const connectGmailSubmitBtn = document.getElementById('connectGmailSubmitBtn');
       const gmailAddressInput = document.getElementById('gmailAddressInput');
       const gmailAppPasswordInput = document.getElementById('gmailAppPasswordInput');
       const gmailConnectFeedback = document.getElementById('gmailConnectFeedback');
 
+      // Live DAT Auto-Detection Elements
+      const datSyncBanner = document.getElementById('datSyncBanner');
+      const datSyncTitle = document.getElementById('datSyncTitle');
+      const datSyncDetails = document.getElementById('datSyncDetails');
+      const reDetectDatBtn = document.getElementById('reDetectDatBtn');
+
+      let activeDetectedData = null;
+      let drawerSyncInterval = null;
+
+      async function detectLoadFromActiveTab(isManual = false) {
+        try {
+          const activeTab = tabs.find(t => t.id === activeTabId);
+          const wv = activeTab ? activeTab.webview : null;
+          if (!wv) return;
+
+          // 100% read-only passive extraction inside DAT webview
+          function extractDatLoadInfoInWebview() {
+            try {
+              var res = {
+                found: false,
+                email: '',
+                origin: '',
+                destination: '',
+                rate: '',
+                equipment: '',
+                companyName: '',
+                contactName: ''
+              };
+
+              var clean = function(s) { return s ? s.replace(/\s+/g, ' ').trim() : ''; };
+              var rateRegex = /\$\s*([\d,]+(?:\.\d{2})?)/;
+              var emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi;
+
+              function formatCityState(raw) {
+                if (!raw) return '';
+                var cleaned = clean(raw)
+                  .replace(/^(?:origin|orig|pickup|pick\s*up|pu|from|destination|dest|delivery|del|dropoff|drop\s*off|drop|to|dho|dhd|dh-o|dh-d)\s*[:\-–—]?\s*/i, '')
+                  .replace(/\s*\(\s*\d+\s*(?:mi|miles)?\s*\)/i, '')
+                  .replace(/\s*;\s*.*$/, '')
+                  .trim();
+                var stateMatch = cleaned.match(/\b([A-Za-z\s.-]+?)[,\s]+(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|AB|BC|MB|NB|NL|NS|NT|NU|ON|PE|QC|SK|YT)\b/i);
+                if (!stateMatch) return '';
+                var city = stateMatch[1].replace(/^(?:origin|orig|pickup|pu|from|destination|dest|delivery|del|drop|to)\s*[:\-–—]?\s*/i, '').trim();
+                city = city.toLowerCase().replace(/\b[a-z]/g, function(c) { return c.toUpperCase(); });
+                var state = stateMatch[2].toUpperCase();
+                return city + ', ' + state;
+              }
+
+              var detailSelectors = [
+                '[data-testid*="load-detail" i]',
+                '[data-testid*="detail" i]',
+                '[data-testid*="flyout" i]',
+                '[data-testid*="drawer" i]',
+                '[data-testid*="sidebar" i]',
+                '[class*="detail" i]',
+                '[class*="drawer" i]',
+                '[class*="pane" i]',
+                '[class*="panel" i]',
+                '[class*="sidebar" i]',
+                'section[aria-label*="detail" i]',
+                '[role="dialog"]',
+                'div[class*="expanded" i]'
+              ];
+
+              var detailEl = null;
+              for (var i = 0; i < detailSelectors.length; i++) {
+                var candidates = document.querySelectorAll(detailSelectors[i]);
+                for (var j = 0; j < candidates.length; j++) {
+                  var el = candidates[j];
+                  if (el && el.offsetHeight > 80 && el.innerText && el.innerText.length > 30) {
+                    detailEl = el;
+                    break;
+                  }
+                }
+                if (detailEl) break;
+              }
+
+              var rowSelectors = [
+                'tr[class*="selected" i]',
+                'tr[aria-selected="true"]',
+                'div[role="row"][aria-selected="true"]',
+                'div[class*="selected" i][role="row"]',
+                'div[class*="active" i][role="row"]',
+                '.mat-row.selected',
+                '.cdk-row.selected',
+                '[class*="selected-row" i]',
+                '[class*="selectedRow" i]'
+              ];
+              var selectedRowEl = null;
+              for (var r = 0; r < rowSelectors.length; r++) {
+                var row = document.querySelector(rowSelectors[r]);
+                if (row && row.offsetHeight > 0) {
+                  selectedRowEl = row;
+                  break;
+                }
+              }
+
+              var scope = detailEl || selectedRowEl || document.body;
+
+              // 1. Broker Email
+              var mailtos = Array.from(scope.querySelectorAll('a[href^="mailto:" i]'));
+              for (var m = 0; m < mailtos.length; m++) {
+                var href = mailtos[m].getAttribute('href') || '';
+                var em = href.replace(/^mailto:/i, '').split('?')[0].trim();
+                if (em && !em.toLowerCase().includes('dat.com') && !em.toLowerCase().includes('example.com')) {
+                  res.email = em;
+                  break;
+                }
+              }
+
+              if (!res.email) {
+                var allMailtos = Array.from(document.querySelectorAll('a[href^="mailto:" i]'));
+                for (var a = 0; a < allMailtos.length; a++) {
+                  var href2 = allMailtos[a].getAttribute('href') || '';
+                  var em2 = href2.replace(/^mailto:/i, '').split('?')[0].trim();
+                  if (em2 && !em2.toLowerCase().includes('dat.com') && !em2.toLowerCase().includes('example.com')) {
+                    res.email = em2;
+                    break;
+                  }
+                }
+              }
+
+              if (!res.email) {
+                var text = scope.innerText || '';
+                var matches = text.match(emailRegex);
+                if (matches) {
+                  var filtered = matches.filter(function(e) {
+                    return !e.toLowerCase().includes('dat.com') && !e.toLowerCase().includes('example.com') && !e.toLowerCase().includes('sentry') && !e.toLowerCase().includes('google');
+                  });
+                  if (filtered.length > 0) res.email = filtered[0];
+                }
+              }
+
+              // 2. Origin & Destination
+              var originEl = scope.querySelector('[data-testid*="origin" i], [class*="origin" i], [data-testid*="pickup" i], [class*="pickup" i]');
+              var destEl = scope.querySelector('[data-testid*="destination" i], [class*="destination" i], [data-testid*="delivery" i], [class*="delivery" i]');
+
+              if (originEl) {
+                res.origin = formatCityState(originEl.innerText);
+              }
+              if (destEl) {
+                res.destination = formatCityState(destEl.innerText);
+              }
+
+              if (!res.origin || !res.destination) {
+                var fullText = (detailEl || selectedRowEl || document.body).innerText || '';
+                var lines = fullText.split('\n');
+                for (var li = 0; li < lines.length; li++) {
+                  var parsedCS = formatCityState(lines[li]);
+                  if (parsedCS) {
+                    if (!res.origin) {
+                      res.origin = parsedCS;
+                    } else if (!res.destination && parsedCS !== res.origin) {
+                      res.destination = parsedCS;
+                      break;
+                    }
+                  }
+                }
+              }
+
+              // 3. Rate
+              var rateEl = scope.querySelector('[data-testid*="rate" i], [class*="rate" i], [data-testid*="price" i], [class*="price" i]');
+              if (rateEl) {
+                var rm = clean(rateEl.innerText).match(rateRegex);
+                if (rm) res.rate = '$' + rm[1];
+              }
+              if (!res.rate) {
+                var rm2 = (scope.innerText || '').match(rateRegex);
+                if (rm2) res.rate = '$' + rm2[1];
+              }
+
+              // 4. Equipment
+              var textAll = scope.innerText || '';
+              if (/\b(?:Reefer|Refrigerated|Temp Controlled)\b/i.test(textAll) || /\b(?:53'?\s*R|R\s*53)\b/i.test(textAll)) {
+                res.equipment = "53' Reefer";
+              } else if (/\b(?:Van|Dry Van)\b/i.test(textAll) || /\b(?:53'?\s*V|V\s*53)\b/i.test(textAll)) {
+                res.equipment = "53' Dry Van";
+              } else if (/\b(?:Flatbed|Flat Bed)\b/i.test(textAll) || /\b(?:53'?\s*F|F\s*53)\b/i.test(textAll)) {
+                res.equipment = "Flatbed";
+              } else if (/\b(?:Step Deck|Stepdeck)\b/i.test(textAll)) {
+                res.equipment = "Step Deck";
+              } else if (/\b(?:Power Only)\b/i.test(textAll)) {
+                res.equipment = "Power Only";
+              }
+
+              // 5. Broker / Company Name
+              var compEl = scope.querySelector('[data-testid*="company" i], [class*="company" i], [class*="broker" i]');
+              if (compEl) {
+                var ct = clean(compEl.innerText);
+                if (ct && ct.length < 50 && !ct.includes('@')) res.companyName = ct;
+              }
+              if (!res.companyName && res.email) {
+                var domain = res.email.split('@')[1] || '';
+                var base = domain.split('.')[0] || '';
+                if (base && base !== 'gmail' && base !== 'yahoo' && base !== 'outlook') {
+                  res.companyName = base.charAt(0).toUpperCase() + base.slice(1);
+                }
+              }
+
+              if (res.email) {
+                var local = res.email.split('@')[0] || '';
+                var cleanName = local.replace(/[._0-9-]/g, ' ').trim();
+                if (cleanName.length > 2) {
+                  res.contactName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+                }
+              }
+
+              res.found = !!(res.email || res.origin || res.destination);
+              return res;
+            } catch(e) {
+              return { found: false, error: e.message };
+            }
+          }
+
+          var probeScript = '(' + extractDatLoadInfoInWebview.toString() + ')()';
+
+          const data = await wv.executeJavaScript(probeScript);
+          if (data && data.found) {
+            activeDetectedData = data;
+            if (data.email) toInput.value = data.email;
+            if (data.origin) originInput.value = data.origin;
+            if (data.destination) destInput.value = data.destination;
+            if (data.rate) rateInput.value = data.rate;
+            if (data.equipment) equipmentInput.value = data.equipment;
+
+            // Ensure active template is set
+            if (!activeTemplate && templates && templates.length > 0) {
+              const def = templates.find(t => t.isDefault) || templates[0];
+              if (def) {
+                activeTemplate = def;
+                if (templateSelect) templateSelect.value = def.id;
+              }
+            }
+
+            // Re-compile active template with new variables
+            if (activeTemplate) {
+              applyActiveTemplate();
+            } else if (data.origin && data.destination) {
+              // High-fidelity fallback subject & body if no templates exist yet
+              subjectInput.value = `Load Inquiry: ${data.origin} ➔ ${data.destination}${data.equipment ? ' [' + data.equipment + ']' : ''}`;
+              bodyInput.value = `Hello ${data.contactName || data.companyName || 'Team'},\n\nFollowing up on your load from ${data.origin} to ${data.destination}. We have a ${data.equipment || 'truck'} ready and available for pickup.\n\nPlease advise if this load is still available and the current rate.\n\nThank you,\n${operatorUser || 'Dispatch'}`;
+            }
+
+            if (datSyncBanner) {
+              datSyncBanner.classList.add('detected');
+              if (datSyncTitle) {
+                datSyncTitle.textContent = `⚡ ${data.origin || '?'} ➔ ${data.destination || '?'}`;
+              }
+              if (datSyncDetails) {
+                datSyncDetails.textContent = `${data.email || 'Email detected'} • ${data.equipment || 'Truck'} ${data.rate ? '• ' + data.rate : ''} ${data.companyName ? '• ' + data.companyName : ''}`;
+              }
+            }
+          } else if (isManual) {
+            if (datSyncDetails) {
+              datSyncDetails.textContent = 'No active load details found. Please click on a load row on DAT.';
+            }
+          }
+        } catch (err) {
+          console.warn('[QuickEmail] Auto-detect failed:', err.message);
+        }
+      }
+
       function openDrawer(tabName) {
         if (!overlay) return;
         overlay.classList.add('active');
         if (tabName) switchDrawerTab(tabName);
+
+        // Auto-detect load info from the active DAT tab immediately
+        detectLoadFromActiveTab();
+
+        // While drawer is open, keep syncing every 1.5s in case user clicks a different load
+        if (drawerSyncInterval) clearInterval(drawerSyncInterval);
+        drawerSyncInterval = setInterval(() => {
+          if (overlay && overlay.classList.contains('active')) {
+            detectLoadFromActiveTab();
+          }
+        }, 1500);
+
         // Try to auto-populate clipboard email if input is empty
         if (!toInput.value.trim() && navigator.clipboard && navigator.clipboard.readText) {
           navigator.clipboard.readText().then(text => {
@@ -2252,6 +2619,10 @@
 
       function closeDrawer() {
         if (overlay) overlay.classList.remove('active');
+        if (drawerSyncInterval) {
+          clearInterval(drawerSyncInterval);
+          drawerSyncInterval = null;
+        }
       }
 
       function toggleDrawer() {
@@ -2274,6 +2645,8 @@
       // Event Listeners for drawer controls
       toggleBtn?.addEventListener('click', toggleDrawer);
       closeBtn?.addEventListener('click', closeDrawer);
+      reDetectDatBtn?.addEventListener('click', () => detectLoadFromActiveTab(true));
+
       overlay?.addEventListener('click', (e) => {
         if (e.target === overlay) closeDrawer();
       });
@@ -2333,7 +2706,8 @@
         const destVal = (destInput?.value || '').trim();
         const rateVal = (rateInput?.value || '').trim();
         const equipVal = (equipmentInput?.value || '').trim();
-        const brokerVal = (toInput?.value || '').split('@')[0] || 'Broker';
+        const brokerVal = activeDetectedData?.contactName || (toInput?.value || '').split('@')[0] || 'Broker';
+        const companyVal = activeDetectedData?.companyName || 'Broker';
         const dispatcherName = operatorUser || 'Dispatcher';
         const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
@@ -2343,6 +2717,7 @@
           .replace(/\{\{rate\}\}/gi, rateVal || '')
           .replace(/\{\{equipment\}\}/gi, equipVal || '')
           .replace(/\{\{broker_name\}\}/gi, brokerVal)
+          .replace(/\{\{company_name\}\}/gi, companyVal)
           .replace(/\{\{dispatcher_name\}\}/gi, dispatcherName)
           .replace(/\{\{date\}\}/gi, today)
           .replace(/\{\{load_id\}\}/gi, '');
