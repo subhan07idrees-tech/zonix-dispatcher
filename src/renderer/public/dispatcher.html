@@ -1575,12 +1575,18 @@
           </div>
 
           <div class="email-form-group">
-            <label class="email-label">Subject</label>
+            <div class="flex-between">
+              <label class="email-label">Subject</label>
+              <button id="clearSubjectBtn" class="email-link-btn" type="button">Clear</button>
+            </div>
             <input type="text" id="emailSubjectInput" class="email-input" placeholder="Load Inquiry..." />
           </div>
 
           <div class="email-form-group">
-            <label class="email-label">Body Text (Live Preview)</label>
+            <div class="flex-between">
+              <label class="email-label">Body Text (Live Preview)</label>
+              <button id="clearBodyBtn" class="email-link-btn" type="button">Clear</button>
+            </div>
             <textarea id="emailBodyInput" class="email-textarea" rows="6" placeholder="Email body..."></textarea>
           </div>
 
@@ -1616,25 +1622,37 @@
               <label class="email-label">Template Name</label>
               <input type="text" id="editTemplateName" class="email-input" placeholder="e.g. Reefer Rate Intro" />
             </div>
+
             <div class="email-form-group">
-              <label class="email-label">Subject Line</label>
+              <div class="flex-between">
+                <label class="email-label">Subject Line</label>
+                <button id="clearEditSubjectBtn" class="email-link-btn" type="button">Clear</button>
+              </div>
               <input type="text" id="editTemplateSubject" class="email-input" placeholder="e.g. Load {{origin}} to {{destination}}" />
-            </div>
-            
-            <div class="email-form-group">
-              <label class="email-label">Insert Token (Click to Add)</label>
-              <div class="token-pills-row">
-                <button class="token-pill" type="button" data-token="{{origin}}">+ origin</button>
-                <button class="token-pill" type="button" data-token="{{destination}}">+ destination</button>
-                <button class="token-pill" type="button" data-token="{{rate}}">+ rate</button>
-                <button class="token-pill" type="button" data-token="{{equipment}}">+ equipment</button>
-                <button class="token-pill" type="button" data-token="{{broker_name}}">+ broker</button>
-                <button class="token-pill" type="button" data-token="{{dispatcher_name}}">+ my name</button>
+              <div class="token-pills-row mt-1">
+                <span style="font-size:10px;color:var(--dp-ink-2);align-self:center;margin-right:2px;">Insert into Subject:</span>
+                <button class="token-pill" type="button" data-target="subject" data-token="{{origin}}">+ origin</button>
+                <button class="token-pill" type="button" data-target="subject" data-token="{{destination}}">+ destination</button>
+                <button class="token-pill" type="button" data-target="subject" data-token="{{equipment}}">+ equipment</button>
+                <button class="token-pill" type="button" data-target="subject" data-token="{{rate}}">+ rate</button>
               </div>
             </div>
 
             <div class="email-form-group">
-              <label class="email-label">Body Text</label>
+              <div class="flex-between">
+                <label class="email-label">Body Text</label>
+                <button id="clearEditBodyBtn" class="email-link-btn" type="button">Clear</button>
+              </div>
+              <div class="token-pills-row mb-1">
+                <span style="font-size:10px;color:var(--dp-ink-2);align-self:center;margin-right:2px;">Insert into Body:</span>
+                <button class="token-pill" type="button" data-target="body" data-token="{{origin}}">+ origin</button>
+                <button class="token-pill" type="button" data-target="body" data-token="{{destination}}">+ destination</button>
+                <button class="token-pill" type="button" data-target="body" data-token="{{equipment}}">+ equipment</button>
+                <button class="token-pill" type="button" data-target="body" data-token="{{rate}}">+ rate</button>
+                <button class="token-pill" type="button" data-target="body" data-token="{{broker_name}}">+ broker</button>
+                <button class="token-pill" type="button" data-target="body" data-token="{{company_name}}">+ company</button>
+                <button class="token-pill" type="button" data-target="body" data-token="{{dispatcher_name}}">+ my name</button>
+              </div>
               <textarea id="editTemplateBody" class="email-textarea" rows="5"></textarea>
             </div>
 
@@ -2335,6 +2353,9 @@
 
       let activeDetectedData = null;
       let drawerSyncInterval = null;
+      let lastDetectedLoadSignature = '';
+      let userWantsCustomTemplate = false;
+      let lastFocusedTemplateInput = null;
 
       async function detectLoadFromActiveTab(isManual = false) {
         try {
@@ -2546,28 +2567,37 @@
           const data = await wv.executeJavaScript(probeScript);
           if (data && data.found) {
             activeDetectedData = data;
-            if (data.email) toInput.value = data.email;
-            if (data.origin) originInput.value = data.origin;
-            if (data.destination) destInput.value = data.destination;
-            if (data.rate) rateInput.value = data.rate;
-            if (data.equipment) equipmentInput.value = data.equipment;
+            const currentLoadSig = `${data.origin || ''}|${data.destination || ''}|${data.rate || ''}|${data.equipment || ''}|${data.email || ''}`;
+            const isNewLoad = (currentLoadSig !== lastDetectedLoadSignature && currentLoadSig !== '||||');
 
-            // Ensure active template is set
-            if (!activeTemplate && templates && templates.length > 0) {
-              const def = templates.find(t => t.isDefault) || templates[0];
-              if (def) {
-                activeTemplate = def;
-                if (templateSelect) templateSelect.value = def.id;
+            if (data.email && (!toInput.value || isNewLoad)) toInput.value = data.email;
+            if (data.origin && (!originInput.value || isNewLoad)) originInput.value = data.origin;
+            if (data.destination && (!destInput.value || isNewLoad)) destInput.value = data.destination;
+            if (data.rate && (!rateInput.value || isNewLoad)) rateInput.value = data.rate;
+            if (data.equipment && (!equipmentInput.value || isNewLoad)) equipmentInput.value = data.equipment;
+
+            // Only update Subject & Body if this is a NEW load, user is NOT actively typing, and has not chosen blank/custom
+            const isUserEditing = (document.activeElement === subjectInput || document.activeElement === bodyInput);
+            if (isNewLoad && !isUserEditing && !userWantsCustomTemplate) {
+              lastDetectedLoadSignature = currentLoadSig;
+
+              // Ensure active template is set
+              if (!activeTemplate && templates && templates.length > 0) {
+                const def = templates.find(t => t.isDefault) || templates[0];
+                if (def) {
+                  activeTemplate = def;
+                  if (templateSelect) templateSelect.value = def.id;
+                }
               }
-            }
 
-            // Re-compile active template with new variables
-            if (activeTemplate) {
-              applyActiveTemplate();
-            } else if (data.origin && data.destination) {
-              // High-fidelity fallback subject & body if no templates exist yet
-              subjectInput.value = `Load Inquiry: ${data.origin} ➔ ${data.destination}${data.equipment ? ' [' + data.equipment + ']' : ''}`;
-              bodyInput.value = `Hello ${data.contactName || data.companyName || 'Team'},\n\nFollowing up on your load from ${data.origin} to ${data.destination}. We have a ${data.equipment || 'truck'} ready and available for pickup.\n\nPlease advise if this load is still available and the current rate.\n\nThank you,\n${operatorUser || 'Dispatch'}`;
+              // Re-compile active template with new variables
+              if (activeTemplate) {
+                applyActiveTemplate();
+              } else if (data.origin && data.destination) {
+                // High-fidelity fallback subject & body if no templates exist yet
+                subjectInput.value = `Load Inquiry: ${data.origin} ➔ ${data.destination}${data.equipment ? ' [' + data.equipment + ']' : ''}`;
+                bodyInput.value = `Hello ${data.contactName || data.companyName || 'Team'},\n\nFollowing up on your load from ${data.origin} to ${data.destination}. We have a ${data.equipment || 'truck'} ready and available for pickup.\n\nPlease advise if this load is still available and the current rate.\n\nThank you,\n${operatorUser || 'Dispatch'}`;
+              }
             }
 
             if (datSyncBanner) {
@@ -2685,18 +2715,68 @@
         }
       });
 
+      // Template Editor Focus Tracking
+      editTemplateSubject?.addEventListener('focus', () => { lastFocusedTemplateInput = editTemplateSubject; });
+      editTemplateBody?.addEventListener('focus', () => { lastFocusedTemplateInput = editTemplateBody; });
+
       // Token Pills Insertion into Template Editor
       document.querySelectorAll('.token-pill').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
           const token = btn.getAttribute('data-token');
-          if (!editTemplateBody) return;
-          const start = editTemplateBody.selectionStart;
-          const end = editTemplateBody.selectionEnd;
-          const val = editTemplateBody.value;
-          editTemplateBody.value = val.substring(0, start) + token + val.substring(end);
-          editTemplateBody.focus();
-          editTemplateBody.selectionStart = editTemplateBody.selectionEnd = start + token.length;
+          const targetType = btn.getAttribute('data-target');
+          let targetEl = lastFocusedTemplateInput;
+          if (targetType === 'subject') targetEl = editTemplateSubject;
+          else if (targetType === 'body') targetEl = editTemplateBody;
+          if (!targetEl) targetEl = editTemplateSubject;
+
+          const start = targetEl.selectionStart ?? targetEl.value.length;
+          const end = targetEl.selectionEnd ?? targetEl.value.length;
+          const val = targetEl.value;
+          targetEl.value = val.substring(0, start) + token + val.substring(end);
+          targetEl.focus();
+          targetEl.selectionStart = targetEl.selectionEnd = start + token.length;
         });
+      });
+
+      // Clear buttons in Quick Send
+      document.getElementById('clearSubjectBtn')?.addEventListener('click', () => {
+        if (subjectInput) {
+          subjectInput.value = '';
+          userWantsCustomTemplate = true;
+          subjectInput.focus();
+        }
+      });
+
+      document.getElementById('clearBodyBtn')?.addEventListener('click', () => {
+        if (bodyInput) {
+          bodyInput.value = '';
+          userWantsCustomTemplate = true;
+          bodyInput.focus();
+        }
+      });
+
+      // Clear buttons in Template Editor
+      document.getElementById('clearEditSubjectBtn')?.addEventListener('click', () => {
+        if (editTemplateSubject) {
+          editTemplateSubject.value = '';
+          editTemplateSubject.focus();
+        }
+      });
+
+      document.getElementById('clearEditBodyBtn')?.addEventListener('click', () => {
+        if (editTemplateBody) {
+          editTemplateBody.value = '';
+          editTemplateBody.focus();
+        }
+      });
+
+      // Manual input listeners to respect custom typing
+      subjectInput?.addEventListener('input', () => {
+        userWantsCustomTemplate = true;
+      });
+      bodyInput?.addEventListener('input', () => {
+        userWantsCustomTemplate = true;
       });
 
       // Live Token Replacement
@@ -2731,7 +2811,7 @@
 
       [originInput, destInput, rateInput, equipmentInput].forEach(inp => {
         inp?.addEventListener('input', () => {
-          if (activeTemplate) {
+          if (activeTemplate && !userWantsCustomTemplate) {
             applyActiveTemplate();
           }
         });
@@ -2739,6 +2819,14 @@
 
       templateSelect?.addEventListener('change', () => {
         const id = templateSelect.value;
+        if (!id) {
+          activeTemplate = null;
+          userWantsCustomTemplate = true;
+          subjectInput.value = '';
+          bodyInput.value = '';
+          return;
+        }
+        userWantsCustomTemplate = false;
         activeTemplate = templates.find(t => t.id === id) || null;
         if (activeTemplate) {
           applyActiveTemplate();
@@ -2876,6 +2964,7 @@
         editTemplateBody.value = tpl ? tpl.bodyText : '';
         editTemplateDefault.checked = tpl ? !!tpl.isDefault : false;
         templateSaveFeedback.style.display = 'none';
+        lastFocusedTemplateInput = editTemplateSubject;
         editTemplateName.focus();
       }
 
