@@ -1534,6 +1534,14 @@
             </button>
           </div>
 
+          <div class="email-form-group" id="fromAccountGroup" style="display:none;">
+            <label class="email-label">
+              <span>Send From</span>
+              <span class="text-xs text-muted">Gmail Account</span>
+            </label>
+            <select id="emailFromSelect" class="email-select"></select>
+          </div>
+
           <div class="email-form-group">
             <label class="email-label">
               <span>Broker Email <span class="req">*</span></span>
@@ -1671,18 +1679,20 @@
 
         <!-- TAB 3: GMAIL CONNECT -->
         <div id="connectTab" class="email-tab-content">
-          <div id="gmailConnectedState" class="gmail-status-card" style="display:none;">
-            <div class="gmail-connected-badge">
-              <span class="beacon-dot"></span>
-              <strong>Gmail Connected</strong>
-            </div>
-            <p class="text-xs text-muted mb-2">All dispatch emails are sent directly through your verified Google SMTP server.</p>
-            <div class="gmail-address-chip" id="connectedGmailDisplay">user@gmail.com</div>
-            <button id="disconnectGmailBtn" class="email-danger-btn" type="button">Disconnect Gmail</button>
+          <div class="flex-between mb-2">
+            <span class="email-section-title text-sm" style="font-weight:700;">Connected Accounts</span>
+            <button id="showAddGmailBtn" class="email-mini-btn" type="button">+ Add Account</button>
           </div>
 
-          <div id="gmailDisconnectedState" class="gmail-connect-card">
-            <div class="email-section-title mb-1" style="font-weight:700;font-size:13px;">Connect Your Gmail</div>
+          <div id="gmailAccountsListContainer" class="templates-list mb-3">
+            <div class="email-muted-text text-xs">No Gmail accounts connected yet.</div>
+          </div>
+
+          <div id="addGmailCard" class="gmail-connect-card">
+            <div class="flex-between mb-1">
+              <span class="email-section-title" style="font-weight:700;font-size:13px;" id="addGmailCardTitle">Connect Gmail Account</span>
+              <button id="cancelAddGmailBtn" class="email-link-btn" type="button" style="display:none;">Cancel</button>
+            </div>
             <p class="text-xs text-muted mb-3">
               Use your Gmail address and a 16-character Google App Password. 100% safe, no DAT interaction, direct Google SMTP.
             </p>
@@ -1705,7 +1715,7 @@
 
             <button id="connectGmailSubmitBtn" class="email-primary-btn" type="button">
               <span id="connectBtnSpinner" class="email-spinner" style="display:none;"></span>
-              <span>Verify & Connect Gmail</span>
+              <span>Verify &amp; Connect Gmail</span>
             </button>
           </div>
         </div>
@@ -2300,6 +2310,8 @@
       let effectiveOrgId = '';
       let emailConnected = false;
       let connectedEmailAddress = '';
+      let connectedAccounts = [];
+      let isAddingAccount = false;
       let templates = [];
       let activeTemplate = null;
 
@@ -2311,6 +2323,8 @@
       const btnLabel = document.getElementById('emailBtnLabel');
 
       // Elements
+      const fromAccountGroup = document.getElementById('fromAccountGroup');
+      const emailFromSelect = document.getElementById('emailFromSelect');
       const templateSelect = document.getElementById('emailTemplateSelect');
       const toInput = document.getElementById('emailToInput');
       const originInput = document.getElementById('emailOriginInput');
@@ -2336,10 +2350,11 @@
       const editTemplateDefault = document.getElementById('editTemplateDefault');
       const templateSaveFeedback = document.getElementById('templateSaveFeedback');
 
-      // Connect Elements
-      const gmailConnectedState = document.getElementById('gmailConnectedState');
-      const gmailDisconnectedState = document.getElementById('gmailDisconnectedState');
-      const disconnectGmailBtn = document.getElementById('disconnectGmailBtn');
+      // Connect Elements (Multi-Account)
+      const gmailAccountsListContainer = document.getElementById('gmailAccountsListContainer');
+      const addGmailCard = document.getElementById('addGmailCard');
+      const showAddGmailBtn = document.getElementById('showAddGmailBtn');
+      const cancelAddGmailBtn = document.getElementById('cancelAddGmailBtn');
       const connectGmailSubmitBtn = document.getElementById('connectGmailSubmitBtn');
       const gmailAddressInput = document.getElementById('gmailAddressInput');
       const gmailAppPasswordInput = document.getElementById('gmailAppPasswordInput');
@@ -2849,30 +2864,153 @@
           const res = await authFetch('/api/email-settings');
           if (res.ok) {
             const data = await res.json();
-            emailConnected = !!data.connected;
-            connectedEmailAddress = data.gmailAddress || '';
+            if (data.accounts && Array.isArray(data.accounts)) {
+              connectedAccounts = data.accounts;
+            } else if (data.gmailAddress) {
+              connectedAccounts = [{ id: 'default', email: data.gmailAddress, isDefault: true }];
+            } else {
+              connectedAccounts = [];
+            }
+            emailConnected = connectedAccounts.length > 0;
+            const defaultAcc = connectedAccounts.find(a => a.isDefault) || connectedAccounts[0];
+            connectedEmailAddress = defaultAcc ? defaultAcc.email : '';
 
             if (emailConnected) {
               statusDot?.classList.add('connected');
               if (btnLabel) btnLabel.textContent = 'Email';
-              if (toggleBtn) toggleBtn.title = `Quick Email Broker • Connected (${connectedEmailAddress}) [Alt+E]`;
+              if (toggleBtn) toggleBtn.title = `Quick Email Broker • ${connectedAccounts.length} Connected Account(s) [Alt+E]`;
               if (notConnectedBanner) notConnectedBanner.style.display = 'none';
-              if (gmailConnectedState) gmailConnectedState.style.display = 'block';
-              if (gmailDisconnectedState) gmailDisconnectedState.style.display = 'none';
-              if (connectedGmailDisplay) connectedGmailDisplay.textContent = connectedEmailAddress;
             } else {
               statusDot?.classList.remove('connected');
               if (btnLabel) btnLabel.textContent = 'Connect Email';
               if (toggleBtn) toggleBtn.title = 'Connect Gmail for Quick Email [Alt+E]';
               if (notConnectedBanner) notConnectedBanner.style.display = 'flex';
-              if (gmailConnectedState) gmailConnectedState.style.display = 'none';
-              if (gmailDisconnectedState) gmailDisconnectedState.style.display = 'block';
             }
+
+            // Populate Send From Selector
+            if (emailFromSelect && fromAccountGroup) {
+              const previousVal = emailFromSelect.value;
+              emailFromSelect.innerHTML = '';
+              if (connectedAccounts.length > 1) {
+                fromAccountGroup.style.display = 'block';
+                connectedAccounts.forEach(acc => {
+                  const opt = document.createElement('option');
+                  opt.value = acc.email;
+                  opt.textContent = `${acc.email} ${acc.isDefault ? '(Default)' : ''}`;
+                  if (previousVal ? acc.email === previousVal : acc.isDefault) {
+                    opt.selected = true;
+                  }
+                  emailFromSelect.appendChild(opt);
+                });
+              } else if (connectedAccounts.length === 1) {
+                fromAccountGroup.style.display = 'none';
+                const opt = document.createElement('option');
+                opt.value = connectedAccounts[0].email;
+                opt.textContent = connectedAccounts[0].email;
+                opt.selected = true;
+                emailFromSelect.appendChild(opt);
+              } else {
+                fromAccountGroup.style.display = 'none';
+              }
+            }
+
+            renderAccountsList();
           }
         } catch (e) {
           console.warn('[QuickEmail] Error checking email status:', e.message);
         }
       }
+
+      function renderAccountsList() {
+        if (!gmailAccountsListContainer) return;
+        if (connectedAccounts.length === 0) {
+          gmailAccountsListContainer.innerHTML = '<div class="text-xs text-muted" style="padding:8px 0;">No Gmail accounts connected yet. Connect one below.</div>';
+          if (addGmailCard) addGmailCard.style.display = 'block';
+          if (cancelAddGmailBtn) cancelAddGmailBtn.style.display = 'none';
+          return;
+        }
+
+        gmailAccountsListContainer.innerHTML = '';
+        connectedAccounts.forEach(acc => {
+          const card = document.createElement('div');
+          card.className = 'template-card';
+          card.innerHTML = `
+            <div class="template-card-main">
+              <div class="template-card-title">
+                <span style="font-family:monospace;font-size:12px;">${acc.email}</span>
+                ${acc.isDefault ? '<span class="template-default-badge">Default</span>' : ''}
+              </div>
+            </div>
+            <div class="template-actions">
+              ${!acc.isDefault ? `<button class="email-mini-btn btn-make-default" data-email="${acc.email}">Set Default</button>` : ''}
+              <button class="email-mini-btn btn-disconnect" data-email="${acc.email}" style="color:#DC2626;">Disconnect</button>
+            </div>
+          `;
+          gmailAccountsListContainer.appendChild(card);
+        });
+
+        gmailAccountsListContainer.querySelectorAll('.btn-make-default').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const email = btn.getAttribute('data-email');
+            await setDefaultAccount(email);
+          });
+        });
+
+        gmailAccountsListContainer.querySelectorAll('.btn-disconnect').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const email = btn.getAttribute('data-email');
+            if (confirm(`Disconnect ${email}?`)) {
+              await disconnectAccount(email);
+            }
+          });
+        });
+
+        if (addGmailCard && !isAddingAccount) {
+          addGmailCard.style.display = 'none';
+        }
+      }
+
+      async function setDefaultAccount(email) {
+        try {
+          const res = await authFetch('/api/email-settings/set-default', {
+            method: 'POST',
+            body: JSON.stringify({ email })
+          });
+          if (res.ok) {
+            await loadEmailSettings();
+          }
+        } catch (e) {
+          alert('Failed to set default: ' + e.message);
+        }
+      }
+
+      async function disconnectAccount(email) {
+        try {
+          const res = await authFetch('/api/email-settings/disconnect', {
+            method: 'POST',
+            body: JSON.stringify({ email })
+          });
+          if (res.ok) {
+            await loadEmailSettings();
+          }
+        } catch (e) {
+          alert('Failed to disconnect: ' + e.message);
+        }
+      }
+
+      showAddGmailBtn?.addEventListener('click', () => {
+        isAddingAccount = true;
+        if (addGmailCard) addGmailCard.style.display = 'block';
+        if (cancelAddGmailBtn) cancelAddGmailBtn.style.display = 'inline';
+        gmailAddressInput?.focus();
+      });
+
+      cancelAddGmailBtn?.addEventListener('click', () => {
+        isAddingAccount = false;
+        if (addGmailCard && connectedAccounts.length > 0) {
+          addGmailCard.style.display = 'none';
+        }
+      });
 
       // Load Templates
       async function loadTemplates() {
@@ -3044,11 +3182,13 @@
           if (!res.ok) throw new Error(data.error || 'Failed to connect Gmail');
 
           showFeedback(gmailConnectFeedback, '✅ Gmail connected and verified with Google!', 'success');
+          gmailAddressInput.value = '';
           gmailAppPasswordInput.value = '';
+          isAddingAccount = false;
           await loadEmailSettings();
           setTimeout(() => {
             switchDrawerTab('sendTab');
-          }, 1200);
+          }, 1000);
         } catch (err) {
           showFeedback(gmailConnectFeedback, err.message, 'error');
         } finally {
@@ -3057,22 +3197,12 @@
         }
       });
 
-      // Disconnect Gmail Action
-      disconnectGmailBtn?.addEventListener('click', async () => {
-        if (!confirm('Disconnect your Gmail from ZONIX?')) return;
-        try {
-          const res = await authFetch('/api/email-settings/disconnect', { method: 'POST' });
-          if (res.ok) {
-            await loadEmailSettings();
-          }
-        } catch (e) {}
-      });
-
       // Send Email Action
       sendBtn?.addEventListener('click', async () => {
         const to = (toInput?.value || '').trim();
         const subject = (subjectInput?.value || '').trim();
         const body = (bodyInput?.value || '').trim();
+        const fromEmail = emailFromSelect ? emailFromSelect.value : undefined;
 
         if (!emailConnected) {
           showFeedback(sendFeedback, 'Please connect your Gmail account first (Tab 3).', 'error');
@@ -3100,7 +3230,7 @@
         try {
           const res = await authFetch('/api/email-settings/send', {
             method: 'POST',
-            body: JSON.stringify({ to, subject, body })
+            body: JSON.stringify({ to, subject, body, fromEmail })
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'Failed to send email');

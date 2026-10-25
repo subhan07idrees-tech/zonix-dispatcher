@@ -89,26 +89,26 @@ function TemplateModal({ template, orgId, token, onClose, onSave }) {
 
           {/* Subject */}
           <div>
-            <label className="block text-[12px] font-semibold text-ink-2 uppercase tracking-wider mb-1.5">Email Subject</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[12px] font-semibold text-ink-2 uppercase tracking-wider">Email Subject</label>
+              <button type="button" onClick={() => setSubject('')} className="text-[11px] text-accent hover:underline">Clear</button>
+            </div>
             <input
               value={subject}
               onChange={e => setSubject(e.target.value)}
-              placeholder="e.g. Available — {{origin}} to {{destination}}"
-              className="w-full px-3 py-2 rounded-[var(--r-ctl)] bg-bg border border-line-input text-[13px] text-ink placeholder-ink-3 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30"
+              placeholder="e.g. Load {{origin}} to {{destination}}"
+              className="w-full px-3 py-2 rounded-[var(--r-ctl)] bg-bg border border-line-input text-[13px] text-ink placeholder-ink-3 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 font-mono"
             />
-          </div>
-
-          {/* Variable tokens */}
-          <div>
-            <label className="block text-[12px] font-semibold text-ink-2 uppercase tracking-wider mb-1.5">Insert Variable</label>
-            <div className="flex flex-wrap gap-1">
-              {TOKENS.map(t => (
+            <div className="flex items-center flex-wrap gap-1 mt-1.5">
+              <span className="text-[10px] text-ink-3 mr-1">Insert into Subject:</span>
+              {['{{origin}}', '{{destination}}', '{{equipment}}', '{{rate}}'].map(t => (
                 <button
                   key={t}
-                  onClick={() => insertToken(t)}
-                  className="px-2 py-1 rounded text-[11px] font-mono font-semibold bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
+                  type="button"
+                  onClick={() => setSubject(prev => prev ? `${prev} ${t}` : t)}
+                  className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
                 >
-                  {t}
+                  +{t.replace(/[{}]/g, '')}
                 </button>
               ))}
             </div>
@@ -116,7 +116,23 @@ function TemplateModal({ template, orgId, token, onClose, onSave }) {
 
           {/* Body */}
           <div>
-            <label className="block text-[12px] font-semibold text-ink-2 uppercase tracking-wider mb-1.5">Email Body</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[12px] font-semibold text-ink-2 uppercase tracking-wider">Email Body</label>
+              <button type="button" onClick={() => setBodyText('')} className="text-[11px] text-accent hover:underline">Clear</button>
+            </div>
+            <div className="flex items-center flex-wrap gap-1 mb-1.5">
+              <span className="text-[10px] text-ink-3 mr-1">Insert into Body:</span>
+              {['{{broker_name}}', '{{origin}}', '{{destination}}', '{{rate}}', '{{equipment}}', '{{date}}', '{{dispatcher_name}}'].map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setBodyText(prev => prev ? `${prev} ${t}` : t)}
+                  className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
+                >
+                  +{t.replace(/[{}]/g, '')}
+                </button>
+              ))}
+            </div>
             <textarea
               value={bodyText}
               onChange={e => setBodyText(e.target.value)}
@@ -159,8 +175,9 @@ function TemplateModal({ template, orgId, token, onClose, onSave }) {
 }
 
 // ─── Compose Modal ────────────────────────────────────────────────────────────
-function ComposeModal({ templates, token, onClose }) {
+function ComposeModal({ templates, accounts = [], token, onClose }) {
   const [to, setTo] = useState('');
+  const [fromEmail, setFromEmail] = useState(accounts.find(a => a.isDefault)?.email || accounts[0]?.email || '');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState('');
@@ -208,7 +225,8 @@ function ComposeModal({ templates, token, onClose }) {
         body: JSON.stringify({
           to: to.trim(),
           subject: resolveVars(subject),
-          body: resolveVars(body)
+          body: resolveVars(body),
+          fromEmail: fromEmail || undefined
         })
       });
       const data = await res.json();
@@ -255,6 +273,24 @@ function ComposeModal({ templates, token, onClose }) {
             {error && (
               <div className="flex items-center gap-2 px-3 py-2 rounded-[var(--r-ctl)] bg-err-bg border border-err/20 text-err-ink text-[13px]">
                 <AlertTriangle size={14} /> {error}
+              </div>
+            )}
+
+            {/* Send From Account (if multiple) */}
+            {accounts.length > 1 && (
+              <div>
+                <label className="block text-[12px] font-semibold text-ink-2 uppercase tracking-wider mb-1.5">Send From</label>
+                <select
+                  value={fromEmail}
+                  onChange={e => setFromEmail(e.target.value)}
+                  className="w-full px-3 py-2 rounded-[var(--r-ctl)] bg-bg border border-line-input text-[13px] text-ink font-mono focus:outline-none focus:border-accent"
+                >
+                  {accounts.map(a => (
+                    <option key={a.email} value={a.email}>
+                      {a.email} {a.isDefault ? '★ (Default)' : ''}
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
 
@@ -431,12 +467,25 @@ export default function EmailPage() {
     }
   }
 
-  async function handleDisconnect() {
+  async function handleSetDefault(email) {
+    try {
+      const res = await fetch(`${API}/api/email-settings/set-default`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ email })
+      });
+      if (res.ok) fetchStatus();
+    } catch (e) { /* silent */ }
+  }
+
+  async function handleDisconnect(email) {
+    if (!window.confirm(`Disconnect ${email || 'Gmail account'}?`)) return;
     setDisconnecting(true);
     try {
       await fetch(`${API}/api/email-settings/disconnect`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ email })
       });
       setConnectSuccess('');
       fetchStatus();
@@ -457,6 +506,9 @@ export default function EmailPage() {
   }
 
   const canManageTemplates = ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role);
+  const accountsList = gmailStatus.accounts && gmailStatus.accounts.length > 0
+    ? gmailStatus.accounts
+    : (gmailStatus.connected && gmailStatus.gmailAddress ? [{ id: 'default', email: gmailStatus.gmailAddress, isDefault: true }] : []);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -465,7 +517,7 @@ export default function EmailPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-[18px] font-semibold text-ink tracking-tight">Email</h1>
-            <p className="text-[13px] text-ink-2 mt-0.5">Connect your Gmail and manage dispatch email templates</p>
+            <p className="text-[13px] text-ink-2 mt-0.5">Connect your Gmail accounts and manage dispatch email templates</p>
           </div>
           {gmailStatus.connected && (
             <button
@@ -488,15 +540,15 @@ export default function EmailPage() {
               <Mail size={16} className="text-ink-2" />
             </div>
             <div>
-              <h2 className="text-[14px] font-semibold text-ink">Gmail Account</h2>
-              <p className="text-[12px] text-ink-3">Send emails directly from your own Gmail address</p>
+              <h2 className="text-[14px] font-semibold text-ink">Connected Gmail Accounts</h2>
+              <p className="text-[12px] text-ink-3">Send dispatch emails directly through your verified Google SMTP servers</p>
             </div>
             <div className="ml-auto">
               {loadingStatus ? (
                 <Loader2 size={16} className="text-ink-3 animate-spin" />
-              ) : gmailStatus.connected ? (
+              ) : accountsList.length > 0 ? (
                 <span className="flex items-center gap-1.5 text-[12px] font-medium text-ok-ink bg-ok-bg px-2.5 py-1 rounded-[var(--r-pill)] border border-ok/20">
-                  <CheckCircle size={12} /> Connected
+                  <CheckCircle size={12} /> {accountsList.length} Connected
                 </span>
               ) : (
                 <span className="flex items-center gap-1.5 text-[12px] font-medium text-ink-3 bg-bg px-2.5 py-1 rounded-[var(--r-pill)] border border-line">
@@ -506,85 +558,111 @@ export default function EmailPage() {
             </div>
           </div>
 
-          {gmailStatus.connected ? (
-            <div className="flex items-center justify-between p-3 rounded-[var(--r-ctl)] bg-ok-bg border border-ok/20">
-              <div>
-                <p className="text-[13px] font-semibold text-ok-ink">{gmailStatus.gmailAddress}</p>
-                <p className="text-[11px] text-ok-ink/70 mt-0.5">Credentials stored encrypted · Never exposed</p>
-              </div>
-              <button
-                onClick={handleDisconnect}
-                disabled={disconnecting}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium text-err-ink bg-err-bg border border-err/20 rounded-[var(--r-ctl)] hover:opacity-80 transition-opacity disabled:opacity-50"
-              >
-                {disconnecting ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />}
-                Disconnect
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {/* Info callout */}
-              <div className="flex items-start gap-2.5 p-3 rounded-[var(--r-ctl)] bg-accent-wash border border-accent/20">
-                <Shield size={14} className="text-accent mt-0.5 flex-shrink-0" />
-                <div className="text-[12px] text-ink-2 leading-relaxed">
-                  <strong className="text-ink">Requires a Gmail App Password</strong> — not your regular password.
-                  Go to <strong>Google Account → Security → 2-Step Verification → App passwords</strong> and generate one for "Mail".
-                </div>
-              </div>
-
-              {connectError && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-[var(--r-ctl)] bg-err-bg border border-err/20 text-err-ink text-[13px]">
-                  <AlertTriangle size={14} /> {connectError}
-                </div>
-              )}
-              {connectSuccess && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-[var(--r-ctl)] bg-ok-bg border border-ok/20 text-ok-ink text-[13px]">
-                  <CheckCircle size={14} /> {connectSuccess}
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[12px] font-semibold text-ink-2 uppercase tracking-wider mb-1.5">Gmail Address</label>
-                  <input
-                    type="email"
-                    value={gmailInput}
-                    onChange={e => setGmailInput(e.target.value)}
-                    placeholder="you@gmail.com"
-                    className="w-full px-3 py-2 rounded-[var(--r-ctl)] bg-bg border border-line-input text-[13px] text-ink placeholder-ink-3 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[12px] font-semibold text-ink-2 uppercase tracking-wider mb-1.5">App Password</label>
-                  <div className="relative">
-                    <input
-                      type={showPass ? 'text' : 'password'}
-                      value={appPassInput}
-                      onChange={e => setAppPassInput(e.target.value)}
-                      placeholder="xxxx xxxx xxxx xxxx"
-                      className="w-full pl-3 pr-9 py-2 rounded-[var(--r-ctl)] bg-bg border border-line-input text-[13px] text-ink placeholder-ink-3 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 font-mono"
-                    />
+          {/* Accounts List */}
+          {accountsList.length > 0 && (
+            <div className="space-y-2 mb-5">
+              {accountsList.map(acc => (
+                <div key={acc.id || acc.email} className="flex items-center justify-between p-3 rounded-[var(--r-ctl)] bg-bg border border-line">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-2.5 h-2.5 rounded-full bg-ok flex-shrink-0 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+                    <span className="font-mono text-[13px] font-semibold text-ink truncate">{acc.email}</span>
+                    {acc.isDefault && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-accent/10 text-accent border border-accent/20 flex-shrink-0">
+                        Default
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {!acc.isDefault && (
+                      <button
+                        onClick={() => handleSetDefault(acc.email)}
+                        className="px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:text-ink bg-surface border border-line rounded-[var(--r-ctl)] transition-colors"
+                      >
+                        Make Default
+                      </button>
+                    )}
                     <button
-                      type="button"
-                      onClick={() => setShowPass(p => !p)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink"
+                      onClick={() => handleDisconnect(acc.email)}
+                      disabled={disconnecting}
+                      className="px-2.5 py-1 text-[11px] font-medium text-err-ink hover:text-err bg-err-bg border border-err/20 rounded-[var(--r-ctl)] transition-colors disabled:opacity-50"
                     >
-                      {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                      Disconnect
                     </button>
                   </div>
                 </div>
-              </div>
-
-              <button
-                onClick={handleConnect}
-                disabled={connecting || !gmailInput || !appPassInput}
-                className="flex items-center gap-2 px-4 py-2 text-[13px] font-semibold bg-accent text-white rounded-[var(--r-ctl)] hover:bg-accent-hover disabled:opacity-50 transition-colors"
-              >
-                {connecting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
-                {connecting ? 'Verifying…' : 'Connect Gmail'}
-              </button>
+              ))}
             </div>
           )}
+
+          {/* Add Another Account Form */}
+          <div className="pt-4 border-t border-line space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[13px] font-semibold text-ink">
+                {accountsList.length > 0 ? '+ Connect Another Gmail Account' : 'Connect Gmail Account'}
+              </span>
+            </div>
+
+            {/* Info callout */}
+            <div className="flex items-start gap-2.5 p-3 rounded-[var(--r-ctl)] bg-accent-wash border border-accent/20">
+              <Shield size={14} className="text-accent mt-0.5 flex-shrink-0" />
+              <div className="text-[12px] text-ink-2 leading-relaxed">
+                <strong className="text-ink">Requires a 16-character Google App Password</strong> — not your regular password.
+                Go to <strong>Google Account → Security → 2-Step Verification → App passwords</strong> and generate one for "Mail".
+              </div>
+            </div>
+
+            {connectError && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-[var(--r-ctl)] bg-err-bg border border-err/20 text-err-ink text-[13px]">
+                <AlertTriangle size={14} /> {connectError}
+              </div>
+            )}
+            {connectSuccess && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-[var(--r-ctl)] bg-ok-bg border border-ok/20 text-ok-ink text-[13px]">
+                <CheckCircle size={14} /> {connectSuccess}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[12px] font-semibold text-ink-2 uppercase tracking-wider mb-1.5">Gmail Address</label>
+                <input
+                  type="email"
+                  value={gmailInput}
+                  onChange={e => setGmailInput(e.target.value)}
+                  placeholder="dispatcher@gmail.com"
+                  className="w-full px-3 py-2 rounded-[var(--r-ctl)] bg-bg border border-line-input text-[13px] text-ink placeholder-ink-3 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30"
+                />
+              </div>
+              <div>
+                <label className="block text-[12px] font-semibold text-ink-2 uppercase tracking-wider mb-1.5">App Password</label>
+                <div className="relative">
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    value={appPassInput}
+                    onChange={e => setAppPassInput(e.target.value)}
+                    placeholder="xxxx xxxx xxxx xxxx"
+                    className="w-full pl-3 pr-9 py-2 rounded-[var(--r-ctl)] bg-bg border border-line-input text-[13px] text-ink placeholder-ink-3 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(p => !p)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink"
+                  >
+                    {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleConnect}
+              disabled={connecting || !gmailInput || !appPassInput}
+              className="flex items-center gap-2 px-4 py-2 text-[13px] font-semibold bg-accent text-white rounded-[var(--r-ctl)] hover:bg-accent-hover disabled:opacity-50 transition-colors"
+            >
+              {connecting ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+              {connecting ? 'Verifying with Google…' : (accountsList.length > 0 ? 'Add Account' : 'Connect Gmail')}
+            </button>
+          </div>
         </div>
 
         {/* ── Email Templates ───────────────────────────────────────────────── */}

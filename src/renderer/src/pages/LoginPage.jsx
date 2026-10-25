@@ -69,7 +69,7 @@ export default function LoginPage() {
                 value={orgId}
                 onChange={(e) => setOrgId(e.target.value)}
                 className="zx-input w-full font-mono text-[13px]"
-                placeholder="Tenant ID (leave blank for root console)"
+                placeholder="Organization ID"
                 autoComplete="organization"
               />
             </div>

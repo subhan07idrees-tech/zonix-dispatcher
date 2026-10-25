@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import EmptyState from '../components/EmptyState';
 import {
-  FileText, Search, Filter, RefreshCw, ChevronLeft, ChevronRight
+  FileText, Search, Filter, RefreshCw, ChevronLeft, ChevronRight, Trash2
 } from 'lucide-react';
 
 function formatUtcTimestamp(dateOrIso) {
@@ -86,6 +86,29 @@ export default function LogsPage() {
     fetchLogs();
   };
 
+  const [pruning, setPruning] = useState(false);
+
+  const handlePruneLogs = async () => {
+    if (!window.confirm('Prune audit logs older than 30 days to keep database storage lean?')) return;
+    setPruning(true);
+    try {
+      const res = await authFetch('/dashboard/audit/prune', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ days: 30 })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to prune logs');
+      showToast(`Cleaned up ${data.count} old log records`, 'ok');
+      setPage(0);
+      fetchLogs();
+    } catch (err) {
+      showToast('Prune failed: ' + err.message, 'err');
+    } finally {
+      setPruning(false);
+    }
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
@@ -113,6 +136,16 @@ export default function LogsPage() {
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} strokeWidth={1.5} />
             <span>Refresh</span>
+          </button>
+          <button
+            type="button"
+            onClick={handlePruneLogs}
+            disabled={pruning || loading}
+            title="Prune logs older than 30 days to keep database storage lean"
+            className="zx-btn-secondary text-xs hover:border-err/40 hover:text-err"
+          >
+            <Trash2 className={`w-3.5 h-3.5 ${pruning ? 'animate-spin' : ''}`} strokeWidth={1.5} />
+            <span>Prune &gt;30d</span>
           </button>
         </div>
       </div>

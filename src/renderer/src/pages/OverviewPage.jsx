@@ -210,7 +210,7 @@ export default function OverviewPage() {
           subject: trimmedSubj,
           message: trimmedMsg,
           telemetry: {
-            appVersion: window.zonixAPI?.appVersion ? ('v' + window.zonixAPI.appVersion) : 'v2.0.3',
+            appVersion: window.zonixAPI?.appVersion ? ('v' + window.zonixAPI.appVersion) : 'v2.0.4',
             os: 'Windows 10/11',
             targetDomain,
             userRole: user?.role,

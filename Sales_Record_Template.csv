@@ -1,0 +1,9 @@
+Date,Transaction ID,Client Name,Company / Organization,Service / Product,Units / Seats,Unit Price ($),Total Sales ($),Discount ($),Net Revenue ($),Payment Method,Payment Status,Dispatcher / Sales Rep,Notes
+2026-07-01,TXN-1001,Apex Freight Lines,Apex Logistics,ZONIX Dispatch OS - Admin,1,299.00,299.00,0.00,299.00,Credit Card,Paid,Subhan,Annual Subscription
+2026-07-03,TXN-1002,Global Express Inc,Global Express,ZONIX Dispatch Seats,5,49.00,245.00,25.00,220.00,ACH Transfer,Paid,Alex,Monthly 5-Seat Pack
+2026-07-05,TXN-1003,Swift Carriers LLC,Swift Carriers,Dedicated Proxy Tunnel,2,99.00,198.00,0.00,198.00,PayPal,Paid,Subhan,High-speed ORD proxy
+2026-07-10,TXN-1004,Vanguard Freight,Vanguard Logistics,ZONIX Enterprise Unlimited,1,899.00,899.00,100.00,799.00,Wire Transfer,Paid,Sarah,Enterprise Tier
+2026-07-15,TXN-1005,Horizon Logistics,Horizon Transport,ZONIX Dispatch Seats,10,45.00,450.00,50.00,400.00,Credit Card,Pending,Alex,Invoice #INV-204
+2026-07-18,TXN-1006,Titan Transports,Titan Logistics,Session Anti-Detect Addon,3,79.00,237.00,0.00,237.00,Credit Card,Paid,Subhan,Anti-fingerprint module
+2026-07-22,TXN-1007,Pinnacle Freight,Pinnacle Logistics,ZONIX Dispatch OS - Admin,1,299.00,299.00,20.00,279.00,ACH Transfer,Paid,Sarah,Monthly Starter
+2026-07-25,TXN-1008,Eagle Transport,Eagle Freight,ZONIX Dispatch Seats,8,49.00,392.00,42.00,350.00,Credit Card,Pending,Alex,Awaiting Payment Confirmation

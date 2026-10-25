@@ -1,0 +1,1265 @@
+﻿<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ZONIX ΓÇö Enterprise Session OS &amp; Multi-Seat Dispatch Platform</title>
+<meta name="description" content="ZONIX is the next-generation secure session-sharing, anti-detect browser platform for freight dispatchers. Zero login bans, zero leaked credentials, dedicated secure tunnels."/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+        display: ['Outfit', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+      },
+      colors: {
+        ink: '#06080F',
+        panel: '#0B0F19',
+        card: '#0E1322',
+        surface: '#141A2D',
+        cyan: '#00F0FF',
+        blue: {
+          400: '#60A5FA',
+          500: '#3B82F6',
+          600: '#2563EB',
+          700: '#1D4ED8',
+        },
+      },
+    }
+  }
+}
+</script>
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<style>
+  html { scroll-behavior: smooth; }
+  body {
+    background: #06080F;
+    color: #F3F4F6;
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+  }
+  .font-display { font-family: 'Outfit', sans-serif; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* Background glow meshes */
+  .hero-glow-1 {
+    position: absolute;
+    width: 650px;
+    height: 650px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.22) 0%, rgba(6, 8, 15, 0) 70%);
+    top: -150px;
+    left: -100px;
+    pointer-events: none;
+    filter: blur(40px);
+  }
+  .hero-glow-2 {
+    position: absolute;
+    width: 550px;
+    height: 550px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 240, 255, 0.16) 0%, rgba(6, 8, 15, 0) 70%);
+    top: 150px;
+    right: -100px;
+    pointer-events: none;
+    filter: blur(50px);
+  }
+
+  /* Grid & Subtle Scanlines */
+  .bg-grid-cyber {
+    background-image:
+      linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Glassmorphism Classes */
+  .glass {
+    background: rgba(14, 19, 34, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  .glass-card {
+    background: linear-gradient(180deg, rgba(17, 24, 43, 0.75) 0%, rgba(11, 15, 26, 0.85) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.6);
+  }
+  .glass-card:hover {
+    border-color: rgba(0, 240, 255, 0.35);
+    box-shadow: 0 25px 60px -15px rgba(0, 240, 255, 0.15);
+  }
+
+  /* Button Styles */
+  .btn-primary {
+    background: linear-gradient(135deg, #1E40AF 0%, #2563EB 50%, #00F0FF 100%);
+    background-size: 200% 200%;
+    color: #FFFFFF;
+    font-weight: 700;
+    transition: all .3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 10px 28px -8px rgba(37, 99, 235, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    background-position: 100% 100%;
+    box-shadow: 0 16px 36px -8px rgba(0, 240, 255, 0.5);
+  }
+
+  .btn-outline {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #E2E8F0;
+    transition: all .25s ease;
+  }
+  .btn-outline:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(0, 240, 255, 0.4);
+    color: #FFFFFF;
+    box-shadow: 0 0 25px -5px rgba(0, 240, 255, 0.3);
+  }
+
+  /* Text Gradients */
+  .text-gradient {
+    background: linear-gradient(135deg, #FFFFFF 0%, #BAE6FD 45%, #00F0FF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .text-gradient-cyan {
+    background: linear-gradient(135deg, #00F0FF 0%, #38BDF8 50%, #60A5FA 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Beacon Animation */
+  @keyframes beaconGlow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(1.2); }
+  }
+  .beacon-active {
+    animation: beaconGlow 1.8s infinite;
+  }
+
+  /* Slider Customization */
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: #1E293B;
+    height: 8px;
+    border-radius: 4px;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #00F0FF;
+    cursor: pointer;
+    box-shadow: 0 0 14px #00F0FF;
+    border: 2px solid #FFFFFF;
+  }
+
+  /* Accordion chevron */
+  details[open] > summary .faq-icon {
+    transform: rotate(180deg);
+    color: #00F0FF;
+  }
+</style>
+</head>
+<body class="antialiased selection:bg-cyan selection:text-ink">
+
+<!-- TOP NAV -->
+<header id="nav" class="fixed top-0 inset-x-0 z-50 transition-all duration-300">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-3">
+    <div class="glass rounded-2xl flex items-center justify-between px-4 sm:px-6 py-3 border border-white/10 shadow-xl">
+      <!-- Brand Logo -->
+      <a href="#top" class="flex items-center gap-3 group">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-cyan p-0.5 shadow-lg shadow-blue-500/30 group-hover:shadow-cyan/40 transition">
+          <div class="w-full h-full bg-[#0B0F19] rounded-[10px] flex items-center justify-center font-display font-extrabold text-white text-base">
+            Z
+          </div>
+        </div>
+        <div>
+          <div class="font-display font-extrabold tracking-tight text-lg text-white leading-none flex items-center gap-2">
+            ZONIX
+            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-blue-500/20 text-cyan border border-blue-400/30 font-bold">OS</span>
+          </div>
+          <div class="text-[9px] uppercase tracking-[0.2em] text-gray-400 leading-none mt-1 font-mono">Dispatcher Node</div>
+        </div>
+      </a>
+
+      <!-- Navigation Links -->
+      <nav class="hidden md:flex items-center gap-7 text-xs font-semibold uppercase tracking-wider text-gray-300">
+        <a href="#dat-options" class="text-cyan hover:text-white transition flex items-center gap-1 font-bold">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan beacon-active"></span> DAT Access
+        </a>
+        <a href="#architecture" class="hover:text-cyan transition">Architecture</a>
+        <a href="#simulator" class="hover:text-cyan transition">Live Simulator</a>
+        <a href="#calculator" class="hover:text-cyan transition">ROI Calculator</a>
+        <a href="#security" class="hover:text-cyan transition">Zero-Leak Shield</a>
+        <a href="#faq" class="hover:text-cyan transition">FAQ</a>
+      </nav>
+
+      <!-- Right Action CTAs -->
+      <div class="flex items-center gap-2.5">
+        <span class="hidden sm:inline-flex items-center gap-1.5 text-xs text-gray-300 font-mono px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 beacon-active"></span> v1.9.22
+        </span>
+        <button onclick="openAccessModal('general')" class="btn-outline rounded-xl px-3.5 py-2 text-xs font-bold inline-flex items-center gap-1.5 text-cyan border-cyan/40 hover:border-cyan hover:bg-cyan/10">
+          <i data-lucide="zap" class="w-3.5 h-3.5 text-cyan"></i> Get Access
+        </button>
+        <a href="https://github.com/subhan07idrees-tech/zonix-dispatcher/releases/download/v1.9.22/ZONIX-Dispatcher-Setup-1.9.22.exe" class="btn-primary rounded-xl px-4 py-2 text-xs font-bold inline-flex items-center gap-2">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i> Download App
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- HERO SECTION -->
+<section id="top" class="relative pt-36 pb-20 lg:pt-44 lg:pb-32 overflow-hidden bg-grid-cyber">
+  <div class="hero-glow-1"></div>
+  <div class="hero-glow-2"></div>
+  <div class="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-ink pointer-events-none"></div>
+
+  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-12 gap-12 items-center">
+      
+      <!-- Hero Copy -->
+      <div class="lg:col-span-6" data-aos="fade-right" data-aos-duration="800">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs font-mono text-cyan mb-6 border border-cyan/30 shadow-md">
+          <span class="w-2 h-2 rounded-full bg-cyan beacon-active"></span>
+          OFFICIAL DISPATCH PROTOCOL ┬╖ ZERO-SUSPENSION GUARANTEE
+        </div>
+
+        <h1 class="font-display font-black text-4xl sm:text-5xl lg:text-6xl leading-[1.08] tracking-tight text-white">
+          The Operating System for <span class="text-gradient">Freight Dispatch.</span>
+        </h1>
+
+        <p class="mt-6 text-base sm:text-lg text-gray-300 leading-relaxed max-w-xl">
+          <strong class="text-white">Run your own DAT with full admin control</strong> or <strong class="text-cyan">buy pre-verified DAT accounts</strong> ready to dispatch in minutes. Zero multi-login bans, zero account suspensions, and hardware-isolated multi-seat sharing for your entire team.
+        </p>
+
+        <!-- Main Action Buttons -->
+        <div class="mt-8 flex flex-wrap items-center gap-3">
+          <button onclick="openAccessModal('buy')" class="btn-primary rounded-xl px-5 py-3.5 text-sm font-bold inline-flex items-center gap-2.5 shadow-lg shadow-cyan/25">
+            <i data-lucide="zap" class="w-4 h-4"></i>
+            Buy or Mount DAT Account
+          </button>
+          <a href="https://github.com/subhan07idrees-tech/zonix-dispatcher/releases/download/v1.9.22/ZONIX-Dispatcher-Setup-1.9.22.exe" class="btn-outline rounded-xl px-4 py-3.5 text-sm font-semibold inline-flex items-center gap-2">
+            <i data-lucide="download" class="w-4 h-4 text-cyan"></i>
+            Download App (.exe)
+          </a>
+          <a href="https://wa.me/14046101615?text=Hello%2C%20I'm%20interested%20in%20getting%20access%20to%20ZONIX%20(Buy%20DAT%20or%20Run%20My%20Own%20DAT)!" target="_blank" class="rounded-xl px-4 py-3.5 text-sm font-semibold inline-flex items-center gap-2 bg-[#128C7E]/90 hover:bg-[#128C7E] text-white transition shadow-lg shadow-[#128C7E]/20">
+            <i data-lucide="message-square" class="w-4 h-4"></i>
+            WhatsApp Desk
+          </a>
+        </div>
+
+        <!-- Telemetry Spec Highlights -->
+        <div class="mt-10 grid grid-cols-3 gap-4 pt-6 border-t border-white/10 text-xs text-gray-400 font-mono">
+          <div>
+            <div class="text-white font-bold text-sm">0.05ms</div>
+            <div class="text-[11px] text-gray-400 mt-0.5">Killswitch Trip</div>
+          </div>
+          <div>
+            <div class="text-cyan font-bold text-sm">AES-256-GCM</div>
+            <div class="text-[11px] text-gray-400 mt-0.5">Sealed Session Vault</div>
+          </div>
+          <div>
+            <div class="text-emerald-400 font-bold text-sm">Zero-Leak</div>
+            <div class="text-[11px] text-gray-400 mt-0.5">Hard Tunnel Isolation</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Desktop App Simulation Preview -->
+      <div class="lg:col-span-6" data-aos="fade-left" data-aos-duration="800">
+        <div class="relative glass-card rounded-2xl overflow-hidden border border-white/15 shadow-2xl">
+          <!-- Dispatch Window Header Bar -->
+          <div class="h-11 bg-[#090D18] px-4 flex items-center justify-between border-b border-white/10 select-none">
+            <div class="flex items-center gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#EF4444]"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-[#F59E0B]"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-[#10B981]"></span>
+              <div class="h-3 w-px bg-white/10 mx-1"></div>
+              <span class="font-display font-extrabold text-xs text-white tracking-wider">ZONIX</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.5 bg-blue-500/20 text-cyan rounded border border-blue-500/30">GATEWAY</span>
+            </div>
+
+            <!-- Simulated Header Telemetry Badges (Sanitized - No Raw IP/Host) -->
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1.5">
+                <i data-lucide="shield-check" class="w-3 h-3"></i> TARGET: ONE.DAT.COM
+              </span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-cyan flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 beacon-active"></span> ROUTE: SECURE TUNNEL
+              </span>
+              <span class="hidden sm:inline-flex text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-gray-300">
+                OPERATOR: DISPATCH_01
+              </span>
+            </div>
+          </div>
+
+          <!-- Multi-Tab Navigation Bar -->
+          <div class="h-9 bg-[#0B0F19] px-3 flex items-center gap-1 border-b border-white/5 text-xs font-mono">
+            <button class="px-3 py-1 bg-[#141A2D] text-white rounded-t border-t-2 border-cyan font-semibold flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> DAT One ┬╖ Seat 01
+            </button>
+            <button class="px-3 py-1 text-gray-400 hover:text-white rounded-t flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Truckstop Pro
+            </button>
+            <button class="px-3 py-1 text-gray-400 hover:text-white rounded-t flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span> 123Loadboard
+            </button>
+            <span class="ml-auto text-[10px] text-gray-500">1 / 5 Allowed Seats</span>
+          </div>
+
+          <!-- Simulated Live Loadboard Stream -->
+          <div class="p-4 bg-[#080B14] space-y-2.5 font-sans">
+            <div class="flex items-center justify-between text-xs font-mono text-gray-400 pb-2 border-b border-white/5">
+              <span>LIVE FREIGHT STREAM ┬╖ SEARCH: CHICAGO, IL ΓåÆ ATLANTA, GA</span>
+              <span class="text-emerald-400 flex items-center gap-1">ΓùÅ HARDWARE SHIELD LOCKED</span>
+            </div>
+
+            <!-- Simulated Freight Items -->
+            <div class="glass rounded-xl p-3 flex items-center justify-between hover:border-cyan/40 transition">
+              <div>
+                <div class="text-xs font-bold text-white flex items-center gap-2">
+                  <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold">$3,450</span>
+                  53' Van ┬╖ 44,000 lbs ┬╖ Spot Match
+                </div>
+                <div class="text-[11px] text-gray-400 mt-1">Chicago, IL ΓåÆ Atlanta, GA ┬╖ 716 mi ($4.81/mi) ┬╖ Verified Broker</div>
+              </div>
+              <button class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition">
+                Book Load
+              </button>
+            </div>
+
+            <div class="glass rounded-xl p-3 flex items-center justify-between hover:border-cyan/40 transition">
+              <div>
+                <div class="text-xs font-bold text-white flex items-center gap-2">
+                  <span class="px-1.5 py-0.5 rounded bg-cyan/20 text-cyan text-[10px] font-mono font-bold">$3,800</span>
+                  Reefer ┬╖ 42,500 lbs ┬╖ Immediate Pickup
+                </div>
+                <div class="text-[11px] text-gray-400 mt-1">Gary, IN ΓåÆ Nashville, TN ┬╖ 465 mi ($8.17/mi) ┬╖ QuickPay 1-Day</div>
+              </div>
+              <button class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition">
+                Book Load
+              </button>
+            </div>
+
+            <!-- Interactive Simulator Trigger Buttons -->
+            <div class="mt-4 pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+              <span class="text-gray-400">Interactive Simulation:</span>
+              <div class="flex gap-2">
+                <button id="btn-demo-sync" onclick="simulateSessionSync()" class="px-2.5 py-1 rounded bg-cyan/10 hover:bg-cyan/20 text-cyan border border-cyan/30 transition">
+                  ΓÜí Hot-Swap Token
+                </button>
+                <button id="btn-demo-kill" onclick="simulateKillswitch()" class="px-2.5 py-1 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 transition">
+                  ≡ƒ¢í∩╕Å Test Killswitch
+                </button>
+              </div>
+            </div>
+
+            <!-- Simulation Banner -->
+            <div id="sim-status-banner" class="hidden rounded-lg p-2.5 text-xs font-mono text-center"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Performance Metrics Ticker -->
+    <div class="mt-16 glass rounded-2xl p-6 grid grid-cols-2 lg:grid-cols-4 gap-6 border border-white/10 shadow-xl">
+      <div class="text-center">
+        <div class="font-display text-3xl sm:text-4xl font-extrabold text-white" data-counter data-target="28400">0</div>
+        <div class="text-xs text-gray-400 uppercase tracking-widest mt-1 font-mono">Active Synced Sessions</div>
+      </div>
+      <div class="text-center">
+        <div class="font-display text-3xl sm:text-4xl font-extrabold text-cyan" data-counter data-target="99.99" data-decimals="2">0</div>
+        <div class="text-xs text-gray-400 uppercase tracking-widest mt-1 font-mono">Tunnel Uptime SLA %</div>
+      </div>
+      <div class="text-center">
+        <div class="font-display text-3xl sm:text-4xl font-extrabold text-white" data-counter data-target="420">0</div>
+        <div class="text-xs text-gray-400 uppercase tracking-widest mt-1 font-mono">Fleets Protected</div>
+      </div>
+      <div class="text-center">
+        <div class="font-display text-3xl sm:text-4xl font-extrabold text-emerald-400">0</div>
+        <div class="text-xs text-gray-400 uppercase tracking-widest mt-1 font-mono">Credentials Leaked</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DAT FLEET DEPLOYMENT OPTIONS: BYO DAT OR BUY MANAGED DAT -->
+<section id="dat-options" class="relative py-24 bg-[#05070E] border-t border-white/10 overflow-hidden">
+  <!-- Subtle ambient glow -->
+  <div class="absolute w-[600px] h-[600px] rounded-full bg-blue-600/10 blur-[120px] -top-40 -right-40 pointer-events-none"></div>
+  <div class="absolute w-[500px] h-[500px] rounded-full bg-cyan/10 blur-[100px] -bottom-20 -left-20 pointer-events-none"></div>
+
+  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-3xl mx-auto mb-16" data-aos="fade-up">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs font-mono text-cyan mb-4 border border-cyan/30">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan beacon-active"></span>
+        FLEXIBLE LOADBOARD ACCESS INFRASTRUCTURE
+      </div>
+      <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
+        Two Ways to Power Your Dispatch Fleet.
+      </h2>
+      <p class="mt-4 text-base text-gray-300 leading-relaxed">
+        Whether you already own a DAT subscription or need fresh, enterprise-grade access todayΓÇöZONIX delivers a <strong class="text-white">100% suspension-proof</strong> environment with <strong class="text-cyan">complete administrative control</strong>.
+      </p>
+    </div>
+
+    <!-- Dual Cards Grid -->
+    <div class="grid lg:grid-cols-2 gap-8 items-stretch">
+      
+      <!-- CARD 1: RUN YOUR OWN DAT (WITH FULL ADMIN CONTROL) -->
+      <div class="glass-card rounded-3xl p-8 sm:p-10 border border-white/15 relative flex flex-col justify-between hover:border-cyan/50 transition group" data-aos="fade-right">
+        <div>
+          <!-- Card Header & Badge -->
+          <div class="flex items-center justify-between gap-4 mb-6">
+            <span class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-cyan/10 text-cyan border border-cyan/30">
+              BRING YOUR OWN DAT (BYO)
+            </span>
+            <span class="text-xs font-mono text-emerald-400 flex items-center gap-1.5">
+              <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i> ZERO BAN RISK
+            </span>
+          </div>
+
+          <h3 class="font-display text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+            Run Your Own DAT in ZONIX<br>
+            <span class="text-gradient-cyan">With Full Admin Control</span>
+          </h3>
+
+          <p class="mt-3 text-sm text-gray-300 leading-relaxed">
+            Mount your existing DAT One or DAT Power account into ZONIX with <strong>100% full administrative authority</strong>. Share access across your entire dispatch roster without ever sharing passwords, risking multi-login flags, or facing account suspensions.
+          </p>
+
+          <!-- Feature Matrix -->
+          <div class="mt-8 space-y-3.5 text-xs text-gray-200">
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <div class="w-7 h-7 rounded-lg bg-cyan/15 text-cyan flex items-center justify-center shrink-0 mt-0.5">
+                <i data-lucide="crown" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <strong class="text-white text-sm block">100% Full Admin Authority</strong>
+                <span>You retain sole ownership of your master account. Add, pause, or remove dispatcher seats instantly in one click from your control portal.</span>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <div class="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                <i data-lucide="shield-alert" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <strong class="text-white text-sm block">Zero Account Block &amp; Suspension Protection</strong>
+                <span>Hardware fingerprint cloning (WebGL, Canvas, Audio, Screen) + dedicated sticky residential IP routing ensures DAT sees a single consistent device.</span>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <div class="w-7 h-7 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
+                <i data-lucide="key-round" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <strong class="text-white text-sm block">Zero Password Exposure to Staff</strong>
+                <span>Dispatchers log in via cryptographically sealed tokens. They never see your DAT password, email, or 2FA authentication prompts.</span>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <div class="w-7 h-7 rounded-lg bg-purple-500/15 text-purple-400 flex items-center justify-center shrink-0 mt-0.5">
+                <i data-lucide="activity" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <strong class="text-white text-sm block">Live Session Audit &amp; Remote Killswitch</strong>
+                <span>Monitor active operator telemetry in real time. Instantly terminate access the second a dispatcher leaves your fleet.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Footer Action -->
+        <div class="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="text-xs font-mono text-gray-400">
+            <span class="text-white font-bold">Ideal for:</span> Existing DAT subscribers, brokerages &amp; carrier dispatch teams.
+          </div>
+          <button onclick="openAccessModal('byo')" class="w-full sm:w-auto btn-outline rounded-xl px-5 py-3 text-xs font-bold inline-flex items-center justify-center gap-2 hover:border-cyan text-white hover:text-cyan transition">
+            <i data-lucide="settings" class="w-4 h-4 text-cyan"></i>
+            Mount Your DAT Account
+          </button>
+        </div>
+      </div>
+
+      <!-- CARD 2: BUY MANAGED DAT ACCOUNT (TURNKEY FLEET ACCESS) -->
+      <div class="glass-card rounded-3xl p-8 sm:p-10 border border-cyan/30 relative flex flex-col justify-between shadow-2xl shadow-blue-900/20 group bg-gradient-to-b from-[#0F162B] to-[#0A0E1C]" data-aos="fade-left">
+        <!-- Glow accent badge -->
+        <div class="absolute -top-3.5 right-8">
+          <span class="px-4 py-1 rounded-full text-[11px] font-mono font-extrabold bg-gradient-to-r from-cyan to-blue-500 text-ink uppercase tracking-wider shadow-lg shadow-cyan/30">
+            Γÿà INSTANT ONBOARDING
+          </span>
+        </div>
+
+        <div>
+          <!-- Card Header & Badge -->
+          <div class="flex items-center justify-between gap-4 mb-6">
+            <span class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-blue-500/20 text-cyan border border-blue-400/40">
+              TURNKEY FLEET ACCESS
+            </span>
+            <span class="text-xs font-mono text-cyan flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-cyan beacon-active"></span> PRE-VERIFIED &amp; READY
+            </span>
+          </div>
+
+          <h3 class="font-display text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+            Buy Managed DAT Accounts<br>
+            <span class="text-gradient">Ready-to-Dispatch in Minutes</span>
+          </h3>
+
+          <p class="mt-3 text-sm text-gray-300 leading-relaxed">
+            Don't have an active DAT subscription or need extra dedicated capacity right away? We provide <strong>fully verified, enterprise-grade DAT accounts</strong> deployed directly inside your ZONIX client with zero setup friction.
+          </p>
+
+          <!-- Feature Matrix -->
+          <div class="mt-8 space-y-3.5 text-xs text-gray-200">
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/[0.04] border border-cyan/20">
+              <div class="w-7 h-7 rounded-lg bg-cyan/20 text-cyan flex items-center justify-center shrink-0 mt-0.5">
+                <i data-lucide="zap" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <strong class="text-white text-sm block">Instant Access &amp; Zero Verification Wait</strong>
+                <span>Skip tedious paperwork and verification delays. Receive verified DAT One loadboard access delivered straight into your workspace.</span>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/[0.04] border border-cyan/20">
+              <div class="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
+                <i data-lucide="globe-2" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <strong class="text-white text-sm block">Dedicated Clean Residential IP Bound</strong>
+                <span>Every managed account is paired with high-reputation, exclusive US residential proxy poolsΓÇözero rate-limiting and zero CAPTCHAs.</span>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/[0.04] border border-cyan/20">
+              <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                <i data-lucide="users" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <strong class="text-white text-sm block">Multi-Seat Team Scaling</strong>
+                <span>Equip 1 to 20+ dispatchers with concurrent search and post power under a single managed organization structure.</span>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/[0.04] border border-cyan/20">
+              <div class="w-7 h-7 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 mt-0.5">
+                <i data-lucide="headphones" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <strong class="text-white text-sm block">24/7 Priority Logistics Desk Support</strong>
+                <span>Direct WhatsApp and emergency session assistance whenever you need routing changes, additional seats, or technical support.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Footer Action -->
+        <div class="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="text-xs font-mono text-gray-400">
+            <span class="text-white font-bold">Ideal for:</span> New dispatchers, expanding freight agencies &amp; teams needing instant capacity.
+          </div>
+          <button onclick="openAccessModal('buy')" class="w-full sm:w-auto btn-primary rounded-xl px-6 py-3.5 text-xs font-bold inline-flex items-center justify-center gap-2 shadow-lg shadow-cyan/20">
+            <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+            Buy DAT Account Now
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE & WORKFLOW SECTION -->
+<section id="architecture" class="relative py-24 bg-[#070A12] border-t border-white/5">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl">
+      <div class="text-cyan text-xs uppercase font-mono tracking-[0.25em] mb-3">Enterprise Multi-Tenant Protocol</div>
+      <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
+        One Master Authentication.<br><span class="text-gradient">Zero Credential Exposure.</span>
+      </h2>
+      <p class="mt-4 text-gray-300 text-sm sm:text-base leading-relaxed">
+        Eliminate shared passwords on Post-it notes or unprotected remote desktops. ZONIX binds session artifacts directly to client partitions without granting operators access to passwords or 2FA credentials.
+      </p>
+    </div>
+
+    <!-- 4 Step Architecture Pillars -->
+    <div class="mt-14 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="glass-card rounded-2xl p-6 relative">
+        <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-cyan mb-4 font-mono font-bold">
+          01
+        </div>
+        <h3 class="font-display font-bold text-lg text-white">Admin Capture</h3>
+        <p class="text-xs text-gray-400 mt-2 leading-relaxed">
+          The fleet manager signs into DAT or Truckstop once through the ZONIX Master Shell. 2FA is verified safely on your device.
+        </p>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6 relative">
+        <div class="w-10 h-10 rounded-xl bg-cyan/10 border border-cyan/20 flex items-center justify-center text-cyan mb-4 font-mono font-bold">
+          02
+        </div>
+        <h3 class="font-display font-bold text-lg text-white">Hardware Sealing</h3>
+        <p class="text-xs text-gray-400 mt-2 leading-relaxed">
+          Cookies, device tokens, and hardware fingerprint metrics (Canvas, WebGL, Audio) are sealed in an AES-256 encrypted vault.
+        </p>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6 relative">
+        <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 mb-4 font-mono font-bold">
+          03
+        </div>
+        <h3 class="font-display font-bold text-lg text-white">Tunnel Binding</h3>
+        <p class="text-xs text-gray-400 mt-2 leading-relaxed">
+          The dispatch session is bound to dedicated sticky proxy nodes. If connection drops, the zero-leak killswitch prevents local IP leak.
+        </p>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6 relative">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4 font-mono font-bold">
+          04
+        </div>
+        <h3 class="font-display font-bold text-lg text-white">Instant Seat Mount</h3>
+        <p class="text-xs text-gray-400 mt-2 leading-relaxed">
+          Dispatchers launch ZONIX on their Windows PC and immediately book freight. Passwords are never seen, shared, or leaked.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INTERACTIVE LATENCY & SIMULATOR WIDGET -->
+<section id="simulator" class="relative py-24 bg-grid-cyber">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-12 gap-12 items-center">
+      
+      <div class="lg:col-span-5">
+        <div class="text-cyan text-xs uppercase font-mono tracking-[0.25em] mb-3">Live Edge Route Telemetry</div>
+        <h2 class="font-display text-3xl sm:text-4xl font-bold text-white">
+          Ultra-Low Latency.<br><span class="text-gradient">Real-Time Egress Health.</span>
+        </h2>
+        <p class="mt-4 text-sm text-gray-400 leading-relaxed">
+          Loadboard speed is everything when securing high-paying loads. ZONIX maintains high-speed egress routes with continuous sub-second ping verification and automatic failover.
+        </p>
+
+        <div class="mt-6 space-y-3 font-mono text-xs">
+          <button onclick="selectEdgeNode('ord', 28, 'US-CENTRAL (CHICAGO)', '100% ROUTE NOMINAL')" id="btn-node-ord" class="w-full text-left p-3 rounded-xl glass border border-cyan/40 bg-cyan/5 flex items-center justify-between transition">
+            <span>ORD ┬╖ Chicago Hub (DAT Primary)</span>
+            <span class="text-emerald-400 font-bold">28ms ┬╖ ACTIVE</span>
+          </button>
+          <button onclick="selectEdgeNode('dfw', 34, 'US-SOUTH (DALLAS)', '100% ROUTE NOMINAL')" id="btn-node-dfw" class="w-full text-left p-3 rounded-xl glass border border-white/10 hover:border-white/20 flex items-center justify-between transition">
+            <span>DFW ┬╖ Dallas Node (Truckstop Egress)</span>
+            <span class="text-gray-300">34ms ┬╖ READY</span>
+          </button>
+          <button onclick="selectEdgeNode('atl', 31, 'US-EAST (ATLANTA)', '100% ROUTE NOMINAL')" id="btn-node-atl" class="w-full text-left p-3 rounded-xl glass border border-white/10 hover:border-white/20 flex items-center justify-between transition">
+            <span>ATL ┬╖ Atlanta Edge (Southeast Hub)</span>
+            <span class="text-gray-300">31ms ┬╖ READY</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="lg:col-span-7">
+        <div class="glass-card rounded-2xl p-6 border border-white/10 shadow-2xl">
+          <div class="flex items-center justify-between pb-4 border-b border-white/10 font-mono text-xs">
+            <div>
+              <span class="text-gray-400">SELECTED NODE:</span>
+              <span id="active-node-title" class="text-cyan font-bold ml-1.5">US-CENTRAL (CHICAGO)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 beacon-active"></span>
+              <span id="active-node-status" class="text-emerald-400 font-bold">100% ROUTE NOMINAL</span>
+            </div>
+          </div>
+
+          <!-- Simulated Live Latency Waveform Graph -->
+          <div class="mt-6">
+            <div class="flex items-center justify-between text-xs font-mono text-gray-400 mb-2">
+              <span>RTT LATENCY STREAM (LAST 60 SECONDS)</span>
+              <span class="text-white"><strong id="active-node-ms" class="text-xl text-cyan">28</strong> ms</span>
+            </div>
+            <div id="interactiveLatencyBars" class="flex items-end gap-1.5 h-32 pt-2"></div>
+          </div>
+
+          <div class="mt-6 grid grid-cols-3 gap-3 text-xs font-mono">
+            <div class="p-3 rounded-lg bg-black/40 border border-white/5">
+              <span class="text-gray-500 block text-[10px]">PACKET LOSS</span>
+              <span class="text-emerald-400 font-bold text-sm mt-0.5 block">0.00%</span>
+            </div>
+            <div class="p-3 rounded-lg bg-black/40 border border-white/5">
+              <span class="text-gray-500 block text-[10px]">ENCRYPTION CIPHER</span>
+              <span class="text-cyan font-bold text-sm mt-0.5 block">CHACHA20-POLY1305</span>
+            </div>
+            <div class="p-3 rounded-lg bg-black/40 border border-white/5">
+              <span class="text-gray-500 block text-[10px]">EGRESS LEAK RISK</span>
+              <span class="text-emerald-400 font-bold text-sm mt-0.5 block">STRICT ZERO</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INTERACTIVE ROI CALCULATOR -->
+<section id="calculator" class="relative py-24 bg-[#070A12] border-t border-white/5">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-2xl mx-auto mb-12">
+      <div class="text-cyan text-xs uppercase font-mono tracking-[0.25em] mb-3">Enterprise Cost Optimization</div>
+      <h2 class="font-display text-3xl sm:text-4xl font-bold text-white">
+        Calculate Your Annual Seat Savings.
+      </h2>
+      <p class="mt-3 text-gray-400 text-sm">
+        Loadboards charge $130 - $250/month per seat. See how much your logistics team saves annually with ZONIX Session OS.
+      </p>
+    </div>
+
+    <div class="glass-card rounded-3xl p-8 sm:p-12 border border-white/15">
+      <div class="grid md:grid-cols-12 gap-8 items-center">
+        <div class="md:col-span-7 space-y-6">
+          <div>
+            <div class="flex justify-between items-center text-sm font-semibold mb-2">
+              <span class="text-white">Active Dispatchers on Your Team:</span>
+              <span id="seatCountDisplay" class="font-mono text-cyan text-xl font-bold">8 Seats</span>
+            </div>
+            <input type="range" id="seatSlider" min="2" max="30" value="8" oninput="updateROICalculation()">
+            <div class="flex justify-between text-[11px] font-mono text-gray-500 mt-1">
+              <span>2 Dispatchers</span>
+              <span>15 Seats</span>
+              <span>30+ Seats</span>
+            </div>
+          </div>
+
+          <div class="space-y-3 text-xs text-gray-300 font-mono">
+            <div class="flex items-center gap-2">
+              <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> No duplicate subscriptions across dispatch team
+            </div>
+            <div class="flex items-center gap-2">
+              <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Zero risk of account bans or multi-IP flag blocks
+            </div>
+            <div class="flex items-center gap-2">
+              <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Instantly revoke access when a dispatcher leaves
+            </div>
+          </div>
+        </div>
+
+        <div class="md:col-span-5 bg-gradient-to-br from-blue-900/30 to-cyan/10 rounded-2xl p-6 border border-cyan/30 text-center">
+          <div class="text-xs uppercase font-mono tracking-wider text-gray-300">Estimated Annual Fleet Savings</div>
+          <div id="savingsDisplay" class="font-display text-4xl sm:text-5xl font-black text-cyan my-3">$14,400</div>
+          <div class="text-xs text-gray-400 leading-relaxed">
+            Based on standard loadboard seat fee of ~$150/user/mo + ban mitigation downtime.
+          </div>
+          <a href="https://wa.me/14046101615?text=Hello%2C%20I%20want%20to%20set%20up%20ZONIX%20for%20my%20dispatch%20fleet" target="_blank" class="mt-5 w-full btn-primary py-3 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-2">
+            Get Fleet License
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ZERO-LEAK SECURITY MATRIX (COMPARISON TABLE) -->
+<section id="security" class="relative py-24 bg-grid-cyber">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-3xl mx-auto mb-14">
+      <div class="text-cyan text-xs uppercase font-mono tracking-[0.25em] mb-3">Architectural Comparison</div>
+      <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white">
+        Built for Freight. Not Generic Browsing.
+      </h2>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="glass-card rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="bg-black/60 border-b border-white/10 font-mono text-gray-400 uppercase text-[11px]">
+              <th class="p-4 sm:px-6">Capability &amp; Security Layer</th>
+              <th class="p-4 sm:px-6 text-gray-400">Standard Chrome</th>
+              <th class="p-4 sm:px-6 text-gray-400">Generic Anti-Detect</th>
+              <th class="p-4 sm:px-6 text-cyan bg-blue-500/10 font-bold">ZONIX Session OS</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5 font-sans">
+            <tr class="hover:bg-white/[0.02] transition">
+              <td class="p-4 sm:px-6 font-semibold text-white">
+                Multi-User Session Mirroring
+                <div class="text-[11px] text-gray-400 font-normal mt-0.5">Share live login across team without revealing passwords</div>
+              </td>
+              <td class="p-4 sm:px-6 text-red-400 font-mono">Γ£ò Manual 2FA / ban</td>
+              <td class="p-4 sm:px-6 text-yellow-400 font-mono">Γû│ Manual JSON export</td>
+              <td class="p-4 sm:px-6 text-emerald-400 font-mono font-bold bg-blue-500/10">Γ£ô 100% Instant Hot-Swap</td>
+            </tr>
+            <tr class="hover:bg-white/[0.02] transition">
+              <td class="p-4 sm:px-6 font-semibold text-white">
+                Hardware Fingerprint Spoofing
+                <div class="text-[11px] text-gray-400 font-normal mt-0.5">Canvas, WebGL vendor, AudioContext, and Screen resolution</div>
+              </td>
+              <td class="p-4 sm:px-6 text-red-400 font-mono">Γ£ò Real device leaked</td>
+              <td class="p-4 sm:px-6 text-yellow-400 font-mono">Γû│ Static profile only</td>
+              <td class="p-4 sm:px-6 text-emerald-400 font-mono font-bold bg-blue-500/10">Γ£ô Deterministic Matching</td>
+            </tr>
+            <tr class="hover:bg-white/[0.02] transition">
+              <td class="p-4 sm:px-6 font-semibold text-white">
+                Hard Proxy Killswitch (Zero-Leak)
+                <div class="text-[11px] text-gray-400 font-normal mt-0.5">Instant blackhole if proxy drops to protect home ISP</div>
+              </td>
+              <td class="p-4 sm:px-6 text-red-400 font-mono">Γ£ò Falls back to ISP</td>
+              <td class="p-4 sm:px-6 text-yellow-400 font-mono">Γû│ Software toggle</td>
+              <td class="p-4 sm:px-6 text-emerald-400 font-mono font-bold bg-blue-500/10">Γ£ô Hard 0.05ms Trap</td>
+            </tr>
+            <tr class="hover:bg-white/[0.02] transition">
+              <td class="p-4 sm:px-6 font-semibold text-white">
+                Sanitized Operator View
+                <div class="text-[11px] text-gray-400 font-normal mt-0.5">Hides raw proxy IPs and credentials from staff</div>
+              </td>
+              <td class="p-4 sm:px-6 text-red-400 font-mono">Γ£ò Passwords exposed</td>
+              <td class="p-4 sm:px-6 text-red-400 font-mono">Γ£ò Proxy IPs exposed</td>
+              <td class="p-4 sm:px-6 text-emerald-400 font-mono font-bold bg-blue-500/10">Γ£ô Fully Obfuscated &amp; Locked</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FREQUENTLY ASKED QUESTIONS -->
+<section id="faq" class="relative py-24 bg-[#070A12] border-t border-white/5">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <div class="text-cyan text-xs uppercase font-mono tracking-[0.25em] mb-3">Questions &amp; Knowledge Base</div>
+      <h2 class="font-display text-3xl sm:text-4xl font-bold text-white">Answers Before You Onboard.</h2>
+    </div>
+
+    <div class="space-y-3.5">
+      <details class="glass-card rounded-xl p-5 group transition" open>
+        <summary class="flex items-center justify-between cursor-pointer list-none">
+          <span class="font-semibold text-white text-sm sm:text-base">Can I run my existing DAT account in ZONIX with full admin control?</span>
+          <i data-lucide="chevron-down" class="faq-icon w-4 h-4 text-gray-400 transition-transform"></i>
+        </summary>
+        <p class="mt-3 text-xs sm:text-sm text-gray-400 leading-relaxed font-sans">
+          Yes, 100%. You maintain full administrative authority over your DAT account. You can invite operators, provision dedicated seats, and monitor activity in real time. Because ZONIX isolates hardware fingerprints (WebGL, Canvas, Audio, Screen resolution) and binds sessions to clean, sticky residential proxies, DAT sees only a single stable, legitimate machine. You get zero account bans, zero multi-IP blocks, and complete administrative control without ever sharing your master passwords.
+        </p>
+      </details>
+
+      <details class="glass-card rounded-xl p-5 group transition">
+        <summary class="flex items-center justify-between cursor-pointer list-none">
+          <span class="font-semibold text-white text-sm sm:text-base">Can I buy a DAT account directly from ZONIX?</span>
+          <i data-lucide="chevron-down" class="faq-icon w-4 h-4 text-gray-400 transition-transform"></i>
+        </summary>
+        <p class="mt-3 text-xs sm:text-sm text-gray-400 leading-relaxed font-sans">
+          Yes! For dispatch fleets, independent dispatchers, or expanding freight agencies needing immediate capacity without setup delays, we offer pre-verified, turnkey DAT One access provisioned directly into your ZONIX client. Contact our 24/7 Dispatch Desk via WhatsApp or our Instant Access Desk to get set up in minutes.
+        </p>
+      </details>
+
+      <details class="glass-card rounded-xl p-5 group transition">
+        <summary class="flex items-center justify-between cursor-pointer list-none">
+          <span class="font-semibold text-white text-sm sm:text-base">Does ZONIX prevent DAT One and Truckstop account bans?</span>
+          <i data-lucide="chevron-down" class="faq-icon w-4 h-4 text-gray-400 transition-transform"></i>
+        </summary>
+        <p class="mt-3 text-xs sm:text-sm text-gray-400 leading-relaxed font-sans">
+          Yes. Loadboard algorithms trigger flags when multiple dispatchers log in simultaneously with different IP addresses, conflicting timezones, or changing canvas fingerprints. ZONIX routes all dispatchers through consistent sticky proxy nodes and mirrors the master admin's hardware profile exactly, presenting a single stable identity.
+        </p>
+      </details>
+
+      <details class="glass-card rounded-xl p-5 group transition">
+        <summary class="flex items-center justify-between cursor-pointer list-none">
+          <span class="font-semibold text-white text-sm sm:text-base">Do my dispatchers see my passwords or loadboard logins?</span>
+          <i data-lucide="chevron-down" class="faq-icon w-4 h-4 text-gray-400 transition-transform"></i>
+        </summary>
+        <p class="mt-3 text-xs sm:text-sm text-gray-400 leading-relaxed font-sans">
+          No. Passwords never touch the dispatcher's computer. The admin signs into the session vault once. The dispatcher client only receives sealed authorization tokens. If an operator leaves your organization, you can terminate their session in one click from the admin portal.
+        </p>
+      </details>
+
+      <details class="glass-card rounded-xl p-5 group transition">
+        <summary class="flex items-center justify-between cursor-pointer list-none">
+          <span class="font-semibold text-white text-sm sm:text-base">What happens if a proxy node goes down during active dispatch?</span>
+          <i data-lucide="chevron-down" class="faq-icon w-4 h-4 text-gray-400 transition-transform"></i>
+        </summary>
+        <p class="mt-3 text-xs sm:text-sm text-gray-400 leading-relaxed font-sans">
+          ZONIX's zero-leak killswitch engages in 0.05ms. It immediately freezes the viewport and blocks all outbound socket traffic, preventing the dispatcher's real home IP address from leaking to DAT. Once the backup proxy connects, the session resumes seamlessly.
+        </p>
+      </details>
+
+      <details class="glass-card rounded-xl p-5 group transition">
+        <summary class="flex items-center justify-between cursor-pointer list-none">
+          <span class="font-semibold text-white text-sm sm:text-base">How fast can our dispatch fleet get set up?</span>
+          <i data-lucide="chevron-down" class="faq-icon w-4 h-4 text-gray-400 transition-transform"></i>
+        </summary>
+        <p class="mt-3 text-xs sm:text-sm text-gray-400 leading-relaxed font-sans">
+          Under 5 minutes. Download the desktop installer (`v1.9.22`), create your organization, invite your dispatchers via email or invite link, and mount your master session.
+        </p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- DEDICATED SUPPORT & ACCESS DESK -->
+<section id="support" class="relative py-20 border-t border-white/5 bg-grid-cyber">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="glass-card rounded-3xl p-8 lg:p-12 relative overflow-hidden border border-cyan/20">
+      <div class="grid lg:grid-cols-12 gap-8 items-center">
+        <div class="lg:col-span-7 space-y-4">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono text-cyan bg-cyan/10 border border-cyan/20">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan beacon-active"></span>
+            24/7 DEDICATED LOGISTICS FLEET DESK
+          </div>
+          <h2 class="font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
+            Need Guided Onboarding or Proxy Setup?
+          </h2>
+          <p class="text-gray-300 text-sm leading-relaxed max-w-xl">
+            Our engineering team assists freight brokers, dispatch agencies, and carrier fleets with custom proxy pool allocation, session synchronization, and custom loadboard targets.
+          </p>
+
+          <div class="grid sm:grid-cols-2 gap-4 pt-2">
+            <div class="glass rounded-xl p-4 border border-white/10 flex items-start gap-3">
+              <div class="w-9 h-9 rounded-lg bg-cyan/10 border border-cyan/20 flex items-center justify-center shrink-0">
+                <i data-lucide="mail" class="w-4 h-4 text-cyan"></i>
+              </div>
+              <div>
+                <div class="text-[11px] text-gray-400 font-mono uppercase">Official Support Desk</div>
+                <a href="mailto:support.zonix@gmail.com" class="text-xs font-semibold text-white hover:text-cyan transition block mt-0.5 font-mono">support.zonix@gmail.com</a>
+                <div class="text-[10px] text-emerald-400 mt-0.5">ΓÜí Response: &lt; 2 hours</div>
+              </div>
+            </div>
+
+            <div class="glass rounded-xl p-4 border border-white/10 flex items-start gap-3">
+              <div class="w-9 h-9 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+                <i data-lucide="send" class="w-4 h-4 text-purple-400"></i>
+              </div>
+              <div>
+                <div class="text-[11px] text-gray-400 font-mono uppercase">Invitation Desk</div>
+                <a href="mailto:invites.zonix@gmail.com" class="text-xs font-semibold text-white hover:text-purple-400 transition block mt-0.5 font-mono">invites.zonix@gmail.com</a>
+                <div class="text-[10px] text-purple-400 mt-0.5">Γ£ë∩╕Å Dispatcher Seating</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-5 flex flex-col items-center lg:items-end gap-3.5">
+          <a href="https://wa.me/14046101615?text=Hello%2C%20I%20need%20support%20with%20ZONIX" target="_blank" class="w-full sm:w-auto px-6 py-3.5 rounded-xl text-sm font-bold inline-flex items-center justify-center gap-2.5 bg-[#128C7E] hover:bg-[#0E7064] text-white transition shadow-lg shadow-[#128C7E]/30">
+            <i data-lucide="phone-call" class="w-4 h-4"></i>
+            WhatsApp Direct Desk (+1 404 610 1615)
+          </a>
+          <a href="https://github.com/subhan07idrees-tech/zonix-dispatcher/releases/download/v1.9.22/ZONIX-Dispatcher-Setup-1.9.22.exe" class="w-full sm:w-auto btn-primary px-6 py-3.5 rounded-xl text-sm font-bold inline-flex items-center justify-center gap-2.5">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            Download App v1.9.22 (.exe)
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="relative border-t border-white/10 pt-14 pb-10 bg-[#04060A]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid md:grid-cols-4 gap-10">
+      <div class="md:col-span-2">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-display font-black text-white text-base">Z</div>
+          <div>
+            <div class="font-display font-extrabold text-white text-base leading-none">ZONIX SYSTEMS</div>
+            <div class="text-[10px] font-mono text-gray-500 uppercase tracking-widest mt-1">Multi-Tenant Dispatch OS</div>
+          </div>
+        </div>
+        <p class="mt-4 text-xs text-gray-400 max-w-sm leading-relaxed">
+          High-performance session virtualization, anti-detect isolation, and secure loadboard management for enterprise dispatch teams.
+        </p>
+        <div class="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-[11px] text-gray-300 font-mono">
+          <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-cyan"></i>
+          Tested on Windows 10 &amp; 11 x64 ┬╖ Stable Release v1.9.22
+        </div>
+      </div>
+
+      <div>
+        <div class="text-xs uppercase font-mono tracking-widest text-gray-400 mb-3">Platform</div>
+        <ul class="space-y-2 text-xs text-gray-300 font-medium">
+          <li><a href="#top" class="hover:text-cyan transition">Overview</a></li>
+          <li><a href="#architecture" class="hover:text-cyan transition">Architecture</a></li>
+          <li><a href="#simulator" class="hover:text-cyan transition">Route Diagnostics</a></li>
+          <li><a href="#calculator" class="hover:text-cyan transition">ROI Calculator</a></li>
+          <li><a href="/join.html" class="hover:text-cyan transition">Accept Seat Invite</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="text-xs uppercase font-mono tracking-widest text-gray-400 mb-3">Direct Support</div>
+        <ul class="space-y-2 text-xs text-gray-300 font-mono">
+          <li><a href="mailto:support.zonix@gmail.com" class="hover:text-cyan transition flex items-center gap-1.5"><i data-lucide="mail" class="w-3.5 h-3.5 text-cyan"></i> support.zonix@gmail.com</a></li>
+          <li><a href="mailto:invites.zonix@gmail.com" class="hover:text-cyan transition flex items-center gap-1.5"><i data-lucide="send" class="w-3.5 h-3.5 text-purple-400"></i> invites.zonix@gmail.com</a></li>
+          <li><a href="https://wa.me/14046101615" target="_blank" class="hover:text-emerald-400 transition flex items-center gap-1.5 text-emerald-400"><i data-lucide="message-square" class="w-3.5 h-3.5"></i> WhatsApp Helpdesk</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-12 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-gray-500 font-mono">
+      <div>&copy; 2026 ZONIX Systems Inc. All rights reserved. Zero-leak guaranteed.</div>
+      <div>Session Infrastructure Engine v1.9.22</div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+  AOS.init({ duration: 800, once: true, offset: 80 });
+  if (window.lucide) lucide.createIcons();
+
+  // Sticky nav blur
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 30) nav.classList.add('backdrop-blur-xl');
+    else nav.classList.remove('backdrop-blur-xl');
+  });
+
+  // Animated Counters
+  const counters = document.querySelectorAll('[data-counter]');
+  const runCounter = (el) => {
+    const target = parseFloat(el.dataset.target);
+    const decimals = parseInt(el.dataset.decimals || '0');
+    let cur = 0;
+    const step = target / 50;
+    const tick = () => {
+      cur += step;
+      if (cur >= target) {
+        el.textContent = decimals ? target.toFixed(decimals) : Math.round(target).toLocaleString();
+        return;
+      }
+      el.textContent = decimals ? cur.toFixed(decimals) : Math.round(cur).toLocaleString();
+      requestAnimationFrame(tick);
+    };
+    tick();
+  };
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        runCounter(e.target);
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.2 });
+  counters.forEach(c => obs.observe(c));
+
+  // Interactive Edge Node Simulator
+  const nodeBarsContainer = document.getElementById('interactiveLatencyBars');
+  const barElements = [];
+  if (nodeBarsContainer) {
+    for (let i = 0; i < 36; i++) {
+      const b = document.createElement('div');
+      b.className = 'flex-1 bg-gradient-to-t from-blue-600 to-cyan rounded-t transition-all duration-300';
+      b.style.height = `${25 + Math.random() * 55}%`;
+      nodeBarsContainer.appendChild(b);
+      barElements.push(b);
+    }
+    setInterval(() => {
+      barElements.forEach(b => {
+        b.style.height = `${20 + Math.random() * 70}%`;
+      });
+    }, 1200);
+  }
+
+  function selectEdgeNode(id, latency, title, status) {
+    document.getElementById('active-node-title').textContent = title;
+    document.getElementById('active-node-status').textContent = status;
+    document.getElementById('active-node-ms').textContent = latency;
+
+    ['ord', 'dfw', 'atl'].forEach(n => {
+      const btn = document.getElementById(`btn-node-${n}`);
+      if (n === id) {
+        btn.classList.add('border-cyan/40', 'bg-cyan/5');
+        btn.classList.remove('border-white/10');
+      } else {
+        btn.classList.remove('border-cyan/40', 'bg-cyan/5');
+        btn.classList.add('border-white/10');
+      }
+    });
+  }
+
+  // Interactive ROI Calculator
+  function updateROICalculation() {
+    const seats = parseInt(document.getElementById('seatSlider').value);
+    document.getElementById('seatCountDisplay').textContent = `${seats} Seats`;
+    // Approx $150/mo per extra seat savings across loadboard portfolio
+    const annualSavings = seats * 150 * 12;
+    document.getElementById('savingsDisplay').textContent = `$${annualSavings.toLocaleString()}`;
+  }
+
+  // Interactive Dispatch Demo Simulator
+  function simulateSessionSync() {
+    const banner = document.getElementById('sim-status-banner');
+    banner.className = 'rounded-lg p-2.5 text-xs font-mono text-center bg-cyan/15 border border-cyan/40 text-cyan block animate-pulse';
+    banner.textContent = 'ΓÜí SESSION HOT-SWAP SUCCESS: Cookies refreshed in 0.12s. No DAT re-auth prompted!';
+    setTimeout(() => { banner.classList.add('hidden'); }, 4000);
+  }
+
+  function simulateKillswitch() {
+    const banner = document.getElementById('sim-status-banner');
+    banner.className = 'rounded-lg p-2.5 text-xs font-mono text-center bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 block animate-pulse';
+    banner.textContent = '≡ƒ¢í∩╕Å KILLSWITCH TRIPPED (0.05ms): Socket blackholed instantly. Home IP leak 100% prevented.';
+    setTimeout(() => { banner.classList.add('hidden'); }, 4000);
+  }
+
+  // Instant Access Modal Controllers
+  function openAccessModal(preset) {
+    const modal = document.getElementById('access-modal');
+    const optBuy = document.getElementById('opt-buy');
+    const optByo = document.getElementById('opt-byo');
+    const title = document.getElementById('modal-title');
+    const desc = document.getElementById('modal-desc');
+
+    if (preset === 'byo') {
+      optByo.checked = true;
+      title.textContent = 'Mount Your DAT (Full Admin Control)';
+      desc.textContent = 'Run your existing DAT One or DAT Power subscription with zero ban risk and full control.';
+    } else if (preset === 'buy') {
+      optBuy.checked = true;
+      title.textContent = 'Buy Managed DAT Account';
+      desc.textContent = 'Get pre-verified, turnkey DAT One access provisioned in minutes with dedicated residential IPs.';
+    } else {
+      title.textContent = 'Get Instant Access to ZONIX';
+      desc.textContent = 'Select your deployment option to connect directly with our 24/7 logistics team.';
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function closeAccessModal() {
+    const modal = document.getElementById('access-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  function handleAccessSubmit(e) {
+    e.preventDefault();
+    const type = document.querySelector('input[name="access_type"]:checked').value;
+    const seats = document.getElementById('modal-seats').value;
+    const name = document.getElementById('modal-name').value.trim();
+
+    const msg = `Hello ZONIX Logistics Team! My name is ${name}. I am looking to get access:\nΓÇó Requirement: ${type}\nΓÇó Fleet Capacity: ${seats}\nPlease provide onboarding details and setup assistance.`;
+    const waUrl = `https://wa.me/14046101615?text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, '_blank');
+    closeAccessModal();
+  }
+
+  function submitViaEmail() {
+    const type = document.querySelector('input[name="access_type"]:checked').value;
+    const seats = document.getElementById('modal-seats').value;
+    const name = document.getElementById('modal-name').value.trim() || 'Logistics Partner';
+
+    const subject = `[Access Request] ${type} - ${seats} (${name})`;
+    const body = `Hello ZONIX Support,\n\nI want to request ZONIX Dispatcher access.\n\nName / Organization: ${name}\nDeployment Model: ${type}\nSeats Needed: ${seats}\n\nPlease reply with setup and license information.\n\nThank you!`;
+    window.location.href = `mailto:support.zonix@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    closeAccessModal();
+  }
+</script>
+
+<!-- INSTANT ACCESS REQUEST MODAL -->
+<div id="access-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-opacity">
+  <div class="relative w-full max-w-lg glass-card rounded-3xl p-6 sm:p-8 border border-cyan/40 shadow-2xl bg-[#080C16]">
+    <!-- Close Button -->
+    <button onclick="closeAccessModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition">
+      <i data-lucide="x" class="w-4 h-4"></i>
+    </button>
+
+    <div class="flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-mono text-cyan bg-cyan/10 border border-cyan/30 w-fit mb-3">
+      <span class="w-1.5 h-1.5 rounded-full bg-cyan beacon-active"></span> INSTANT ACCESS DESK
+    </div>
+
+    <h3 class="font-display text-2xl font-black text-white" id="modal-title">Get Instant Access to ZONIX</h3>
+    <p class="text-xs text-gray-400 mt-1" id="modal-desc">Select your deployment option to connect directly with our logistics team.</p>
+
+    <form onsubmit="handleAccessSubmit(event)" class="mt-6 space-y-4">
+      <!-- Option Selector -->
+      <div>
+        <label class="block text-xs font-mono uppercase text-gray-400 mb-2">Select Your Requirement</label>
+        <div class="grid grid-cols-2 gap-2.5 text-xs font-medium">
+          <label class="p-3.5 rounded-xl border border-white/10 bg-white/[0.02] cursor-pointer hover:border-cyan/40 transition flex flex-col gap-1 text-white has-[:checked]:border-cyan has-[:checked]:bg-cyan/10">
+            <input type="radio" name="access_type" value="Buy Managed DAT Account" id="opt-buy" class="sr-only" checked>
+            <span class="font-bold flex items-center gap-1.5"><i data-lucide="shopping-bag" class="w-3.5 h-3.5 text-cyan"></i> Buy DAT Account</span>
+            <span class="text-[10px] text-gray-400 font-sans leading-tight">Turnkey pre-verified access</span>
+          </label>
+          <label class="p-3.5 rounded-xl border border-white/10 bg-white/[0.02] cursor-pointer hover:border-cyan/40 transition flex flex-col gap-1 text-white has-[:checked]:border-cyan has-[:checked]:bg-cyan/10">
+            <input type="radio" name="access_type" value="Run Own DAT (Full Admin Control)" id="opt-byo" class="sr-only">
+            <span class="font-bold flex items-center gap-1.5"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i> Run My Own DAT</span>
+            <span class="text-[10px] text-gray-400 font-sans leading-tight">Zero-ban + full admin control</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Fleet Size -->
+      <div>
+        <label class="block text-xs font-mono uppercase text-gray-400 mb-1.5">Number of Dispatcher Seats</label>
+        <select id="modal-seats" class="w-full bg-[#0D1220] border border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan">
+          <option value="1 Dispatcher">1 Dispatcher Seat</option>
+          <option value="2-5 Dispatchers" selected>2 - 5 Dispatchers (Small Fleet)</option>
+          <option value="6-15 Dispatchers">6 - 15 Dispatchers (Agency)</option>
+          <option value="16+ Dispatchers">16+ Dispatchers (Enterprise Fleet)</option>
+        </select>
+      </div>
+
+      <!-- Contact Name / Company -->
+      <div>
+        <label class="block text-xs font-mono uppercase text-gray-400 mb-1.5">Your Name or Dispatch Agency</label>
+        <input type="text" id="modal-name" required placeholder="e.g. John Doe / Apex Dispatch LLC" class="w-full bg-[#0D1220] border border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-cyan">
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="pt-2 flex flex-col sm:flex-row gap-2.5">
+        <button type="submit" class="flex-1 btn-primary rounded-xl py-3 text-xs font-bold inline-flex items-center justify-center gap-2 shadow-lg shadow-cyan/20">
+          <i data-lucide="message-square" class="w-4 h-4"></i> Chat on WhatsApp (Instant)
+        </button>
+        <button type="button" onclick="submitViaEmail()" class="btn-outline rounded-xl px-4 py-3 text-xs font-semibold inline-flex items-center justify-center gap-2 hover:border-cyan hover:text-white">
+          <i data-lucide="mail" class="w-4 h-4"></i> Email Desk
+        </button>
+      </div>
+      <div class="text-[10px] text-center text-gray-500 font-mono">ΓÜí Typical WhatsApp response: &lt; 5 minutes</div>
+    </form>
+  </div>
+</div>
+
+<!-- FLOATING LIVE CONTACT DOCK -->
+<aside aria-label="Quick contact desk" class="fixed bottom-5 right-5 z-40 flex items-center gap-2">
+  <div class="glass rounded-full px-3.5 py-2 border border-emerald-500/30 bg-[#0B0F19]/90 shadow-2xl flex items-center gap-3 backdrop-blur-xl">
+    <div class="flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 beacon-active"></span>
+      <span class="text-[11px] font-mono text-gray-300 font-semibold hidden sm:inline">24/7 Desk Online</span>
+    </div>
+    <div class="h-3 w-px bg-white/15"></div>
+    <a href="https://wa.me/14046101615?text=Hello%2C%20I%20want%20to%20get%20access%20to%20ZONIX%20(Buy%20DAT%20or%20Run%20My%20Own%20DAT)!" target="_blank" class="text-xs font-bold text-white hover:text-emerald-400 transition flex items-center gap-1.5" title="Chat on WhatsApp">
+      <i data-lucide="message-circle" class="w-4 h-4 text-emerald-400"></i>
+      <span class="hidden md:inline">WhatsApp</span>
+    </a>
+    <div class="h-3 w-px bg-white/15"></div>
+    <button onclick="openAccessModal('general')" class="text-xs font-bold text-cyan hover:text-white transition flex items-center gap-1.5">
+      <i data-lucide="zap" class="w-3.5 h-3.5 text-cyan"></i>
+      <span>Get Access</span>
+    </button>
+  </div>
+</aside>
+</body>
+</html>
