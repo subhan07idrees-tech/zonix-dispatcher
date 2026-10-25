@@ -416,8 +416,10 @@
             document.getElementById('rememberMe').checked = true;
             const savedOrg = await api.getConfig('rememberedOrgId');
             const savedUser = await api.getConfig('rememberedUserId');
+            const savedPass = await api.getConfig('rememberedPassword');
             if (savedOrg) document.getElementById('orgId').value = savedOrg;
             if (savedUser) document.getElementById('userId').value = savedUser;
+            if (savedPass) document.getElementById('password').value = savedPass;
           } else {
             document.getElementById('rememberMe').checked = false;
           }
@@ -461,10 +463,12 @@
             await api.setConfig('rememberMe', true);
             await api.setConfig('rememberedOrgId', orgId);
             await api.setConfig('rememberedUserId', userId);
+            await api.setConfig('rememberedPassword', password);
           } else {
             await api.setConfig('rememberMe', false);
             await api.setConfig('rememberedOrgId', '');
             await api.setConfig('rememberedUserId', '');
+            await api.setConfig('rememberedPassword', '');
           }
 
           api.setConfig('orgId', result.orgId);

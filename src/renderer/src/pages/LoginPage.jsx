@@ -11,12 +11,38 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Restore saved credentials on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('zonix_remember');
+      if (saved === '1') {
+        setRememberMe(true);
+        setOrgId(localStorage.getItem('zonix_saved_orgId') || '');
+        setUsername(localStorage.getItem('zonix_saved_username') || '');
+        setPassword(localStorage.getItem('zonix_saved_password') || '');
+      }
+    } catch (e) { /* silent */ }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    try {
+      if (rememberMe) {
+        localStorage.setItem('zonix_remember', '1');
+        localStorage.setItem('zonix_saved_orgId', orgId);
+        localStorage.setItem('zonix_saved_username', username);
+        localStorage.setItem('zonix_saved_password', password);
+      } else {
+        localStorage.removeItem('zonix_remember');
+        localStorage.removeItem('zonix_saved_orgId');
+        localStorage.removeItem('zonix_saved_username');
+        localStorage.removeItem('zonix_saved_password');
+      }
+    } catch (e) { /* silent */ }
     await login(orgId, username, password);
     setLoading(false);
   };
