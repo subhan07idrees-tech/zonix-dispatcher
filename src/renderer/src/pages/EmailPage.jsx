@@ -78,7 +78,7 @@ function TemplateModal({ template, orgId, token, onClose, onSave }) {
 
           {/* Name */}
           <div>
-            <label className="block text-[12px] font-semibold text-ink-2 uppercase tracking-wider mb-1.5">Template Name</label>
+            <label className="block text-[12px] font-medium text-ink-2 mb-1.5">Template name</label>
             <input
               value={name}
               onChange={e => setName(e.target.value)}
@@ -90,7 +90,7 @@ function TemplateModal({ template, orgId, token, onClose, onSave }) {
           {/* Subject */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[12px] font-semibold text-ink-2 uppercase tracking-wider">Email Subject</label>
+              <label className="text-[12px] font-medium text-ink-2">Email subject</label>
               <button type="button" onClick={() => setSubject('')} className="text-[11px] text-accent hover:underline">Clear</button>
             </div>
             <input
@@ -117,7 +117,7 @@ function TemplateModal({ template, orgId, token, onClose, onSave }) {
           {/* Body */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[12px] font-semibold text-ink-2 uppercase tracking-wider">Email Body</label>
+              <label className="text-[12px] font-medium text-ink-2">Email body</label>
               <button type="button" onClick={() => setBodyText('')} className="text-[11px] text-accent hover:underline">Clear</button>
             </div>
             <div className="flex items-center flex-wrap gap-1 mb-1.5">
@@ -624,7 +624,7 @@ export default function EmailPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[12px] font-semibold text-ink-2 uppercase tracking-wider mb-1.5">Gmail Address</label>
+                <label className="block text-[12px] font-medium text-ink-2 mb-1.5">Gmail address</label>
                 <input
                   type="email"
                   value={gmailInput}
@@ -634,7 +634,7 @@ export default function EmailPage() {
                 />
               </div>
               <div>
-                <label className="block text-[12px] font-semibold text-ink-2 uppercase tracking-wider mb-1.5">App Password</label>
+                <label className="block text-[12px] font-medium text-ink-2 mb-1.5">App password</label>
                 <div className="relative">
                   <input
                     type={showPass ? 'text' : 'password'}

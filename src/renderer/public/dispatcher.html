@@ -851,25 +851,33 @@
 
     .email-drawer-tabs {
       display: flex;
-      gap: 4px;
+      gap: 6px;
+      padding-bottom: 2px;
     }
     .email-tab-btn {
-      padding: 7px 12px;
-      font-size: 12px;
-      font-weight: 600;
+      padding: 6px 12px;
+      font-size: 11.5px;
+      font-weight: 500;
       background: transparent;
-      border: none;
-      border-bottom: 2px solid transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
       color: var(--dp-ink-2);
       cursor: pointer;
-      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .email-tab-btn:hover {
       color: var(--dp-ink);
+      background: var(--dp-btn-hover);
     }
     .email-tab-btn.active {
-      color: var(--dp-logo-cobalt);
-      border-bottom-color: var(--dp-logo-cobalt);
+      color: var(--dp-ink);
+      background: var(--dp-btn-bg);
+      border-color: var(--dp-btn-border);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     }
 
     .email-drawer-body {
@@ -877,6 +885,30 @@
       overflow-y: auto;
       padding: 16px;
     }
+    /* Bespoke Custom Scrollbars - Eliminates default white scrollbar */
+    .email-drawer-body::-webkit-scrollbar,
+    .email-textarea::-webkit-scrollbar,
+    .templates-list::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .email-drawer-body::-webkit-scrollbar-track,
+    .email-textarea::-webkit-scrollbar-track,
+    .templates-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .email-drawer-body::-webkit-scrollbar-thumb,
+    .email-textarea::-webkit-scrollbar-thumb,
+    .templates-list::-webkit-scrollbar-thumb {
+      background: var(--dp-line);
+      border-radius: 9999px;
+    }
+    .email-drawer-body::-webkit-scrollbar-thumb:hover,
+    .email-textarea::-webkit-scrollbar-thumb:hover,
+    .templates-list::-webkit-scrollbar-thumb:hover {
+      background: var(--dp-ink-3);
+    }
+
     .email-tab-content {
       display: none;
     }
@@ -895,77 +927,123 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 11px;
-      font-weight: 600;
+      font-size: 11.5px;
+      font-weight: 500;
       color: var(--dp-ink-2);
       margin-bottom: 5px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: -0.01em;
     }
     .email-label .req {
       color: #EF4444;
+      margin-left: 2px;
     }
     .email-link-btn {
       background: none;
       border: none;
       color: var(--dp-logo-cobalt);
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 500;
       cursor: pointer;
       padding: 0;
       text-decoration: none;
+      transition: opacity 0.12s;
     }
     .email-link-btn:hover {
+      opacity: 0.8;
       text-decoration: underline;
     }
+
+    /* Bespoke Input, Select, and Textarea */
     .email-input, .email-select, .email-textarea {
       width: 100%;
       background: var(--dp-btn-bg);
-      border: 1px solid var(--dp-line);
-      border-radius: 6px;
-      padding: 8px 10px;
+      border: 1px solid var(--dp-btn-border);
+      border-radius: 7px;
+      padding: 8px 11px;
       font-size: 12.5px;
       color: var(--dp-ink);
       font-family: inherit;
       box-sizing: border-box;
       outline: none;
-      transition: border-color 0.12s, box-shadow 0.12s;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+    .email-input:hover, .email-select:hover, .email-textarea:hover {
+      border-color: var(--dp-line);
     }
     .email-input:focus, .email-select:focus, .email-textarea:focus {
       border-color: var(--dp-logo-cobalt);
-      box-shadow: 0 0 0 2px rgba(36, 71, 214, 0.15);
+      box-shadow: 0 0 0 3px rgba(72, 105, 238, 0.18);
+      background: var(--dp-tab-active-bg);
+    }
+    .email-select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A0B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+      cursor: pointer;
     }
     .email-textarea {
       resize: vertical;
-      line-height: 1.45;
+      line-height: 1.5;
+    }
+
+    /* Load Spec Inset Card */
+    .email-spec-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--dp-btn-border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+    }
+    html.dark .email-spec-card {
+      background: rgba(255, 255, 255, 0.015);
+      border-color: rgba(255, 255, 255, 0.07);
+    }
+    .email-spec-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--dp-ink-2);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     .email-primary-btn {
       width: 100%;
       padding: 10px 14px;
-      background: #2447D6;
+      background: linear-gradient(180deg, #3B5BFF 0%, #2447D6 100%);
       color: #FFFFFF;
-      border: none;
-      border-radius: 6px;
-      font-size: 13px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 7px;
+      font-size: 12.5px;
       font-weight: 600;
+      letter-spacing: 0.01em;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      transition: background-color 0.15s, transform 0.08s;
+      box-shadow: 0 2px 8px -1px rgba(36, 71, 214, 0.35);
+      transition: transform 0.1s ease, box-shadow 0.15s ease, opacity 0.15s ease;
       margin-top: 10px;
     }
     .email-primary-btn:hover {
-      background: #1C39B0;
+      box-shadow: 0 4px 14px -1px rgba(36, 71, 214, 0.5);
+      transform: translateY(-1px);
     }
     .email-primary-btn:active {
-      transform: scale(0.99);
+      transform: translateY(0);
     }
     .email-primary-btn:disabled {
-      opacity: 0.6;
+      opacity: 0.5;
       cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
 
     .email-danger-btn {
@@ -984,15 +1062,15 @@
     }
 
     .email-mini-btn {
-      padding: 4px 8px;
+      padding: 4px 9px;
       background: var(--dp-btn-bg);
-      border: 1px solid var(--dp-line);
-      border-radius: 4px;
+      border: 1px solid var(--dp-btn-border);
+      border-radius: 6px;
       color: var(--dp-ink);
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 500;
       cursor: pointer;
-      transition: all 0.12s;
+      transition: all 0.15s ease;
     }
     .email-mini-btn:hover {
       background: var(--dp-btn-hover);
@@ -1001,9 +1079,9 @@
     }
 
     .email-alert-banner {
-      background: rgba(234, 179, 8, 0.1);
-      border: 1px solid rgba(234, 179, 8, 0.3);
-      border-radius: 6px;
+      background: rgba(234, 179, 8, 0.08);
+      border: 1px solid rgba(234, 179, 8, 0.25);
+      border-radius: 7px;
       padding: 10px 12px;
       display: flex;
       align-items: center;
@@ -1011,7 +1089,7 @@
       margin-bottom: 14px;
     }
     .email-alert-icon {
-      font-size: 16px;
+      font-size: 15px;
       flex-shrink: 0;
     }
     .email-alert-text {
@@ -1022,21 +1100,21 @@
     }
 
     .email-feedback-box {
-      padding: 8px 10px;
-      border-radius: 6px;
+      padding: 8px 11px;
+      border-radius: 7px;
       font-size: 12px;
       margin: 8px 0;
       line-height: 1.35;
     }
     .email-feedback-box.success {
-      background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(16, 185, 129, 0.35);
-      color: #059669;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #10B981;
     }
     .email-feedback-box.error {
-      background: rgba(239, 68, 68, 0.12);
-      border: 1px solid rgba(239, 68, 68, 0.35);
-      color: #DC2626;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #EF4444;
     }
 
     .email-spinner {
@@ -1059,20 +1137,25 @@
       margin-bottom: 6px;
     }
     .token-pill {
-      background: rgba(36, 71, 214, 0.08);
-      border: 1px solid rgba(36, 71, 214, 0.2);
+      background: rgba(72, 105, 238, 0.08);
+      border: 1px solid rgba(72, 105, 238, 0.22);
       color: var(--dp-logo-cobalt);
-      font-size: 11px;
-      font-family: monospace;
-      padding: 2px 7px;
-      border-radius: 4px;
+      font-size: 10.5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      padding: 2.5px 7px;
+      border-radius: 5px;
       cursor: pointer;
       font-weight: 600;
-      transition: all 0.12s;
+      transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
     }
     .token-pill:hover {
       background: var(--dp-logo-cobalt);
       color: #FFFFFF;
+      border-color: var(--dp-logo-cobalt);
+      transform: translateY(-1px);
     }
 
     .templates-list {
@@ -1491,16 +1574,25 @@
               <rect width="20" height="16" x="2" y="4" rx="2"></rect>
               <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
             </svg>
-            <span>QUICK EMAIL DISPATCH</span>
+            <span>Quick Email Dispatch</span>
           </div>
           <button id="emailDrawerCloseBtn" class="email-close-btn" type="button" title="Close Drawer (Esc)">✕</button>
         </div>
         
         <!-- Drawer Navigation Tabs -->
         <div class="email-drawer-tabs">
-          <button class="email-tab-btn active" type="button" data-tab="sendTab">⚡ Quick Send</button>
-          <button class="email-tab-btn" type="button" data-tab="templatesTab">📋 My Templates</button>
-          <button class="email-tab-btn" type="button" data-tab="connectTab">⚙️ Gmail Connect</button>
+          <button class="email-tab-btn active" type="button" data-tab="sendTab">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            <span>Quick Dispatch</span>
+          </button>
+          <button class="email-tab-btn" type="button" data-tab="templatesTab">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/></svg>
+            <span>Templates</span>
+          </button>
+          <button class="email-tab-btn" type="button" data-tab="connectTab">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Google Accounts</span>
+          </button>
         </div>
       </div>
 
@@ -1537,7 +1629,7 @@
           <div class="email-form-group" id="fromAccountGroup" style="display:none;">
             <label class="email-label">
               <span>Send From</span>
-              <span class="text-xs text-muted">Gmail Account</span>
+              <span class="text-xs text-muted">Active Google Account</span>
             </label>
             <select id="emailFromSelect" class="email-select"></select>
           </div>
@@ -1545,37 +1637,43 @@
           <div class="email-form-group">
             <label class="email-label">
               <span>Broker Email <span class="req">*</span></span>
-              <button id="pasteEmailBtn" class="email-link-btn" type="button">📋 Paste Clipboard</button>
+              <button id="pasteEmailBtn" class="email-link-btn" type="button">Paste clipboard</button>
             </label>
             <input type="email" id="emailToInput" class="email-input" placeholder="broker@logistics.com" autocomplete="off" />
           </div>
 
-          <div class="email-form-row">
-            <div class="email-form-group flex-1">
-              <label class="email-label">Origin (City, ST)</label>
-              <input type="text" id="emailOriginInput" class="email-input" placeholder="e.g. Chicago, IL" />
+          <!-- Cohesive Inset Load Specifications Card -->
+          <div class="email-spec-card">
+            <div class="email-spec-header">
+              <span>Load Details</span>
+              <span class="text-xs text-muted" style="text-transform:none;font-weight:400;">Auto-filled from DAT</span>
             </div>
-            <div class="email-form-group flex-1">
-              <label class="email-label">Destination (City, ST)</label>
-              <input type="text" id="emailDestInput" class="email-input" placeholder="e.g. Atlanta, GA" />
+            <div class="email-form-row">
+              <div class="email-form-group flex-1" style="margin-bottom:8px;">
+                <label class="email-label">Origin</label>
+                <input type="text" id="emailOriginInput" class="email-input" placeholder="City, ST" />
+              </div>
+              <div class="email-form-group flex-1" style="margin-bottom:8px;">
+                <label class="email-label">Destination</label>
+                <input type="text" id="emailDestInput" class="email-input" placeholder="City, ST" />
+              </div>
             </div>
-          </div>
-
-          <div class="email-form-row">
-            <div class="email-form-group flex-1">
-              <label class="email-label">Offer / Rate</label>
-              <input type="text" id="emailRateInput" class="email-input" placeholder="e.g. $2,400" />
-            </div>
-            <div class="email-form-group flex-1">
-              <label class="email-label">Equipment</label>
-              <input type="text" id="emailEquipmentInput" class="email-input" placeholder="e.g. 53' Reefer" />
+            <div class="email-form-row">
+              <div class="email-form-group flex-1" style="margin-bottom:0;">
+                <label class="email-label">Offer / Rate</label>
+                <input type="text" id="emailRateInput" class="email-input" placeholder="$ Rate" />
+              </div>
+              <div class="email-form-group flex-1" style="margin-bottom:0;">
+                <label class="email-label">Equipment</label>
+                <input type="text" id="emailEquipmentInput" class="email-input" placeholder="Equipment spec" />
+              </div>
             </div>
           </div>
 
           <div class="email-form-group">
             <div class="flex-between">
-              <label class="email-label">Select Template</label>
-              <button id="manageTemplatesShortcutBtn" class="email-link-btn" type="button">Edit Templates ↗</button>
+              <label class="email-label">Template</label>
+              <button id="manageTemplatesShortcutBtn" class="email-link-btn" type="button">Manage templates ↗</button>
             </div>
             <select id="emailTemplateSelect" class="email-select">
               <option value="">— Select Template —</option>
@@ -1592,7 +1690,7 @@
 
           <div class="email-form-group">
             <div class="flex-between">
-              <label class="email-label">Body Text (Live Preview)</label>
+              <label class="email-label">Live Message Preview</label>
               <button id="clearBodyBtn" class="email-link-btn" type="button">Clear</button>
             </div>
             <textarea id="emailBodyInput" class="email-textarea" rows="6" placeholder="Email body..."></textarea>
@@ -1602,8 +1700,8 @@
 
           <button id="sendEmailSubmitBtn" class="email-primary-btn" type="button">
             <span id="sendBtnSpinner" class="email-spinner" style="display:none;"></span>
-            <span id="sendBtnIcon">🚀</span>
-            <span id="sendBtnText">Send Email via Gmail</span>
+            <span id="sendBtnIcon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></span>
+            <span id="sendBtnText">Send via Gmail</span>
           </button>
         </div>
 
@@ -3249,7 +3347,7 @@
           sendBtn.disabled = false;
           document.getElementById('sendBtnSpinner').style.display = 'none';
           document.getElementById('sendBtnIcon').style.display = 'inline';
-          document.getElementById('sendBtnText').textContent = 'Send Email via Gmail';
+          document.getElementById('sendBtnText').textContent = 'Send via Gmail';
         }
       });
 
