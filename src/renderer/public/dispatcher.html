@@ -228,6 +228,70 @@
       border-color: var(--dp-line);
     }
 
+    .zoom-control-group {
+      display: inline-flex;
+      align-items: center;
+      background: var(--dp-btn-bg);
+      border: 1px solid var(--dp-btn-border);
+      border-radius: 6px;
+      height: 26px;
+      padding: 0 2px;
+      margin-right: 8px;
+      user-select: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .zoom-control-group:hover {
+      border-color: var(--dp-line);
+    }
+
+    .zoom-btn {
+      background: transparent;
+      border: none;
+      color: var(--dp-ink-2);
+      cursor: pointer;
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      padding: 0;
+      transition: all 0.15s ease;
+    }
+
+    .zoom-btn:hover {
+      background: var(--dp-btn-hover);
+      color: var(--dp-ink);
+    }
+
+    .zoom-btn:active {
+      transform: scale(0.92);
+    }
+
+    .zoom-label {
+      font-size: 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-weight: 600;
+      color: var(--dp-ink);
+      min-width: 36px;
+      text-align: center;
+      padding: 2px 3px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+      letter-spacing: -0.3px;
+    }
+
+    .zoom-label:hover {
+      background: var(--dp-btn-hover);
+      color: #2447D6;
+    }
+
+    html.dark .zoom-label:hover, body.dark .zoom-label:hover {
+      color: #60A5FA;
+    }
+
     .theme-btn {
       width: 28px;
       height: 26px;
@@ -1396,6 +1460,17 @@
         <span id="emailBtnLabel">Email</span>
       </button>
 
+      <!-- Viewport Zoom Control Group -->
+      <div class="zoom-control-group" id="zoomControlGroup" title="DAT Viewport Zoom (Ctrl + / - / 0)">
+        <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out (Ctrl -)">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+        <span class="zoom-label" id="zoomLabel" title="Click to reset to 100% (Ctrl 0)">100%</span>
+        <button class="zoom-btn" id="zoomInBtn" title="Zoom In (Ctrl +)">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+      </div>
+
       <!-- Theme Switcher -->
       <button class="header-btn theme-btn" id="themeToggleBtn" title="Switch Theme (Dark / Light)">
         <svg id="themeIconSun" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
@@ -1905,6 +1980,96 @@
     let activeTabId = null;
     let tabCounter = 0;
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // 🔍 DAT VIEWPORT ZOOM ENGINE
+    // ─────────────────────────────────────────────────────────────────────────
+    const ZOOM_STORAGE_KEY = 'zonix_dispatcher_zoom_factor';
+    let currentZoom = parseFloat(localStorage.getItem(ZOOM_STORAGE_KEY) || '1.0');
+    if (isNaN(currentZoom) || currentZoom < 0.5 || currentZoom > 2.0) {
+      currentZoom = 1.0;
+    }
+
+    const zoomLabel = document.getElementById('zoomLabel');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+
+    function updateZoomUI() {
+      if (zoomLabel) {
+        zoomLabel.textContent = `${Math.round(currentZoom * 100)}%`;
+      }
+    }
+
+    function applyZoomToWebview(wv) {
+      if (!wv) return;
+      try {
+        if (typeof wv.setZoomFactor === 'function') {
+          wv.setZoomFactor(currentZoom);
+        }
+      } catch (err) {
+        console.warn('[Zoom] setZoomFactor error:', err.message);
+      }
+    }
+
+    function applyZoomToAllTabs() {
+      tabs.forEach(t => {
+        if (t.webview) {
+          applyZoomToWebview(t.webview);
+        }
+      });
+      updateZoomUI();
+    }
+
+    function changeZoom(step) {
+      let next = Math.round((currentZoom + step) * 100) / 100;
+      next = Math.max(0.5, Math.min(1.5, next));
+      currentZoom = next;
+      try {
+        localStorage.setItem(ZOOM_STORAGE_KEY, String(currentZoom));
+      } catch (e) {}
+      applyZoomToAllTabs();
+    }
+
+    function resetZoom() {
+      currentZoom = 1.0;
+      try {
+        localStorage.setItem(ZOOM_STORAGE_KEY, '1.0');
+      } catch (e) {}
+      applyZoomToAllTabs();
+    }
+
+    zoomInBtn?.addEventListener('click', () => changeZoom(0.05));
+    zoomOutBtn?.addEventListener('click', () => changeZoom(-0.05));
+    zoomLabel?.addEventListener('click', resetZoom);
+
+    // Host window zoom shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === '=' || e.key === '+' || e.code === 'Equal' || e.code === 'NumpadAdd') {
+          e.preventDefault();
+          changeZoom(0.05);
+        } else if (e.key === '-' || e.key === '_' || e.code === 'Minus' || e.code === 'NumpadSubtract') {
+          e.preventDefault();
+          changeZoom(-0.05);
+        } else if (e.key === '0' || e.code === 'Digit0' || e.code === 'Numpad0') {
+          e.preventDefault();
+          resetZoom();
+        }
+      }
+    });
+
+    window.addEventListener('wheel', (e) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        if (e.deltaY < 0) {
+          changeZoom(0.05);
+        } else if (e.deltaY > 0) {
+          changeZoom(-0.05);
+        }
+      }
+    }, { passive: false });
+
+    updateZoomUI();
+
     function updateTabsCountDisplay() {
       tabsCountPill.textContent = `${tabs.length} / ${maxTabs} Seats`;
     }
@@ -2225,7 +2390,18 @@
       });
 
       wv.addEventListener('dom-ready', () => {
+        applyZoomToWebview(wv);
         attachLetterboxBlocker(wv);
+      });
+
+      wv.addEventListener('ipc-message', (e) => {
+        if (e.channel === 'zonix:zoom-in') {
+          changeZoom(0.05);
+        } else if (e.channel === 'zonix:zoom-out') {
+          changeZoom(-0.05);
+        } else if (e.channel === 'zonix:zoom-reset') {
+          resetZoom();
+        }
       });
 
       const tabObj = { id, webview: wv, tabEl, isLoading: true, isInitiallyLoaded: false };
@@ -2241,6 +2417,7 @@
       });
 
       wv.addEventListener('did-finish-load', () => {
+        applyZoomToWebview(wv);
         attachLetterboxBlocker(wv);
         tabObj.isLoading = false;
         tabObj.isInitiallyLoaded = true;

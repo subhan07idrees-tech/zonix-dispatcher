@@ -1050,3 +1050,50 @@ try {
   }
 })();
 
+// Guest Viewport Zoom Interceptor (Forwards keyboard/wheel shortcuts to host webview)
+(function initGuestZoomShortcutInterceptor() {
+  try {
+    window.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === '=' || e.key === '+' || e.code === 'Equal' || e.code === 'NumpadAdd') {
+          e.preventDefault();
+          e.stopPropagation();
+          if (ipcRenderer && typeof ipcRenderer.sendToHost === 'function') {
+            ipcRenderer.sendToHost('zonix:zoom-in');
+          }
+        } else if (e.key === '-' || e.key === '_' || e.code === 'Minus' || e.code === 'NumpadSubtract') {
+          e.preventDefault();
+          e.stopPropagation();
+          if (ipcRenderer && typeof ipcRenderer.sendToHost === 'function') {
+            ipcRenderer.sendToHost('zonix:zoom-out');
+          }
+        } else if (e.key === '0' || e.code === 'Digit0' || e.code === 'Numpad0') {
+          e.preventDefault();
+          e.stopPropagation();
+          if (ipcRenderer && typeof ipcRenderer.sendToHost === 'function') {
+            ipcRenderer.sendToHost('zonix:zoom-reset');
+          }
+        }
+      }
+    }, true);
+
+    window.addEventListener('wheel', (e) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (ipcRenderer && typeof ipcRenderer.sendToHost === 'function') {
+          if (e.deltaY < 0) {
+            ipcRenderer.sendToHost('zonix:zoom-in');
+          } else if (e.deltaY > 0) {
+            ipcRenderer.sendToHost('zonix:zoom-out');
+          }
+        }
+      }
+    }, { passive: false, capture: true });
+
+    console.log('[ZONIX] Guest viewport zoom shortcut handler ready');
+  } catch (err) {
+    console.error('[ZONIX] Guest zoom shortcut interceptor error:', err.message);
+  }
+})();
+
