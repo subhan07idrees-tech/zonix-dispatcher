@@ -516,10 +516,18 @@ async function createDispatchWindow(sessionId, config) {
   // Strictly prevent dispatch window from opening if proxy is unreachable or broken
   const displayName = proxyName ? `${proxyName} (${proxyHost || proxyString})` : (proxyHost || proxyString);
   console.log(`[ZONIX Launch Gate] Probing proxy reachability for session ${sessionId} (${displayName})...`);
-  const probe = await proxyManager.checkProxyHealth(proxyString, sessionId, {
+  let probe = await proxyManager.checkProxyHealth(proxyString, sessionId, {
     username: proxyUsername || config.proxyUsername,
     password: proxyPassword || config.proxyPassword
   });
+
+  if (probe.status === 'unreachable' || probe.latency === -1) {
+    console.warn(`[ZONIX Launch Gate] Initial probe timed out, retrying once for residential proxy warmup...`);
+    probe = await proxyManager.checkProxyHealth(proxyString, sessionId, {
+      username: proxyUsername || config.proxyUsername,
+      password: proxyPassword || config.proxyPassword
+    });
+  }
 
   if (probe.status === 'unreachable' || probe.latency === -1) {
     console.error(`[ZONIX Launch Gate] 🛑 BLOCKED DISPATCH WINDOW: Proxy ${displayName} is unreachable.`);
@@ -1311,7 +1319,7 @@ function registerIPC() {
         store.set('username', result.user.username);
         store.set('userRole', result.user.role);
         store.set('targetUrl', effectiveTargetUrl);
-        store.set('maxTabs', result.organization.maxTabs || 5);
+        store.set('maxTabs', result.user.maxTabs || result.organization.maxTabs || 5);
         connectWebSocket();
         
         // Hide auth window immediately so it instantly vanishes from screen before next window opens
@@ -1450,11 +1458,18 @@ function registerIPC() {
         throw new Error('No Proxy Assigned: Your organization has no active proxy route configured. An active proxy is required to protect your accounts and prevent IP leaks.');
       }
 
-      console.log(`[ZONIX Launch Gate] Pre-flight probing proxy node ${proxyNode.name} (${activeProxyString})...`);
-      const preProbe = await proxyManager.checkProxyHealth(activeProxyString, `prelaunch_${userId}`, {
+      let preProbe = await proxyManager.checkProxyHealth(activeProxyString, `prelaunch_${userId}`, {
         username: proxyUsername,
         password: proxyPassword
       });
+
+      if (preProbe.status === 'unreachable' || preProbe.latency === -1) {
+        console.warn(`[ZONIX Launch Gate] Initial pre-flight probe timed out, retrying once for residential proxy warmup...`);
+        preProbe = await proxyManager.checkProxyHealth(activeProxyString, `prelaunch_${userId}`, {
+          username: proxyUsername,
+          password: proxyPassword
+        });
+      }
 
       if (preProbe.status === 'unreachable' || preProbe.latency === -1) {
         throw new Error(`Proxy Unreachable: The configured proxy server (${proxyNode.name} · ${proxyNode.host}:${proxyNode.port}) is not responding or unreachable. Launch was aborted to protect your account.`);

@@ -6,10 +6,11 @@ class ProxyManager {
     this.killSwitchActive = new Set();
     this.proxyLatencies = new Map();
     this.partitionSessions = new Map();
-    this.PROXY_CHECK_INTERVAL = 15000; // Efficient 15s heartbeat (frees proxy bandwidth for fast user browsing)
-    this.MAX_LATENCY_MS = 5000;        // 5s timeout (accommodates normal residential latency)
-    this.FAILURE_THRESHOLD = 2;        // Requires 2 consecutive failures before tripping kill-switch
+    this.PROXY_CHECK_INTERVAL = 30000; // 30s heartbeat (conserves residential proxy tunnel bandwidth for fast user browsing)
+    this.MAX_LATENCY_MS = 10000;       // 10s timeout (generous headroom for residential proxy jitter & peer hops)
+    this.FAILURE_THRESHOLD = 4;        // Requires 4 consecutive failures before tripping kill-switch
     this.proxyFailures = new Map();
+    this.configuredPartitions = new Set();
   }
 
   isKillSwitchActive(sessionId) {
@@ -21,11 +22,15 @@ class ProxyManager {
 
     try {
       const startTime = Date.now();
-      const url = new URL('https://clients3.google.com/generate_204'); // Low-overhead 204 endpoint
+      const url = new URL('https://1.1.1.1/cdn-cgi/trace'); // High-reliability Cloudflare trace endpoint (never rate-limited on residential proxies)
       
       // Isolated in-memory test session with configured upstream proxy rules
-      const checkSess = session.fromPartition(`proxy_check_${sessionId}`);
-      await checkSess.setProxy({ proxyRules: proxyString });
+      const partitionKey = `proxy_check_${sessionId}`;
+      const checkSess = session.fromPartition(partitionKey);
+      if (!this.configuredPartitions.has(partitionKey)) {
+        await checkSess.setProxy({ proxyRules: proxyString });
+        this.configuredPartitions.add(partitionKey);
+      }
 
       const request = net.request({
         method: 'GET',

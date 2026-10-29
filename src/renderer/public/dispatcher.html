@@ -490,7 +490,7 @@
     .webview-container {
       flex: 1;
       width: 100%;
-      background: #FFFFFF;
+      background: var(--dp-bg);
       position: relative;
     }
 
@@ -499,6 +499,7 @@
       height: 100%;
       border: none;
       display: inline-flex;
+      background: var(--dp-bg);
     }
 
     webview.hidden-tab {
@@ -2406,6 +2407,41 @@
 
       const tabObj = { id, webview: wv, tabEl, isLoading: true, isInitiallyLoaded: false };
 
+      function dismissOverlay() {
+        tabObj.isLoading = false;
+        tabObj.isInitiallyLoaded = true;
+        if (id === activeTabId) {
+          overlay.style.opacity = '0';
+          setTimeout(() => {
+            if (activeTabId === id && !tabObj.isLoading) {
+              overlay.style.display = 'none';
+            }
+          }, 300);
+        }
+      }
+
+      // Progressive loading feedback while residential proxy downloads DAT One bundles
+      setTimeout(() => {
+        if (tabObj.isLoading && !tabObj.isInitiallyLoaded && id === activeTabId) {
+          loadingStatusText.textContent = 'Loading DAT One interface through secure tunnel...';
+        }
+      }, 3500);
+
+      setTimeout(() => {
+        if (tabObj.isLoading && !tabObj.isInitiallyLoaded && id === activeTabId) {
+          loadingStatusText.textContent = 'Rendering load board dashboard & syncing session...';
+        }
+      }, 8000);
+
+      // Graceful timeout fallback (25s) if residential proxy connection stalls
+      setTimeout(() => {
+        if (tabObj.isLoading && !tabObj.isInitiallyLoaded && id === activeTabId) {
+          loadErrorMsg.textContent = 'DAT One is taking longer than usual to load over the residential proxy.';
+          loadErrorBox.style.display = 'block';
+          loadingStatusText.textContent = 'Connection slow. You can wait or click Retry.';
+        }
+      }, 25000);
+
       wv.addEventListener('did-start-loading', () => {
         tabObj.isLoading = true;
         if (!tabObj.isInitiallyLoaded && id === activeTabId) {
@@ -2419,16 +2455,7 @@
       wv.addEventListener('did-finish-load', () => {
         applyZoomToWebview(wv);
         attachLetterboxBlocker(wv);
-        tabObj.isLoading = false;
-        tabObj.isInitiallyLoaded = true;
-        if (id === activeTabId) {
-          overlay.style.opacity = '0';
-          setTimeout(() => {
-            if (activeTabId === id && !tabObj.isLoading) {
-              overlay.style.display = 'none';
-            }
-          }, 300);
-        }
+        dismissOverlay();
 
         try {
           const pageTitle = wv.getTitle();
@@ -2438,8 +2465,15 @@
         }
       });
 
+      wv.addEventListener('did-stop-loading', () => {
+        dismissOverlay();
+      });
+
       wv.addEventListener('page-title-updated', (e) => {
         titleEl.textContent = e.title;
+        if (e.title && !e.title.toLowerCase().includes('connecting') && e.title !== 'about:blank') {
+          dismissOverlay();
+        }
       });
 
       wv.addEventListener('did-fail-load', (e) => {
