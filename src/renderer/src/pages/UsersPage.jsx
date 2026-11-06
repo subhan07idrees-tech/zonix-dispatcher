@@ -6,7 +6,7 @@ import RoleBadge from '../components/RoleBadge';
 import EmptyState from '../components/EmptyState';
 import {
   Users, Plus, Edit2, Trash2, X, ShieldOff, ShieldCheck,
-  Key, Mail, Send, Copy
+  Key, Mail, Send, Copy, Clock, Ban
 } from 'lucide-react';
 
 function InviteModal({ orgId, onClose, onSend }) {
@@ -261,6 +261,8 @@ export default function UsersPage() {
   const { showToast, copyToClipboard } = useToast();
 
   const [users, setUsers] = useState([]);
+  const [pendingInvites, setPendingInvites] = useState([]);
+  const [loadingInvites, setLoadingInvites] = useState(false);
   const [orgs, setOrgs] = useState([]);
   const [selectedOrg, setSelectedOrg] = useState('');
   const [loading, setLoading] = useState(true);
@@ -279,6 +281,7 @@ export default function UsersPage() {
   useEffect(() => {
     if (selectedOrg) {
       fetchUsers();
+      fetchInvites();
     }
   }, [selectedOrg]);
 
@@ -311,6 +314,22 @@ export default function UsersPage() {
     }
   };
 
+  const fetchInvites = async () => {
+    if (!selectedOrg) return;
+    setLoadingInvites(true);
+    try {
+      const res = await authFetch(`/invites/${selectedOrg}`);
+      if (res.ok) {
+        const data = await res.json();
+        setPendingInvites(data.invites || []);
+      }
+    } catch (err) {
+      console.error('Error fetching invites:', err);
+    } finally {
+      setLoadingInvites(false);
+    }
+  };
+
   const handleSendInvite = async (form) => {
     try {
       const res = await authFetch(`/invites/${selectedOrg}`, {
@@ -325,9 +344,43 @@ export default function UsersPage() {
       }
       setShowInviteModal(false);
       showToast(`Invitation sent to ${form.email}`, 'ok');
+      fetchInvites();
     } catch (err) {
       showToast(err.message, 'err');
     }
+  };
+
+  const handleCancelInvite = async (invite) => {
+    const confirmed = await showConfirm(
+      `Cancel the invitation sent to ${invite.email}? Their link will expire immediately.`,
+      'Cancel Invitation'
+    );
+    if (!confirmed) return;
+
+    try {
+      const res = await authFetch(`/invites/${selectedOrg}/${invite.id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.error || 'Failed to cancel invite', 'err');
+        return;
+      }
+      showToast('Invitation cancelled', 'ok');
+      fetchInvites();
+    } catch (err) {
+      showToast(err.message, 'err');
+    }
+  };
+
+  const handleCopyInviteLink = (token) => {
+    const url = `https://thezonix.com/join.html?token=${token}`;
+    if (copyToClipboard) {
+      copyToClipboard(url);
+    } else {
+      navigator.clipboard.writeText(url);
+    }
+    showToast('Invite link copied to clipboard', 'ok');
   };
 
   const handleSaveUser = async (form) => {
@@ -624,6 +677,115 @@ export default function UsersPage() {
                             aria-label="Delete dispatcher"
                           >
                             <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      {/* Pending Invitations Card */}
+      <div className="zx-card">
+        <div className="zx-card-header">
+          <div className="flex items-center gap-2">
+            <h2 className="text-[15px] leading-[24px] font-semibold text-ink">
+              Pending invitations
+            </h2>
+            {pendingInvites.length > 0 && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-accent/10 text-accent border border-accent/20">
+                {pendingInvites.length} pending
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowInviteModal(true)}
+            className="zx-btn-secondary text-xs"
+          >
+            <Mail className="w-3.5 h-3.5" strokeWidth={1.5} />
+            <span>Invite new dispatcher</span>
+          </button>
+        </div>
+
+        <div className="overflow-x-auto">
+          {loadingInvites ? (
+            <div className="p-6 space-y-2">
+              <div className="h-8 w-full zx-skeleton" />
+              <div className="h-8 w-full zx-skeleton" />
+            </div>
+          ) : pendingInvites.length === 0 ? (
+            <div className="p-8 text-center text-xs text-ink-3">
+              No pending invitations. When you invite dispatchers via email, they will appear here until they accept.
+            </div>
+          ) : (
+            <table className="zx-table">
+              <thead>
+                <tr>
+                  <th>Invited Email</th>
+                  <th style={{ width: '130px' }}>Role</th>
+                  <th style={{ width: '100px' }} className="text-right">Max Tabs</th>
+                  <th style={{ width: '150px' }}>Expires</th>
+                  <th style={{ width: '180px' }} className="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingInvites.map((inv) => {
+                  const isExpired = new Date(inv.expiresAt) < new Date();
+                  const remainingHours = Math.max(0, Math.round((new Date(inv.expiresAt) - new Date()) / (1000 * 60 * 60)));
+
+                  return (
+                    <tr key={inv.id}>
+                      <td className="text-xs font-medium text-ink">
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-3.5 h-3.5 text-ink-3" />
+                          <span>{inv.email}</span>
+                        </div>
+                      </td>
+
+                      <td>
+                        <RoleBadge role={inv.role} />
+                      </td>
+
+                      <td className="font-mono text-xs tabular-nums text-right text-ink">
+                        {inv.maxTabs || 5}
+                      </td>
+
+                      <td className="text-xs text-ink-2">
+                        {isExpired ? (
+                          <span className="text-err font-medium">Expired</span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 text-ink-2">
+                            <Clock className="w-3 h-3 text-ink-3" />
+                            {remainingHours}h remaining
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="text-right">
+                        <div className="inline-flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleCopyInviteLink(inv.token)}
+                            className="zx-btn-secondary h-7 px-2.5 text-[11px] inline-flex items-center gap-1"
+                            title="Copy invite URL"
+                          >
+                            <Copy className="w-3 h-3" />
+                            <span>Copy link</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleCancelInvite(inv)}
+                            className="zx-btn-icon w-7 h-7 text-ink-3 hover:text-err"
+                            title="Cancel invitation"
+                            aria-label="Cancel invitation"
+                          >
+                            <Ban className="w-3.5 h-3.5" strokeWidth={1.5} />
                           </button>
                         </div>
                       </td>

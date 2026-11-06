@@ -192,8 +192,14 @@ export default function OverviewPage() {
     const trimmedSubj = supportSubject.trim();
     const trimmedMsg = supportMessage.trim();
 
-    if (!trimmedEmail || !trimmedSubj || !trimmedMsg) {
-      setSupportError('All fields are required.');
+    if (supportAudience === 'individual' && !trimmedEmail) {
+      setSupportError('Recipient email is required for individual delivery.');
+      setSubmittingSupport(false);
+      return;
+    }
+
+    if (!trimmedSubj || !trimmedMsg) {
+      setSupportError('Subject and message are required.');
       setSubmittingSupport(false);
       return;
     }
@@ -205,7 +211,7 @@ export default function OverviewPage() {
         body: JSON.stringify({
           type: supportType,
           audience: supportAudience,
-          customRecipientEmail: trimmedEmail,
+          customRecipientEmail: supportAudience === 'individual' ? trimmedEmail : undefined,
           maintenanceWindow: supportType === 'MAINTENANCE' ? maintenanceWindow : null,
           subject: trimmedSubj,
           message: trimmedMsg,
@@ -545,17 +551,44 @@ export default function OverviewPage() {
 
                 <div>
                   <label className="block text-xs font-medium text-ink-2 mb-1.5">
-                    Recipient email
+                    Send to
                   </label>
-                  <input
-                    type="email"
-                    value={supportEmail}
-                    onChange={(e) => setSupportEmail(e.target.value)}
-                    className="zx-input w-full text-xs"
-                    placeholder="operator@company.com"
-                    required
-                  />
+                  <select
+                    value={supportAudience}
+                    onChange={(e) => setSupportAudience(e.target.value)}
+                    className="zx-select w-full text-xs"
+                  >
+                    <option value="all">All Users (Fleet Broadcast)</option>
+                    <option value="org">My Organization (All Team Members)</option>
+                    <option value="individual">Individual User</option>
+                  </select>
                 </div>
+
+                {supportAudience === 'individual' ? (
+                  <div>
+                    <label className="block text-xs font-medium text-ink-2 mb-1.5">
+                      Recipient email
+                    </label>
+                    <input
+                      type="email"
+                      value={supportEmail}
+                      onChange={(e) => setSupportEmail(e.target.value)}
+                      className="zx-input w-full text-xs"
+                      placeholder="operator@company.com"
+                      required
+                    />
+                  </div>
+                ) : (
+                  <div className="p-3 bg-surface border border-line-input rounded-ctl text-[11px] text-ink-2 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-accent flex-shrink-0" />
+                    <span>
+                      Notice will be sent via confidential BCC to{' '}
+                      <strong className="text-ink">
+                        {supportAudience === 'all' ? 'all registered users across the platform' : 'all dispatchers in your organization'}
+                      </strong>.
+                    </span>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-medium text-ink-2 mb-1.5">
