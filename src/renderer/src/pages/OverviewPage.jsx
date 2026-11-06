@@ -213,7 +213,7 @@ export default function OverviewPage() {
           ticketType: supportType,
           audience: supportAudience,
           customRecipientEmail: supportAudience === 'individual' ? trimmedEmail : undefined,
-          maintenanceWindow: supportType === 'MAINTENANCE' ? maintenanceWindow : null,
+          maintenanceWindow: supportType === 'MAINTENANCE' ? (maintenanceWindow.trim() || null) : null,
           subject: trimmedSubj,
           message: trimmedMsg
         })
@@ -536,10 +536,30 @@ export default function OverviewPage() {
                     className="zx-select w-full text-xs"
                   >
                     <option value="MAINTENANCE">Maintenance notice</option>
-                    <option value="SUPPORT">Operational support</option>
-                    <option value="ANNOUNCEMENT">Announcement</option>
+                    <option value="ANNOUNCEMENT">Announcement / Guide</option>
+                    <option value="OPERATIONS">Operations notice</option>
                   </select>
                 </div>
+
+                {supportType === 'MAINTENANCE' && (
+                  <div>
+                    <label className="block text-xs font-medium text-ink-2 mb-1.5 flex items-center justify-between">
+                      <span>Maintenance schedule & timing</span>
+                      <span className="text-[10px] text-amber-500 font-normal">Included in advisory banner</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={maintenanceWindow}
+                      onChange={(e) => setMaintenanceWindow(e.target.value)}
+                      className="zx-input w-full text-xs font-mono"
+                      placeholder="e.g. Tonight: 11:00 PM - 01:00 AM UTC"
+                      required={supportType === 'MAINTENANCE'}
+                    />
+                    <p className="mt-1 text-[11px] text-ink-3">
+                      Specify the scheduled date, start/end time, and timezone.
+                    </p>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-medium text-ink-2 mb-1.5">
