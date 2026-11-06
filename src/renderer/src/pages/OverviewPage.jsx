@@ -210,27 +210,19 @@ export default function OverviewPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: supportType,
+          ticketType: supportType,
           audience: supportAudience,
           customRecipientEmail: supportAudience === 'individual' ? trimmedEmail : undefined,
           maintenanceWindow: supportType === 'MAINTENANCE' ? maintenanceWindow : null,
           subject: trimmedSubj,
-          message: trimmedMsg,
-          telemetry: {
-            appVersion: window.zonixAPI?.appVersion ? ('v' + window.zonixAPI.appVersion) : 'v2.0.11',
-            os: 'Windows 10/11',
-            targetDomain,
-            userRole: user?.role,
-            orgName: user?.orgName || orgDetails?.displayName,
-            latency: proxyLatencyDisplay,
-            cookieStatus: healthTelemetry.cookieStatus
-          }
+          message: trimmedMsg
         })
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
         setShowSupportModal(false);
-        showToast('Support notice dispatched successfully', 'ok');
+        showToast('Notice dispatched successfully', 'ok');
       } else {
         setSupportError(data.error || 'Failed to dispatch notice.');
       }
@@ -514,7 +506,7 @@ export default function OverviewPage() {
           <div className="zx-modal-panel">
             <div className="h-[56px] px-6 border-b border-line flex items-center justify-between">
               <h3 className="text-[15px] font-semibold text-ink">
-                Contact support and dispatch notice
+                Dispatch notice
               </h3>
               <button
                 type="button"
