@@ -23,8 +23,13 @@ function formatDate(isoStr) {
   }
 }
 
-function formatCurrency(amount) {
+function formatCurrency(amount, currency = 'USD') {
   const num = parseFloat(amount) || 0;
+  if (currency === 'PKR') {
+    return `Rs ${new Intl.NumberFormat('en-PK', {
+      maximumFractionDigits: 0
+    }).format(num)}`;
+  }
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -70,9 +75,11 @@ function EditSubscriptionModal({ item, type, onClose, onSave }) {
   const isOrg = type === 'organization';
   const name = isOrg ? item.displayName || item.name : item.username;
 
+  const isPakistaniDefault = ['JazzCash', 'Easypaisa', 'Bank (PKR)'].includes(item.paymentMethod);
   const [form, setForm] = useState({
     planName: item.planName || (isOrg ? 'Standard Company' : 'Individual Seat'),
     planPrice: item.planPrice ?? 0,
+    currency: item.currency || (isPakistaniDefault ? 'PKR' : 'USD'),
     billingCycle: item.billingCycle || 'monthly',
     paymentMethod: item.paymentMethod || 'Zelle',
     subscriptionStart: item.subscriptionStart ? item.subscriptionStart.substring(0, 10) : new Date().toISOString().substring(0, 10),
@@ -124,6 +131,39 @@ function EditSubscriptionModal({ item, type, onClose, onSave }) {
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Currency Toggle */}
+          <div className="flex items-center justify-between p-2.5 rounded-lg bg-surface-hover/60 border border-line">
+            <span className="text-xs font-medium text-ink-2">Billing Currency:</span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setForm(prev => ({ ...prev, currency: 'USD' }))}
+                className={`px-3 py-1 rounded text-xs font-semibold transition-all ${
+                  form.currency === 'USD'
+                    ? 'bg-accent text-accent-contrast shadow-sm'
+                    : 'text-ink-2 hover:text-ink hover:bg-surface'
+                }`}
+              >
+                USD ($)
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm(prev => ({
+                  ...prev,
+                  currency: 'PKR',
+                  paymentMethod: ['JazzCash', 'Easypaisa', 'Bank (PKR)'].includes(prev.paymentMethod) ? prev.paymentMethod : 'JazzCash'
+                }))}
+                className={`px-3 py-1 rounded text-xs font-semibold transition-all ${
+                  form.currency === 'PKR'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-ink-2 hover:text-ink hover:bg-surface'
+                }`}
+              >
+                PKR (Rs)
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-ink-2 mb-1.5">
@@ -140,18 +180,20 @@ function EditSubscriptionModal({ item, type, onClose, onSave }) {
             </div>
             <div>
               <label className="block text-xs font-medium text-ink-2 mb-1.5">
-                Rate / Amount ($ USD)
+                Rate / Amount ({form.currency === 'PKR' ? 'PKR / Rs' : '$ USD'})
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-xs text-ink-3 font-mono">$</span>
+                <span className="absolute left-3 top-2.5 text-xs text-ink-3 font-mono">
+                  {form.currency === 'PKR' ? 'Rs' : '$'}
+                </span>
                 <input
                   type="number"
-                  step="0.01"
+                  step={form.currency === 'PKR' ? '1' : '0.01'}
                   min="0"
                   value={form.planPrice}
                   onChange={e => setForm({ ...form, planPrice: e.target.value })}
-                  className="zx-input w-full pl-7 font-mono"
-                  placeholder="0.00"
+                  className="zx-input w-full pl-8 font-mono"
+                  placeholder={form.currency === 'PKR' ? 'e.g. 25000' : '0.00'}
                   required
                 />
               </div>
@@ -181,17 +223,32 @@ function EditSubscriptionModal({ item, type, onClose, onSave }) {
               </label>
               <select
                 value={form.paymentMethod}
-                onChange={e => setForm({ ...form, paymentMethod: e.target.value })}
+                onChange={e => {
+                  const val = e.target.value;
+                  const isPak = ['JazzCash', 'Easypaisa', 'Bank (PKR)'].includes(val);
+                  setForm(prev => ({
+                    ...prev,
+                    paymentMethod: val,
+                    currency: isPak ? 'PKR' : prev.currency
+                  }));
+                }}
                 className="zx-input w-full cursor-pointer"
               >
-                <option value="Zelle">Zelle</option>
-                <option value="Stripe">Stripe / Card</option>
-                <option value="Wire / Bank">Wire / Bank Transfer</option>
-                <option value="CashApp">CashApp</option>
-                <option value="PayPal">PayPal</option>
-                <option value="Crypto">USDT / Crypto</option>
-                <option value="Cash">Cash</option>
-                <option value="Other">Other</option>
+                <optgroup label="🇵🇰 Pakistani Accounts (PKR)">
+                  <option value="JazzCash">JazzCash</option>
+                  <option value="Easypaisa">Easypaisa</option>
+                  <option value="Bank (PKR)">Bank Transfer (PKR)</option>
+                </optgroup>
+                <optgroup label="🌐 International Accounts (USD)">
+                  <option value="Zelle">Zelle (USD)</option>
+                  <option value="Stripe">Stripe / Card</option>
+                  <option value="Wire / Bank">Wire / International Bank</option>
+                  <option value="CashApp">CashApp (USD)</option>
+                  <option value="PayPal">PayPal (USD)</option>
+                  <option value="Crypto">USDT / Crypto</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Other">Other</option>
+                </optgroup>
               </select>
             </div>
           </div>
@@ -295,6 +352,7 @@ function AssignSubscriptionModal({ organizations, users, initialType, onClose, o
   const [form, setForm] = useState({
     planName: isOrg ? 'Standard Company' : 'Individual Seat',
     planPrice: isOrg ? 150 : 75,
+    currency: 'USD',
     billingCycle: 'monthly',
     paymentMethod: 'Zelle',
     subscriptionStart: new Date().toISOString().substring(0, 10),
@@ -316,9 +374,11 @@ function AssignSubscriptionModal({ organizations, users, initialType, onClose, o
       endStr = d.toISOString().substring(0, 10);
     }
 
+    const isPak = ['JazzCash', 'Easypaisa', 'Bank (PKR)'].includes(item.paymentMethod);
     setForm({
       planName: item.planName || (isCurrentOrg ? 'Standard Company' : 'Individual Seat'),
       planPrice: item.planPrice ?? (isCurrentOrg ? 150 : 75),
+      currency: item.currency || (isPak ? 'PKR' : 'USD'),
       billingCycle: item.billingCycle || 'monthly',
       paymentMethod: item.paymentMethod || 'Zelle',
       subscriptionStart: startStr,
@@ -468,6 +528,44 @@ function AssignSubscriptionModal({ organizations, users, initialType, onClose, o
             )}
           </div>
 
+          {/* Currency Toggle */}
+          <div className="flex items-center justify-between p-2.5 rounded-lg bg-surface-hover/60 border border-line">
+            <span className="text-xs font-medium text-ink-2">Billing Currency:</span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setForm(prev => ({
+                  ...prev,
+                  currency: 'USD',
+                  planPrice: isOrg ? 150 : 75
+                }))}
+                className={`px-3 py-1 rounded text-xs font-semibold transition-all ${
+                  form.currency === 'USD'
+                    ? 'bg-accent text-accent-contrast shadow-sm'
+                    : 'text-ink-2 hover:text-ink hover:bg-surface'
+                }`}
+              >
+                USD ($)
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm(prev => ({
+                  ...prev,
+                  currency: 'PKR',
+                  planPrice: isOrg ? 40000 : 20000,
+                  paymentMethod: ['JazzCash', 'Easypaisa', 'Bank (PKR)'].includes(prev.paymentMethod) ? prev.paymentMethod : 'JazzCash'
+                }))}
+                className={`px-3 py-1 rounded text-xs font-semibold transition-all ${
+                  form.currency === 'PKR'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-ink-2 hover:text-ink hover:bg-surface'
+                }`}
+              >
+                PKR (Rs)
+              </button>
+            </div>
+          </div>
+
           {/* Quick Plan Presets */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
@@ -477,54 +575,106 @@ function AssignSubscriptionModal({ organizations, users, initialType, onClose, o
               <span className="text-[10.5px] text-ink-3">Click to apply:</span>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              {isOrg ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => applyPlanPreset('Standard Company', 150)}
-                    className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
-                  >
-                    Standard ($150)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => applyPlanPreset('Carrier Fleet Pro', 250)}
-                    className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
-                  >
-                    Fleet Pro ($250)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => applyPlanPreset('Enterprise Unlimited', 500)}
-                    className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
-                  >
-                    Enterprise ($500)
-                  </button>
-                </>
+              {form.currency === 'PKR' ? (
+                isOrg ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => applyPlanPreset('Standard Company (PKR)', 40000)}
+                      className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
+                    >
+                      Standard (Rs 40k)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPlanPreset('Carrier Fleet Pro (PKR)', 70000)}
+                      className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
+                    >
+                      Fleet Pro (Rs 70k)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPlanPreset('Enterprise Unlimited (PKR)', 140000)}
+                      className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
+                    >
+                      Enterprise (Rs 140k)
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => applyPlanPreset('Individual Seat (PKR)', 20000)}
+                      className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
+                    >
+                      Standard Seat (Rs 20k)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPlanPreset('Solo Dispatcher Pro (PKR)', 35000)}
+                      className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
+                    >
+                      Solo Pro (Rs 35k)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPlanPreset('Trial Pass (7 Days)', 0)}
+                      className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
+                    >
+                      Free Trial (Rs 0)
+                    </button>
+                  </>
+                )
               ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => applyPlanPreset('Individual Seat', 75)}
-                    className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
-                  >
-                    Standard Seat ($75)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => applyPlanPreset('Solo Dispatcher Pro', 120)}
-                    className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
-                  >
-                    Solo Pro ($120)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => applyPlanPreset('Trial Pass (7 Days)', 0)}
-                    className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
-                  >
-                    Free Trial ($0)
-                  </button>
-                </>
+                isOrg ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => applyPlanPreset('Standard Company', 150)}
+                      className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
+                    >
+                      Standard ($150)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPlanPreset('Carrier Fleet Pro', 250)}
+                      className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
+                    >
+                      Fleet Pro ($250)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPlanPreset('Enterprise Unlimited', 500)}
+                      className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
+                    >
+                      Enterprise ($500)
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => applyPlanPreset('Individual Seat', 75)}
+                      className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
+                    >
+                      Standard Seat ($75)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPlanPreset('Solo Dispatcher Pro', 120)}
+                      className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
+                    >
+                      Solo Pro ($120)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPlanPreset('Trial Pass (7 Days)', 0)}
+                      className="px-2.5 py-1 text-[11px] rounded bg-surface hover:bg-surface-hover text-ink-2 hover:text-ink border border-line transition-colors"
+                    >
+                      Free Trial ($0)
+                    </button>
+                  </>
+                )
               )}
             </div>
           </div>
@@ -545,18 +695,20 @@ function AssignSubscriptionModal({ organizations, users, initialType, onClose, o
             </div>
             <div>
               <label className="block text-xs font-medium text-ink-2 mb-1.5">
-                Rate / Amount ($ USD)
+                Rate / Amount ({form.currency === 'PKR' ? 'PKR / Rs' : '$ USD'})
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-xs text-ink-3 font-mono">$</span>
+                <span className="absolute left-3 top-2.5 text-xs text-ink-3 font-mono">
+                  {form.currency === 'PKR' ? 'Rs' : '$'}
+                </span>
                 <input
                   type="number"
-                  step="0.01"
+                  step={form.currency === 'PKR' ? '1' : '0.01'}
                   min="0"
                   value={form.planPrice}
                   onChange={e => setForm({ ...form, planPrice: e.target.value })}
-                  className="zx-input w-full pl-7 font-mono text-xs"
-                  placeholder="0.00"
+                  className="zx-input w-full pl-8 font-mono text-xs"
+                  placeholder={form.currency === 'PKR' ? 'e.g. 25000' : '0.00'}
                   required
                 />
               </div>
@@ -586,17 +738,32 @@ function AssignSubscriptionModal({ organizations, users, initialType, onClose, o
               </label>
               <select
                 value={form.paymentMethod}
-                onChange={e => setForm({ ...form, paymentMethod: e.target.value })}
+                onChange={e => {
+                  const val = e.target.value;
+                  const isPak = ['JazzCash', 'Easypaisa', 'Bank (PKR)'].includes(val);
+                  setForm(prev => ({
+                    ...prev,
+                    paymentMethod: val,
+                    currency: isPak ? 'PKR' : prev.currency
+                  }));
+                }}
                 className="zx-input w-full cursor-pointer text-xs"
               >
-                <option value="Zelle">Zelle</option>
-                <option value="Stripe">Stripe / Card</option>
-                <option value="Wire / Bank">Wire / Bank Transfer</option>
-                <option value="CashApp">CashApp</option>
-                <option value="PayPal">PayPal</option>
-                <option value="Crypto">USDT / Crypto</option>
-                <option value="Cash">Cash</option>
-                <option value="Other">Other</option>
+                <optgroup label="🇵🇰 Pakistani Accounts (PKR)">
+                  <option value="JazzCash">JazzCash</option>
+                  <option value="Easypaisa">Easypaisa</option>
+                  <option value="Bank (PKR)">Bank Transfer (PKR)</option>
+                </optgroup>
+                <optgroup label="🌐 International Accounts (USD)">
+                  <option value="Zelle">Zelle (USD)</option>
+                  <option value="Stripe">Stripe / Card</option>
+                  <option value="Wire / Bank">Wire / International Bank</option>
+                  <option value="CashApp">CashApp (USD)</option>
+                  <option value="PayPal">PayPal (USD)</option>
+                  <option value="Crypto">USDT / Crypto</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Other">Other</option>
+                </optgroup>
               </select>
             </div>
           </div>
@@ -931,10 +1098,19 @@ function SubscriptionsPageContent() {
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono text-ink tracking-tight">
-            {formatCurrency(metrics.mrr || 0)}
+          <div className="flex flex-wrap items-baseline gap-2">
+            <span className="text-2xl font-bold font-mono text-ink tracking-tight">
+              {formatCurrency(metrics.mrrUSD || metrics.mrr || 0, 'USD')}
+            </span>
+            {(metrics.mrrPKR > 0) && (
+              <span className="text-xs font-semibold font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/25">
+                + {formatCurrency(metrics.mrrPKR, 'PKR')}
+              </span>
+            )}
           </div>
-          <p className="text-[11px] text-ink-3 mt-1">Active recurring monthly pipeline</p>
+          <p className="text-[11px] text-ink-3 mt-1">
+            Active recurring monthly pipeline {metrics.mrrPKR > 0 ? '(USD + PKR)' : ''}
+          </p>
         </div>
 
         {/* Active Subscriptions Card */}
@@ -1151,15 +1327,25 @@ function SubscriptionsPageContent() {
 
                       {/* Rate */}
                       <td className="text-right font-mono text-xs font-bold text-ink">
-                        {formatCurrency(org.planPrice)}
+                        {formatCurrency(
+                          org.planPrice,
+                          org.currency || (['JazzCash', 'Easypaisa', 'Bank (PKR)'].includes(org.paymentMethod) ? 'PKR' : 'USD')
+                        )}
                       </td>
 
                       {/* Payment Method */}
                       <td>
-                        <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-surface border border-line text-ink-2 font-mono">
-                          <Wallet className="w-3 h-3 text-ink-3" />
-                          {org.paymentMethod || 'Zelle'}
-                        </span>
+                        {['JazzCash', 'Easypaisa', 'Bank (PKR)'].includes(org.paymentMethod) ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 font-mono">
+                            <Wallet className="w-3 h-3 text-emerald-400" />
+                            {org.paymentMethod}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-surface border border-line text-ink-2 font-mono">
+                            <Wallet className="w-3 h-3 text-ink-3" />
+                            {org.paymentMethod || 'Zelle'}
+                          </span>
+                        )}
                       </td>
 
                       {/* Cycle Window */}
@@ -1275,15 +1461,25 @@ function SubscriptionsPageContent() {
 
                       {/* Rate */}
                       <td className="text-right font-mono text-xs font-bold text-ink">
-                        {formatCurrency(user.planPrice)}
+                        {formatCurrency(
+                          user.planPrice,
+                          user.currency || (['JazzCash', 'Easypaisa', 'Bank (PKR)'].includes(user.paymentMethod) ? 'PKR' : 'USD')
+                        )}
                       </td>
 
                       {/* Payment Method */}
                       <td>
-                        <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-surface border border-line text-ink-2 font-mono">
-                          <Wallet className="w-3 h-3 text-ink-3" />
-                          {user.paymentMethod || 'Zelle'}
-                        </span>
+                        {['JazzCash', 'Easypaisa', 'Bank (PKR)'].includes(user.paymentMethod) ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 font-mono">
+                            <Wallet className="w-3 h-3 text-emerald-400" />
+                            {user.paymentMethod}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-surface border border-line text-ink-2 font-mono">
+                            <Wallet className="w-3 h-3 text-ink-3" />
+                            {user.paymentMethod || 'Zelle'}
+                          </span>
+                        )}
                       </td>
 
                       {/* Renewal Date */}
