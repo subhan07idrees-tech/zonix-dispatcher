@@ -1103,13 +1103,19 @@ function SubscriptionsPageContent() {
                         icon={Building2}
                         title="No matching companies found"
                         description={search ? 'Try clearing your search query.' : 'Assign a subscription plan to one of your existing organizations.'}
-                        action={!search ? {
-                          label: 'Assign Company Plan',
-                          onClick: () => {
-                            setAssignInitialType('organization');
-                            setShowAssignModal(true);
-                          }
-                        } : undefined}
+                        action={!search ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAssignInitialType('organization');
+                              setShowAssignModal(true);
+                            }}
+                            className="zx-btn-secondary text-xs flex items-center gap-1.5"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Assign Company Plan</span>
+                          </button>
+                        ) : null}
                       />
                     </td>
                   </tr>
@@ -1214,13 +1220,19 @@ function SubscriptionsPageContent() {
                         icon={Users}
                         title="No matching dispatchers found"
                         description={search ? 'Try clearing your search query.' : 'Assign a subscription plan to one of your existing dispatchers.'}
-                        action={!search ? {
-                          label: 'Assign Dispatcher Seat',
-                          onClick: () => {
-                            setAssignInitialType('user');
-                            setShowAssignModal(true);
-                          }
-                        } : undefined}
+                        action={!search ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAssignInitialType('user');
+                              setShowAssignModal(true);
+                            }}
+                            className="zx-btn-secondary text-xs flex items-center gap-1.5"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Assign Dispatcher Seat</span>
+                          </button>
+                        ) : null}
                       />
                     </td>
                   </tr>

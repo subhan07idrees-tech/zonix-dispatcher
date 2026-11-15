@@ -10,7 +10,21 @@ export default function EmptyState({ icon: Icon, title, description, action, cla
       )}
       <h3 className="text-sm font-medium text-ink mb-1">{title}</h3>
       {description && <p className="text-[13px] text-ink-2 max-w-sm mb-4">{description}</p>}
-      {action && <div>{action}</div>}
+      {action && (
+        <div>
+          {React.isValidElement(action) ? (
+            action
+          ) : typeof action === 'object' && action.label && action.onClick ? (
+            <button
+              type="button"
+              onClick={action.onClick}
+              className="zx-btn-secondary text-xs"
+            >
+              {action.label}
+            </button>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }
