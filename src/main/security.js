@@ -87,7 +87,7 @@ class SecurityEngine {
         for (const pattern of this.TELEMETRY_DOMAINS) {
           const domain = pattern.replace(/^\*?:\/\//, '').replace(/\/\*$/, '').replace(/\*/g, '');
           if (url.includes(domain)) {
-            return callback({ cancel: true, redirectURL: this.SINKHOLE_DATA_URI });
+            return callback({ redirectURL: this.SINKHOLE_DATA_URI });
           }
         }
 
@@ -123,9 +123,22 @@ class SecurityEngine {
       { urls: ['*://*/*'] },
       (details, callback) => {
         const headers = details.requestHeaders;
+        const url = details.url || '';
 
-        if (!headers['X-Zonix-Secured']) {
-          headers['X-Zonix-Secured'] = 'true';
+        // Only attach internal security handshake header to ZONIX own backend & portal
+        // Never leak or inject custom non-standard headers into third-party sites (DAT, Google Maps, HERE Maps)
+        // to prevent CORS preflight OPTIONS request amplification and avoid third-party fingerprint signatures
+        const isInternalZonixEndpoint = url.includes('thezonix.com') || 
+                                       url.includes('onrender.com') || 
+                                       url.includes('localhost') || 
+                                       url.includes('127.0.0.1');
+
+        if (isInternalZonixEndpoint) {
+          if (!headers['X-Zonix-Secured']) {
+            headers['X-Zonix-Secured'] = 'true';
+          }
+        } else if (headers['X-Zonix-Secured']) {
+          delete headers['X-Zonix-Secured'];
         }
 
         if (!headers['Accept-Language'] || headers['Accept-Language'] === '') {

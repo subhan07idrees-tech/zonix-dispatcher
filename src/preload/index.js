@@ -729,11 +729,16 @@ try {
       const target = e.target;
       if (!target) return;
 
-      const clickable = target.closest('a, button, [role="button"], [class*="company"], [class*="broker"], [class*="menu"], [class*="item"], [class*="nav"], li, div');
+      // Fast-Path Guard: Never thrash DOM layout or intercept clicks inside load data tables, rows, filters, or drawers
+      if (target.closest('[role="grid"], [role="row"], table, tr, td, [class*="table" i], [class*="row" i], [class*="load" i], [class*="pane" i]')) {
+        return;
+      }
+
+      const clickable = target.closest('a, button, [role="button"], [class*="company"], [class*="broker"], [class*="menu"], [class*="item"], [class*="nav"], li');
       if (!clickable) return;
 
       const href = (clickable.getAttribute('href') || '').toLowerCase();
-      const rawText = (clickable.innerText || clickable.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim();
+      const rawText = (clickable.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim();
 
       // Block restricted menu items (Support, My Account, Sign Out, Account Info, Privacy Policy, Terms, etc.) at the click root
       const menuBlockList = [
