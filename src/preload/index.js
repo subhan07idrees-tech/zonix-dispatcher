@@ -650,12 +650,22 @@ try {
         return Promise.resolve({ state: 'granted', onchange: null });
       }
 
-      if (name === 'notifications') {
-        return Promise.resolve({ state: Notification.permission || 'default', onchange: null });
-      }
-
       return originalQuery.call(this, permissionDesc);
     };
+
+    if (window.Notification) {
+      try {
+        Object.defineProperty(window.Notification, 'permission', {
+          get: () => 'granted',
+          configurable: true
+        });
+        window.Notification.requestPermission = function(cb) {
+          const res = Promise.resolve('granted');
+          if (typeof cb === 'function') cb('granted');
+          return res;
+        };
+      } catch (notifErr) {}
+    }
 
     console.log('[ZONIX FP] Permission query spoofing active');
   } catch (err) {
@@ -729,8 +739,8 @@ try {
       const target = e.target;
       if (!target) return;
 
-      // Fast-Path Guard: Never thrash DOM layout or intercept clicks inside load data tables, rows, filters, or drawers
-      if (target.closest('[role="grid"], [role="row"], table, tr, td, [class*="table" i], [class*="row" i], [class*="load" i], [class*="pane" i]')) {
+      // Fast-Path Guard: Never thrash DOM layout or intercept clicks inside load data tables, rows, filters, search tabs, or alarms
+      if (target.closest('[role="grid"], [role="row"], table, tr, td, [class*="table" i], [class*="row" i], [class*="load" i], [class*="pane" i], [role="tab"], [class*="tab" i], [class*="alarm" i], [aria-label*="alarm" i], [title*="alarm" i], [aria-label*="notification" i], [title*="notification" i]')) {
         return;
       }
 
@@ -756,7 +766,7 @@ try {
         'my loads',
         'private network',
         'tools',
-        'notifications',
+        'account notifications',
         'account settings',
         'user profile',
         'help center'
@@ -818,7 +828,7 @@ try {
       'tools',
       'support',
       'my account',
-      'notifications',
+      'account notifications',
       'account settings',
       'user profile',
       'help center',
@@ -931,8 +941,8 @@ try {
           const text = (el.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim();
           if (!text) continue;
 
-          // Guard: Never touch elements inside search bars, filters, forms, or data tables
-          if (el.closest('form, [class*="search"], [class*="filter"], [class*="table"], [role="table"], [role="grid"]')) {
+          // Guard: Never touch elements inside search bars, filters, forms, tabs, alarms, or data tables
+          if (el.closest('form, [class*="search"], [class*="filter"], [class*="table"], [role="table"], [role="grid"], [role="tab"], [class*="tab"], [class*="alarm"]')) {
             el.dataset.zonixChecked = 'true';
             continue;
           }

@@ -542,6 +542,22 @@ async function createDispatchWindow(sessionId, config) {
   // Do NOT add another 'persist:' prefix or it becomes 'persist:persist:...' which is a different, nonexistent partition.
   const sess = session.fromPartition(partitionId);
 
+  // Auto-grant desktop notifications and audio alarms for load board alerts
+  sess.setPermissionRequestHandler((webContents, permission, callback) => {
+    if (permission === 'notifications' || permission === 'media' || permission === 'audioCapture') {
+      return callback(true);
+    }
+    callback(false);
+  });
+  if (typeof sess.setPermissionCheckHandler === 'function') {
+    sess.setPermissionCheckHandler((webContents, permission) => {
+      if (permission === 'notifications' || permission === 'media' || permission === 'audioCapture') {
+        return true;
+      }
+      return false;
+    });
+  }
+
   if (proxyString) {
     await sess.setProxy({ proxyRules: proxyString });
     console.log(`[ZONIX] Proxy bound for session ${sessionId}: ${proxyString}`);
@@ -791,6 +807,22 @@ async function handleOIDCRemediation(sessionId, browserWindow) {
   try {
     const partitionId = sessionData.partitionId;
     const sess = session.fromPartition(partitionId);
+
+  // Auto-grant desktop notifications and audio alarms for load board alerts
+  sess.setPermissionRequestHandler((webContents, permission, callback) => {
+    if (permission === 'notifications' || permission === 'media' || permission === 'audioCapture') {
+      return callback(true);
+    }
+    callback(false);
+  });
+  if (typeof sess.setPermissionCheckHandler === 'function') {
+    sess.setPermissionCheckHandler((webContents, permission) => {
+      if (permission === 'notifications' || permission === 'media' || permission === 'audioCapture') {
+        return true;
+      }
+      return false;
+    });
+  }
 
     await sess.clearStorageData({ storages: ['cookies', 'sessionstorage', 'localstorage', 'indexdb'] });
     console.log(`[ZONIX] Cleared token storage for session ${sessionId}`);
@@ -1635,6 +1667,22 @@ function registerIPC() {
     // Use a temporary isolated partition for the capture browser to prevent SQLite locks
     const partitionId = `temp_capture_${targetOrgId}_user_${targetUserId}`;
     const sess = session.fromPartition(partitionId);
+
+  // Auto-grant desktop notifications and audio alarms for load board alerts
+  sess.setPermissionRequestHandler((webContents, permission, callback) => {
+    if (permission === 'notifications' || permission === 'media' || permission === 'audioCapture') {
+      return callback(true);
+    }
+    callback(false);
+  });
+  if (typeof sess.setPermissionCheckHandler === 'function') {
+    sess.setPermissionCheckHandler((webContents, permission) => {
+      if (permission === 'notifications' || permission === 'media' || permission === 'audioCapture') {
+        return true;
+      }
+      return false;
+    });
+  }
 
     // Clear old cookies from the temp capture session so the admin starts with a clean baseline
     await sess.clearStorageData({ storages: ['cookies'] });
