@@ -739,8 +739,8 @@ try {
       const target = e.target;
       if (!target) return;
 
-      // Fast-Path Guard: Never thrash DOM layout or intercept clicks inside load data tables, rows, filters, search tabs, or alarms
-      if (target.closest('[role="grid"], [role="row"], table, tr, td, [class*="table" i], [class*="row" i], [class*="load" i], [class*="pane" i], [role="tab"], [class*="tab" i], [class*="alarm" i], [aria-label*="alarm" i], [title*="alarm" i], [aria-label*="notification" i], [title*="notification" i]')) {
+      // Fast-Path Guard: Never thrash DOM layout or intercept clicks inside load data tables, rows, filters, search tabs, alarms, or copy buttons
+      if (target.closest('[role="grid"], [role="row"], table, tr, td, [class*="table" i], [class*="row" i], [class*="load" i], [class*="pane" i], [role="tab"], [class*="tab" i], [class*="alarm" i], [aria-label*="alarm" i], [title*="alarm" i], [aria-label*="notification" i], [title*="notification" i], [class*="copy" i], [aria-label*="copy" i], [title*="copy" i], .zonix-quick-copy-btn, .zonix-load-details-btn')) {
         return;
       }
 
@@ -853,6 +853,143 @@ try {
       </svg>
     `;
 
+    const fallbackCopyText = (text) => {
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.top = '-9999px';
+        textArea.style.left = '-9999px';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        return successful;
+      } catch (err) {
+        console.error('[ZONIX] Fallback copy failed:', err);
+        return false;
+      }
+    };
+
+    const safeCopyToClipboard = (text) => {
+      if (!text) return Promise.resolve(false);
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        return navigator.clipboard.writeText(text).then(() => true).catch((err) => {
+          console.warn('[ZONIX] navigator.clipboard.writeText failed, using fallback:', err);
+          return fallbackCopyText(text);
+        });
+      }
+      return Promise.resolve(fallbackCopyText(text));
+    };
+
+    const extractLoadDetailsFromText = (rawText) => {
+      if (!rawText) return '';
+      const text = rawText.replace(/\r\n/g, '\n');
+
+      // 1. Lane Header (Origin & Destination)
+      const laneMatch = text.match(/([A-Za-z\s\.\'-]+,\s*[A-Za-z]{2})\s*(?:<->|➔|->|to|—|–|-)\s*([A-Za-z\s\.\'-]+,\s*[A-Za-z]{2})/i);
+      const origin = laneMatch ? laneMatch[1].trim() : '';
+      const destination = laneMatch ? laneMatch[2].trim() : '';
+
+      // 2. Miles & Deadhead
+      const totalMilesMatch = text.match(/(\d[\d,]*)\s*mi\s*(?:total|\[([^\]]+)\])/i) || text.match(/(\d[\d,]*)\s*mi/i);
+      const loadedMilesMatch = text.match(/Loaded\s*miles[\s\n\r]*(\d[\d,]*\s*mi)/i);
+      const deadheadMatch = text.match(/Deadhead[\s\n\r]*(\d[\d,]*\s*mi)/i) || text.match(/\+?(\d[\d,]*\s*DH(?:-?[OD])?)/i);
+      
+      let milesStr = '';
+      if (totalMilesMatch) {
+        milesStr = totalMilesMatch[1] + ' mi total';
+        const subParts = [];
+        if (loadedMilesMatch) subParts.push(loadedMilesMatch[1].trim() + ' trip');
+        if (deadheadMatch) {
+          const dhText = deadheadMatch[1].trim();
+          subParts.push(dhText.toLowerCase().includes('dh') ? dhText : dhText + ' DH-O');
+        }
+        if (subParts.length > 0) {
+          milesStr += ' (' + subParts.join(' + ') + ')';
+        }
+      }
+
+      // 3. Rate
+      const totalPayMatch = text.match(/Total\s*Pay[\s\n\r]*\$([\d,]+)/i) || text.match(/Posted\s*rate[\s\n\r]*\$([\d,]+)/i) || text.match(/\$([\d,]+)/);
+      const ratePerMileMatch = text.match(/Rate\s*\/\s*Mile[^\$]*\$([\d\.]+)\/mi/i) || text.match(/\$([\d\.]+)\/mi/i);
+      let rateStr = totalPayMatch ? '$' + totalPayMatch[1] : 'Not Listed / Negotiable';
+      if (ratePerMileMatch) {
+        rateStr += ' ($' + ratePerMileMatch[1] + '/mi)';
+      }
+
+      // 4. Equipment
+      const truckMatch = text.match(/Truck[\s\n\r]+([^\n\r]+)/i);
+      const lengthMatch = text.match(/Length[\s\n\r]+([^\n\r]+)/i);
+      const weightMatch = text.match(/Weight[\s\n\r]+([^\n\r]+)/i);
+      const loadMatch = text.match(/Load[\s\n\r]+([^\n\r]+)/i);
+      const equipParts = [];
+      if (truckMatch && truckMatch[1].trim() !== '-') equipParts.push(truckMatch[1].trim());
+      if (lengthMatch && lengthMatch[1].trim() !== '-') equipParts.push(lengthMatch[1].trim());
+      if (weightMatch && weightMatch[1].trim() !== '-') equipParts.push(weightMatch[1].trim());
+      if (loadMatch && loadMatch[1].trim() !== '-') equipParts.push(loadMatch[1].trim());
+      const equipStr = equipParts.join(' | ');
+
+      // 5. Schedule (Pickup / Delivery Dates & Times)
+      let puDate = '';
+      let delDate = '';
+      const tripSectionMatch = text.match(/Trip[\s\n\r]+([^\n\r]+)[\s\n\r]+([^\n\r]+(?:[\s\n\r]+[^\n\r]+)?)[\s\n\r]+([^\n\r]+)[\s\n\r]+([^\n\r]+)/i);
+      if (tripSectionMatch) {
+        const date1 = tripSectionMatch[2].replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+        const date2 = tripSectionMatch[4].replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+        if (!date1.toLowerCase().includes('google maps') && !date1.toLowerCase().includes('rate')) {
+          puDate = date1;
+        }
+        if (!date2.toLowerCase().includes('google maps') && !date2.toLowerCase().includes('rate')) {
+          delDate = date2;
+        }
+      }
+      if (!puDate) {
+        const puColMatch = text.match(/Pick\s*Up[\s\n\r]+([^\n\r]+)/i) || text.match(/\bPU:?\s*([A-Za-z]{3}\s*\d{1,2}(?:\s*[\d:]+\s*(?:am|pm))?)/i);
+        if (puColMatch) puDate = puColMatch[1].trim();
+      }
+      if (!delDate) {
+        const delColMatch = text.match(/Deliver[^\n\r]*[\s\n\r]+([^\n\r]+)/i) || text.match(/\bDel:?\s*([^\n\r]+)/i);
+        if (delColMatch) delDate = delColMatch[1].trim();
+      }
+
+      // 6. Commodity & Comments
+      const commMatch = text.match(/Commodity[\s\n\r]+([^\n\r]+)/i);
+      const commentsMatch = text.match(/COMMENTS[\s\n\r]+([^\n\r]+)/i);
+      const detailNotes = [];
+      if (commMatch && commMatch[1].trim() !== '-') detailNotes.push(commMatch[1].trim());
+      if (commentsMatch && commentsMatch[1].trim() !== '-') detailNotes.push(commentsMatch[1].trim());
+
+      // Strict privacy sanitizer on notes (guarantees zero phone numbers, emails, or broker references leak)
+      const sanitizedNotes = detailNotes.map(n => {
+        return n
+          .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, '')
+          .replace(/(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, '')
+          .replace(/\b(?:MC|DOT)\s*#?\s*\d+\b/gi, '')
+          .replace(/\b\d+\s*(?:CS|DTP)\b/gi, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }).filter(Boolean);
+
+      // Assemble final multi-line format
+      const lines = [];
+      if (origin && destination) lines.push('📍 Lane: ' + origin + ' ➔ ' + destination);
+      if (milesStr) lines.push('🛣️ Miles: ' + milesStr);
+      if (rateStr) lines.push('💵 Rate: ' + rateStr);
+      if (equipStr) lines.push('🚛 Equipment: ' + equipStr);
+      if (puDate || delDate) {
+        const schedParts = [];
+        if (puDate) schedParts.push('PU: ' + puDate);
+        if (delDate) schedParts.push('Del: ' + delDate);
+        lines.push('📅 Schedule: ' + schedParts.join(' | '));
+      }
+      if (sanitizedNotes.length > 0) lines.push('📝 Details: ' + sanitizedNotes.join(' | '));
+
+      return lines.join('\n');
+    };
+
     const createStyledCopyButton = (getTextFn, titleText) => {
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -901,7 +1038,8 @@ try {
         e.stopPropagation();
         
         const text = btn._getTextFn ? btn._getTextFn() : getTextFn();
-        navigator.clipboard.writeText(text).then(() => {
+        safeCopyToClipboard(text).then((success) => {
+          if (!success) return;
           btn.dataset.copied = 'true';
           btn.innerHTML = getCheckSVG();
           btn.style.borderColor = '#86efac';
@@ -915,8 +1053,6 @@ try {
             btn.style.background = '#f8fafc';
             btn.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.04)';
           }, 1200);
-        }).catch(err => {
-          console.error('[ZONIX] Copy failed:', err);
         });
       });
       
@@ -938,14 +1074,14 @@ try {
           const el = elements[i];
           if (el.dataset.zonixBlocked === 'true' || el.dataset.zonixChecked === 'true' || el.style.display === 'none') continue;
           
-          const text = (el.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim();
-          if (!text) continue;
-
-          // Guard: Never touch elements inside search bars, filters, forms, tabs, alarms, or data tables
-          if (el.closest('form, [class*="search"], [class*="filter"], [class*="table"], [role="table"], [role="grid"], [role="tab"], [class*="tab"], [class*="alarm"]')) {
+          // Guard: Never touch copy buttons, details view, search bars, filters, forms, tabs, alarms, or data tables
+          if (el.classList.contains('zonix-load-details-btn') || el.classList.contains('zonix-quick-copy-btn') || el.closest('form, [class*="search"], [class*="filter"], [class*="table"], [role="table"], [role="grid"], [role="tab"], [class*="tab"], [class*="alarm"], [class*="detail" i]')) {
             el.dataset.zonixChecked = 'true';
             continue;
           }
+
+          const text = (el.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim();
+          if (!text) continue;
 
           let matched = false;
           for (let j = 0; j < blockLabels.length; j++) {
@@ -968,7 +1104,7 @@ try {
           }
         }
 
-      // Intercept and cancel clicks on mailto: links & inject Copy Email button
+      // Intercept and cancel clicks on mailto: links & manage Copy Email button (prevent duplicates if DAT has native copy button)
       const mailtoLinks = document.querySelectorAll('a[href^="mailto:"]');
       mailtoLinks.forEach(link => {
         if (!link.dataset.hooked) {
@@ -982,13 +1118,138 @@ try {
           link.style.setProperty('text-decoration', 'none', 'important');
         }
 
-        // Inject Copy Button next to the email address
-        if (!link.parentNode.querySelector('.zonix-quick-copy-btn')) {
+        const parent = link.parentNode;
+        if (!parent) return;
+
+        // Check if DAT One already has a native copy icon adjacent to this email link
+        const hasNativeCopyBtn = Array.from(parent.children).some(child => {
+          if (child === link || child.classList.contains('zonix-quick-copy-btn')) return false;
+          const t = (child.getAttribute('title') || child.getAttribute('aria-label') || child.className || '').toLowerCase();
+          return t.includes('copy') || child.querySelector('svg, mat-icon, [class*="icon" i]');
+        });
+
+        const existingZonixBtn = parent.querySelector('.zonix-quick-copy-btn');
+        if (hasNativeCopyBtn) {
+          // Remove duplicate if DAT One natively renders a copy icon
+          if (existingZonixBtn) existingZonixBtn.remove();
+        } else if (!existingZonixBtn) {
           const emailText = link.getAttribute('href').replace('mailto:', '');
           const copyBtn = createStyledCopyButton(() => emailText, 'Copy Email Address');
-          link.parentNode.insertBefore(copyBtn, link.nextSibling);
+          parent.insertBefore(copyBtn, link.nextSibling);
         }
       });
+
+      // Inject "Copy Load Details" button into DAT One Load Details Drawer
+      (() => {
+        const candidateHeaders = document.querySelectorAll('h1, h2, h3, h4, [class*="header" i], [class*="title" i], [class*="lane" i]');
+        for (let i = 0; i < candidateHeaders.length; i++) {
+          const hdr = candidateHeaders[i];
+          if (hdr.closest('[role="grid"], [role="row"], table')) continue;
+          
+          const rawText = (hdr.textContent || '').trim();
+          if (rawText.length < 10 || rawText.length > 200) continue;
+
+          // Must match two City, ST patterns separated by route indicators
+          const isLane = /[A-Za-z\s\.\'-]+,\s*[A-Za-z]{2}.*(?:<->|➔|->|to|—|–|-).*[A-Za-z\s\.\'-]+,\s*[A-Za-z]{2}/i.test(rawText);
+          if (!isLane) continue;
+
+          if (hdr.querySelector('.zonix-load-details-btn') || hdr.nextElementSibling?.classList?.contains('zonix-load-details-btn')) {
+            break; // Already injected
+          }
+
+          const detailsBtn = document.createElement('button');
+          detailsBtn.type = 'button';
+          detailsBtn.className = 'zonix-load-details-btn';
+          detailsBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: middle; margin-right: 4px;">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy Load Details
+          `;
+          detailsBtn.style.cssText = `
+            display: inline-flex;
+            align-items: center;
+            background: #0f172a;
+            color: #38bdf8;
+            border: 1px solid #0284c7;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            margin-left: 12px;
+            vertical-align: middle;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+            transition: all 0.15s ease-in-out;
+            letter-spacing: 0.2px;
+            line-height: 1.2;
+            flex-shrink: 0;
+          `;
+
+          detailsBtn.addEventListener('mouseenter', () => {
+            if (!detailsBtn.dataset.copied) {
+              detailsBtn.style.background = '#0284c7';
+              detailsBtn.style.color = '#ffffff';
+              detailsBtn.style.borderColor = '#38bdf8';
+            }
+          });
+          detailsBtn.addEventListener('mouseleave', () => {
+            if (!detailsBtn.dataset.copied) {
+              detailsBtn.style.background = '#0f172a';
+              detailsBtn.style.color = '#38bdf8';
+              detailsBtn.style.borderColor = '#0284c7';
+            }
+          });
+
+          detailsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            let paneRoot = hdr;
+            for (let p = 0; p < 8; p++) {
+              if (!paneRoot.parentElement || paneRoot.parentElement === document.body) break;
+              paneRoot = paneRoot.parentElement;
+              if (paneRoot.matches && paneRoot.matches('[class*="detail" i], [class*="drawer" i], [class*="pane" i], mat-drawer')) {
+                break;
+              }
+            }
+
+            const formattedText = extractLoadDetailsFromText(paneRoot.innerText || paneRoot.textContent || '');
+            if (!formattedText) return;
+
+            safeCopyToClipboard(formattedText).then(() => {
+              detailsBtn.dataset.copied = 'true';
+              detailsBtn.style.background = '#059669';
+              detailsBtn.style.color = '#ffffff';
+              detailsBtn.style.borderColor = '#34d399';
+              detailsBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: middle; margin-right: 4px;">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Copied!
+              `;
+              setTimeout(() => {
+                delete detailsBtn.dataset.copied;
+                detailsBtn.style.background = '#0f172a';
+                detailsBtn.style.color = '#38bdf8';
+                detailsBtn.style.borderColor = '#0284c7';
+                detailsBtn.innerHTML = `
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: middle; margin-right: 4px;">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  Copy Load Details
+                `;
+              }, 1500);
+            });
+          });
+
+          hdr.appendChild(detailsBtn);
+          break;
+        }
+      })();
 
       // Clean up any lingering location copy buttons
       document.querySelectorAll('.zonix-route-copy-btn').forEach(b => b.remove());

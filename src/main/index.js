@@ -542,16 +542,30 @@ async function createDispatchWindow(sessionId, config) {
   // Do NOT add another 'persist:' prefix or it becomes 'persist:persist:...' which is a different, nonexistent partition.
   const sess = session.fromPartition(partitionId);
 
-  // Auto-grant desktop notifications and audio alarms for load board alerts
+  // Auto-grant desktop notifications, audio alarms, and clipboard access for copy operations
   sess.setPermissionRequestHandler((webContents, permission, callback) => {
-    if (permission === 'notifications' || permission === 'media' || permission === 'audioCapture') {
+    if (
+      permission === 'notifications' ||
+      permission === 'media' ||
+      permission === 'audioCapture' ||
+      permission === 'clipboard-read' ||
+      permission === 'clipboard-write' ||
+      permission === 'clipboard-sanitized-write'
+    ) {
       return callback(true);
     }
     callback(false);
   });
   if (typeof sess.setPermissionCheckHandler === 'function') {
     sess.setPermissionCheckHandler((webContents, permission) => {
-      if (permission === 'notifications' || permission === 'media' || permission === 'audioCapture') {
+      if (
+        permission === 'notifications' ||
+        permission === 'media' ||
+        permission === 'audioCapture' ||
+        permission === 'clipboard-read' ||
+        permission === 'clipboard-write' ||
+        permission === 'clipboard-sanitized-write'
+      ) {
         return true;
       }
       return false;
@@ -808,16 +822,30 @@ async function handleOIDCRemediation(sessionId, browserWindow) {
     const partitionId = sessionData.partitionId;
     const sess = session.fromPartition(partitionId);
 
-  // Auto-grant desktop notifications and audio alarms for load board alerts
+  // Auto-grant desktop notifications, audio alarms, and clipboard access for copy operations
   sess.setPermissionRequestHandler((webContents, permission, callback) => {
-    if (permission === 'notifications' || permission === 'media' || permission === 'audioCapture') {
+    if (
+      permission === 'notifications' ||
+      permission === 'media' ||
+      permission === 'audioCapture' ||
+      permission === 'clipboard-read' ||
+      permission === 'clipboard-write' ||
+      permission === 'clipboard-sanitized-write'
+    ) {
       return callback(true);
     }
     callback(false);
   });
   if (typeof sess.setPermissionCheckHandler === 'function') {
     sess.setPermissionCheckHandler((webContents, permission) => {
-      if (permission === 'notifications' || permission === 'media' || permission === 'audioCapture') {
+      if (
+        permission === 'notifications' ||
+        permission === 'media' ||
+        permission === 'audioCapture' ||
+        permission === 'clipboard-read' ||
+        permission === 'clipboard-write' ||
+        permission === 'clipboard-sanitized-write'
+      ) {
         return true;
       }
       return false;
@@ -1668,16 +1696,30 @@ function registerIPC() {
     const partitionId = `temp_capture_${targetOrgId}_user_${targetUserId}`;
     const sess = session.fromPartition(partitionId);
 
-  // Auto-grant desktop notifications and audio alarms for load board alerts
+  // Auto-grant desktop notifications, audio alarms, and clipboard access for copy operations
   sess.setPermissionRequestHandler((webContents, permission, callback) => {
-    if (permission === 'notifications' || permission === 'media' || permission === 'audioCapture') {
+    if (
+      permission === 'notifications' ||
+      permission === 'media' ||
+      permission === 'audioCapture' ||
+      permission === 'clipboard-read' ||
+      permission === 'clipboard-write' ||
+      permission === 'clipboard-sanitized-write'
+    ) {
       return callback(true);
     }
     callback(false);
   });
   if (typeof sess.setPermissionCheckHandler === 'function') {
     sess.setPermissionCheckHandler((webContents, permission) => {
-      if (permission === 'notifications' || permission === 'media' || permission === 'audioCapture') {
+      if (
+        permission === 'notifications' ||
+        permission === 'media' ||
+        permission === 'audioCapture' ||
+        permission === 'clipboard-read' ||
+        permission === 'clipboard-write' ||
+        permission === 'clipboard-sanitized-write'
+      ) {
         return true;
       }
       return false;
