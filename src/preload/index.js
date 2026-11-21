@@ -1188,18 +1188,38 @@ try {
 
       // 1. Inject Micro-Copy Button on EVERY Table Row in Search Results (Zero layout shift, 60fps)
       (() => {
-        const rows = document.querySelectorAll('tr, [role="row"], dat-table-row, [class*="load-row" i], [class*="table-row" i], [class*="cdk-row" i], [class*="dat-row" i]');
-        for (let r = 0; r < rows.length; r++) {
-          const row = rows[r];
-          if (row.closest('thead') || row.querySelector('th, [role="columnheader"]')) continue;
-          if (row.querySelector('.zonix-row-copy-btn')) continue;
+        // DAT One renders loads with a <mat-checkbox> in the first cell of every load row
+        const checkboxes = document.querySelectorAll('mat-checkbox, [role="checkbox"]');
+        for (let i = 0; i < checkboxes.length; i++) {
+          const cb = checkboxes[i];
 
-          // Target the first cell (Checkbox / Action cell) so no data columns (Lane, Rate, Miles) get squished
-          const cells = Array.from(row.querySelectorAll('td, [role="cell"], [class*="cell" i]'));
-          if (cells.length === 0) continue;
+          // Skip header checkbox ("Select All")
+          const isHeader = cb.closest('thead, th, [role="columnheader"], [class*="header" i]');
+          const containerText = (cb.closest('tr, [role="row"], mat-row, [class*="row" i]')?.textContent || '').toLowerCase();
+          if (isHeader || (containerText.includes('age') && containerText.includes('rate') && containerText.includes('origin'))) {
+            continue;
+          }
 
-          const targetCell = cells[0];
-          if (!targetCell) continue;
+          // Host cell: the checkbox container cell
+          const hostCell = cb.parentElement;
+          if (!hostCell) continue;
+          if (hostCell.querySelector('.zonix-row-copy-btn')) continue;
+
+          // Find the entire row container to read full load text
+          let row = cb.closest('tr, [role="row"], mat-row, cdk-row, [class*="row" i], [class*="item" i]');
+          if (!row) {
+            let cur = hostCell;
+            for (let s = 0; s < 5; s++) {
+              if (!cur.parentElement || cur.parentElement === document.body) break;
+              cur = cur.parentElement;
+              const t = (cur.textContent || '');
+              if (/[A-Za-z\s\.\'-]{2,25},\s*[A-Z]{2}/.test(t) && (/\b(?:mi|lbs|ft)\b/i.test(t) || /\$\d+/.test(t))) {
+                row = cur;
+                break;
+              }
+            }
+          }
+          if (!row) row = hostCell.parentElement;
 
           const copyBtn = document.createElement('button');
           copyBtn.type = 'button';
@@ -1253,9 +1273,9 @@ try {
             e.preventDefault();
             e.stopPropagation();
 
-            const detailsDrawer = document.querySelector('[class*="detail" i], [class*="drawer" i], [class*="pane" i], mat-drawer');
+            const detailsDrawer = document.querySelector('mat-drawer, [class*="drawer" i], [class*="pane" i]');
             const drawerText = detailsDrawer ? (detailsDrawer.innerText || detailsDrawer.textContent || '') : '';
-            const rowText = row.innerText || row.textContent || '';
+            const rowText = row ? (row.innerText || row.textContent || '') : '';
             const formattedText = parseLoadFromRowAndDrawer(rowText, drawerText);
 
             if (!formattedText) return;
@@ -1285,39 +1305,48 @@ try {
             });
           });
 
-          targetCell.appendChild(copyBtn);
+          hostCell.style.setProperty('display', 'inline-flex', 'important');
+          hostCell.style.setProperty('align-items', 'center', 'important');
+          hostCell.appendChild(copyBtn);
         }
       })();
 
-      // 2. Inject Compact Copy Button in Load Details Drawer Header (When drawer is open)
+      // 2. Inject Compact Copy Button in Load Details Drawer Header (ONLY when drawer is genuinely open)
       (() => {
+        // Find the open details drawer / panel
+        const drawer = document.querySelector('mat-drawer, [class*="drawer" i], [class*="details-pane" i], [class*="load-details" i]');
+        if (!drawer || drawer.offsetWidth === 0 || drawer.offsetHeight === 0) {
+          // If drawer is closed, remove any lingering drawer buttons
+          document.querySelectorAll('.zonix-load-details-btn').forEach(b => b.remove());
+          return;
+        }
+
+        // Must be a real load drawer (contains rate calculator, comments, equipment, or map)
+        const isRealDrawer = drawer.querySelector('[class*="calculator" i], [class*="comments" i], [class*="contact" i], [class*="equipment" i]') ||
+                             /calculator|comments|commodity|contact/i.test(drawer.textContent || '');
+        if (!isRealDrawer) return;
+
+        // Clean up any rogue drawer buttons outside the drawer (e.g. accidentally in search table)
+        document.querySelectorAll('.zonix-load-details-btn').forEach(b => {
+          if (!drawer.contains(b)) b.remove();
+        });
+
+        if (drawer.querySelector('.zonix-load-details-btn')) return;
+
+        // Search ONLY inside the drawer for the lane header (e.g. Mt Prospect, IL <-> Flint, MI)
         const cityStateRegex = /\b[A-Za-z\s\.\'-]{2,35},\s*[A-Za-z]{2}\b/gi;
-        const candidates = document.querySelectorAll('h1, h2, h3, h4, h5, h6, [class*="header" i], [class*="title" i], [class*="lane" i], [class*="summary" i], [class*="details" i], div');
+        const candidates = drawer.querySelectorAll('h1, h2, h3, h4, h5, h6, [class*="header" i], [class*="title" i], [class*="lane" i]');
         
         let targetHeader = null;
         for (let i = 0; i < candidates.length; i++) {
           const el = candidates[i];
-          if (el.closest('[role="grid"], [role="row"], table, thead, tbody, tr, td, th, dat-table-row')) continue;
-
           const text = (el.textContent || '').trim();
           if (text.length < 15 || text.length > 200) continue;
           if (!/mi|dh/i.test(text)) continue;
 
           cityStateRegex.lastIndex = 0;
           const locMatches = text.match(cityStateRegex);
-          if (!locMatches || locMatches.length < 2) continue;
-
-          const hasDeeperMatch = Array.from(el.children).some(child => {
-            const ct = (child.textContent || '').trim();
-            if (ct.length >= 15 && ct.length <= 200 && /mi|dh/i.test(ct)) {
-              cityStateRegex.lastIndex = 0;
-              const cm = ct.match(cityStateRegex);
-              return cm && cm.length >= 2;
-            }
-            return false;
-          });
-
-          if (!hasDeeperMatch) {
+          if (locMatches && locMatches.length >= 2) {
             targetHeader = el;
             break;
           }
