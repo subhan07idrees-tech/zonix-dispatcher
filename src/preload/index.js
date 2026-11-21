@@ -1221,6 +1221,12 @@ try {
           }
           if (!row) row = hostCell.parentElement;
 
+          // Validate that this row actually represents a load (contains city, ST)
+          const rowTextCheck = (row ? (row.textContent || '') : '');
+          if (!/[A-Za-z\s\.\'-]{2,25},\s*[A-Z]{2}/.test(rowTextCheck)) {
+            continue;
+          }
+
           const copyBtn = document.createElement('button');
           copyBtn.type = 'button';
           copyBtn.className = 'zonix-row-copy-btn';
@@ -1275,7 +1281,23 @@ try {
 
             const detailsDrawer = document.querySelector('mat-drawer, [class*="drawer" i], [class*="pane" i]');
             const drawerText = detailsDrawer ? (detailsDrawer.innerText || detailsDrawer.textContent || '') : '';
-            const rowText = row ? (row.innerText || row.textContent || '') : '';
+            // Resolve live row dynamically at click time to account for virtual scroll recycling
+            let liveRow = cb.closest('tr, [role="row"], mat-row, cdk-row, [class*="row" i], [class*="item" i]');
+            if (!liveRow) {
+              let cur = hostCell;
+              for (let s = 0; s < 5; s++) {
+                if (!cur.parentElement || cur.parentElement === document.body) break;
+                cur = cur.parentElement;
+                const t = (cur.textContent || '');
+                if (/[A-Za-z\s\.\'-]{2,25},\s*[A-Z]{2}/.test(t) && (/\b(?:mi|lbs|ft)\b/i.test(t) || /\$\d+/.test(t))) {
+                  liveRow = cur;
+                  break;
+                }
+              }
+            }
+            if (!liveRow) liveRow = row;
+
+            const rowText = liveRow ? (liveRow.innerText || liveRow.textContent || '') : '';
             const formattedText = parseLoadFromRowAndDrawer(rowText, drawerText);
 
             if (!formattedText) return;
