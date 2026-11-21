@@ -739,8 +739,8 @@ try {
       const target = e.target;
       if (!target) return;
 
-      // Fast-Path Guard: Never thrash DOM layout or intercept clicks inside load data tables, rows, filters, search tabs, alarms, or copy buttons
-      if (target.closest('[role="grid"], [role="row"], table, tr, td, [class*="table" i], [class*="row" i], [class*="load" i], [class*="pane" i], [role="tab"], [class*="tab" i], [class*="alarm" i], [aria-label*="alarm" i], [title*="alarm" i], [aria-label*="notification" i], [title*="notification" i], [class*="copy" i], [aria-label*="copy" i], [title*="copy" i], .zonix-quick-copy-btn, .zonix-load-details-btn')) {
+      // Fast-Path Guard: Never thrash DOM layout or intercept clicks inside load data tables, rows, filters, search tabs, alarms, native/custom copy buttons, or icons
+      if (target.closest('[role="grid"], [role="row"], table, tr, td, [class*="table" i], [class*="row" i], [class*="load" i], [class*="pane" i], [role="tab"], [class*="tab" i], [class*="alarm" i], [aria-label*="alarm" i], [title*="alarm" i], [aria-label*="notification" i], [title*="notification" i], [class*="copy" i], [aria-label*="copy" i], [title*="copy" i], .zonix-quick-copy-btn, .zonix-load-details-btn, .zonix-row-copy-btn, mat-icon, svg, button')) {
         return;
       }
 
@@ -792,7 +792,7 @@ try {
 
         const emailToCopy = emailMatch ? emailMatch[0] : href.replace('mailto:', '');
         if (emailToCopy) {
-          navigator.clipboard.writeText(emailToCopy).catch(() => {});
+          safeCopyToClipboard(emailToCopy);
         }
         return false;
       }
@@ -806,7 +806,7 @@ try {
 
         const phoneToCopy = phoneMatch ? phoneMatch[0] : href.replace('tel:', '');
         if (phoneToCopy) {
-          navigator.clipboard.writeText(phoneToCopy).catch(() => {});
+          safeCopyToClipboard(phoneToCopy);
         }
         return false;
       }
@@ -873,100 +873,161 @@ try {
       }
     };
 
-    const safeCopyToClipboard = (text) => {
-      if (!text) return Promise.resolve(false);
+    function tryBrowserCopy(text) {
       if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-        return navigator.clipboard.writeText(text).then(() => true).catch((err) => {
-          console.warn('[ZONIX] navigator.clipboard.writeText failed, using fallback:', err);
-          return fallbackCopyText(text);
-        });
+        return navigator.clipboard.writeText(text).then(() => true).catch(() => fallbackCopyText(text));
       }
       return Promise.resolve(fallbackCopyText(text));
+    }
+
+    function safeCopyToClipboard(text) {
+      if (!text) return Promise.resolve(false);
+      // 1. Direct OS-Level Clipboard Bridge via Electron IPC (100% reliable)
+      try {
+        if (ipcRenderer && typeof ipcRenderer.invoke === 'function') {
+          return ipcRenderer.invoke('zonix:clipboard-write', text).then((res) => {
+            if (res) return true;
+            return tryBrowserCopy(text);
+          }).catch(() => tryBrowserCopy(text));
+        }
+      } catch (e) {}
+      return tryBrowserCopy(text);
+    }
+
+    // Proxy navigator.clipboard.writeText so DAT One's native blue copy icons also write to OS clipboard via IPC
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        const origWrite = navigator.clipboard.writeText.bind(navigator.clipboard);
+        navigator.clipboard.writeText = function(text) {
+          if (ipcRenderer && typeof ipcRenderer.invoke === 'function') {
+            ipcRenderer.invoke('zonix:clipboard-write', text).catch(() => {});
+          }
+          return origWrite(text).catch(() => Promise.resolve());
+        };
+      }
+    } catch (e) {}
+
+    const eqMap = {
+      'V': 'Van',
+      'SV': 'Sprinter Van',
+      'SB': 'Straight Box Truck',
+      'VR': 'Van / Reefer',
+      'R': 'Reefer',
+      'F': 'Flatbed',
+      'SD': 'Step Deck',
+      'HS': 'Hotshot',
+      'PO': 'Power Only',
+      'AUTO': 'Auto Carrier'
     };
 
-    const extractLoadDetailsFromText = (rawText) => {
-      if (!rawText) return '';
-      const text = rawText.replace(/\r\n/g, '\n');
+    const parseLoadFromRowAndDrawer = (rowText, drawerText = '') => {
+      const combinedText = (rowText + '\n' + drawerText).replace(/\r\n/g, '\n');
+      const cleanRow = (rowText || '').replace(/\s+/g, ' ');
 
-      // 1. Lane Header (Origin & Destination)
-      const cityStateRegex = /\b([A-Za-z\s\.\'-]{2,35}),\s*([A-Za-z]{2})\b/gi;
-      const laneMatches = [];
+      // 1. Origin & Destination
+      const cityStateRegex = /\b([A-Za-z\s\.\'-]{2,30}),\s*([A-Za-z]{2})\b/g;
+      const locs = [];
       let m;
-      while ((m = cityStateRegex.exec(text)) !== null) {
-        laneMatches.push(m[0].trim());
-        if (laneMatches.length >= 2) break;
+      while ((m = cityStateRegex.exec(cleanRow)) !== null) {
+        locs.push(m[0].trim());
+        if (locs.length >= 2) break;
       }
-      const origin = laneMatches.length > 0 ? laneMatches[0] : '';
-      const destination = laneMatches.length > 1 ? laneMatches[1] : '';
+      if (locs.length < 2 && drawerText) {
+        cityStateRegex.lastIndex = 0;
+        while ((m = cityStateRegex.exec(drawerText)) !== null) {
+          if (!locs.includes(m[0].trim())) locs.push(m[0].trim());
+          if (locs.length >= 2) break;
+        }
+      }
+      const origin = locs[0] || '';
+      const dest = locs[1] || '';
 
-      // 2. Miles & Deadhead
-      const totalMilesMatch = text.match(/(\d[\d,]*)\s*mi\s*(?:total|\[([^\]]+)\])/i) || text.match(/(\d[\d,]*)\s*mi/i);
-      const loadedMilesMatch = text.match(/Loaded\s*miles[\s\n\r]*(\d[\d,]*\s*mi)/i) || text.match(/(\d[\d,]*)\s*trip/i);
-      const deadheadMatch = text.match(/Deadhead[\s\n\r]*(\d[\d,]*\s*mi)/i) || text.match(/\+?(\d[\d,]*\s*DH(?:-?[OD])?)/i) || text.match(/(\d[\d,]*)\s*DH/i);
-      
+      // 2. Miles: Trip & Deadhead
+      const tripMatch = cleanRow.match(/\b(\d{1,4})\s+(?:[A-Za-z\s\.\'-]{2,30},\s*[A-Za-z]{2})/) ||
+                        combinedText.match(/Loaded\s*miles[\s\n\r]*(\d[\d,]*\s*mi)/i) ||
+                        combinedText.match(/(\d[\d,]*)\s*trip/i);
+      const tripMiles = tripMatch ? parseInt(tripMatch[1], 10) : null;
+      const dhMatch = cleanRow.match(/\((\d{1,4})\)/) ||
+                      combinedText.match(/Deadhead[\s\n\r]*(\d[\d,]*\s*mi)/i) ||
+                      combinedText.match(/\+?(\d[\d,]*)\s*DH/i);
+      const dhMiles = dhMatch ? parseInt(dhMatch[1], 10) : null;
+
       let milesStr = '';
-      if (totalMilesMatch) {
-        milesStr = totalMilesMatch[1] + ' mi total';
-        const subParts = [];
-        if (loadedMilesMatch) {
-          const lText = loadedMilesMatch[1].trim();
-          subParts.push(lText.includes('trip') ? lText : lText + ' trip');
-        }
-        if (deadheadMatch) {
-          const dhText = deadheadMatch[1].trim();
-          subParts.push(dhText.toLowerCase().includes('dh') ? dhText : dhText + ' DH-O');
-        }
-        if (subParts.length > 0) {
-          milesStr += ' (' + subParts.join(' + ') + ')';
-        }
-      }
-
-      // 3. Rate (Ignore 'weekly target' or 'target')
-      let rateStr = 'Not Listed / Negotiable';
-      const totalPayMatch = text.match(/Total\s*Pay[\s\n\r]*\$([\d,]+)/i) || text.match(/Posted\s*rate[\s\n\r]*\$([\d,]+)/i);
-      const ratePerMileMatch = text.match(/Rate\s*\/\s*Mile[^\$\n\r]*\$([\d\.]+)\/mi/i);
-      if (totalPayMatch) {
-        rateStr = '$' + totalPayMatch[1];
-        if (ratePerMileMatch) {
-          rateStr += ' ($' + ratePerMileMatch[1] + '/mi)';
+      if (tripMiles) {
+        if (dhMiles) {
+          const total = tripMiles + dhMiles;
+          milesStr = `${total} mi total (${tripMiles} mi trip + ${dhMiles} mi DH-O)`;
+        } else {
+          milesStr = `${tripMiles} mi trip`;
         }
       } else {
-        const fallbackRate = text.match(/(?:Rate|Pay)[:\s]*\$([\d,]+)/i);
-        if (fallbackRate) {
-          rateStr = '$' + fallbackRate[1];
+        const totalMatch = combinedText.match(/(\d[\d,]*)\s*mi\s*(?:total|\[([^\]]+)\])/i) || combinedText.match(/(\d[\d,]*)\s*mi/i);
+        if (totalMatch) milesStr = totalMatch[1] + ' mi';
+      }
+
+      // 3. Rate & Rate per mile
+      let rateStr = 'Not Listed / Negotiable';
+      const rateMatch = cleanRow.match(/\$([\d,]+)(?:\s*\$([\d\.]+)\/mi)?/) ||
+                        combinedText.match(/Total\s*Pay[\s\n\r]*\$([\d,]+)/i) ||
+                        combinedText.match(/Posted\s*rate[\s\n\r]*\$([\d,]+)/i);
+      if (rateMatch) {
+        rateStr = '$' + rateMatch[1];
+        if (rateMatch[2]) {
+          rateStr += ' ($' + rateMatch[2] + '/mi)';
+        } else {
+          const rpmMatch = combinedText.match(/Rate\s*\/\s*Mile[^\$\n\r]*\$([\d\.]+)\/mi/i);
+          if (rpmMatch) rateStr += ' ($' + rpmMatch[1] + '/mi)';
         }
       }
 
       // 4. Equipment
-      const truckMatch = text.match(/Truck[\s\n\r]+([^\n\r]+)/i);
-      const lengthMatch = text.match(/Length[\s\n\r]+([^\n\r]+)/i);
-      const weightMatch = text.match(/Weight[\s\n\r]+([^\n\r]+)/i);
-      const loadMatch = text.match(/(?:^|\n)\s*Load[\s\n\r]+(Full|Partial|Full\s*&\s*Partial)/i);
-      const equipParts = [];
-      if (truckMatch && truckMatch[1].trim() !== '-') equipParts.push(truckMatch[1].trim());
-      if (lengthMatch && lengthMatch[1].trim() !== '-') equipParts.push(lengthMatch[1].trim());
-      if (weightMatch && weightMatch[1].trim() !== '-') equipParts.push(weightMatch[1].trim());
-      if (loadMatch) equipParts.push(loadMatch[1].trim());
-      const equipStr = equipParts.join(' | ');
-
-      // 5. Schedule (Pickup / Delivery Dates & Times)
-      let puDate = '';
-      let delDate = '';
-      const dateRangeMatch = text.match(/\b([A-Za-z]{3}\s*\d{1,2}(?:\s*-\s*[A-Za-z]{3}\s*\d{1,2})?(?:\s*[\d:]+\s*(?:am|pm))?)/i);
-      if (dateRangeMatch) {
-        puDate = dateRangeMatch[1].trim();
+      const lengthMatch = cleanRow.match(/\b(\d{1,2})\s*ft\b/i) || combinedText.match(/Length[\s\n\r]+([^\n\r]+)/i);
+      const weightMatch = cleanRow.match(/\b([\d,]+)\s*lbs\b/i) || combinedText.match(/Weight[\s\n\r]+([^\n\r]+)/i);
+      const capMatch = cleanRow.match(/\b(Full|Partial)\b/i) || combinedText.match(/(?:^|\n)\s*Load[\s\n\r]+(Full|Partial)/i);
+      
+      let eqType = '';
+      const eqTokens = ['SV', 'SB', 'VR', 'V', 'R', 'F', 'SD', 'HS', 'PO', 'AUTO'];
+      for (const token of eqTokens) {
+        const r = new RegExp(`\\b${token}\\b`);
+        if (r.test(cleanRow)) {
+          eqType = eqMap[token] || token;
+          break;
+        }
+      }
+      if (!eqType && drawerText) {
+        const truckMatch = drawerText.match(/Truck[\s\n\r]+([^\n\r]+)/i);
+        if (truckMatch && truckMatch[1].trim() !== '-') eqType = truckMatch[1].trim();
       }
 
-      // 6. Commodity & Comments
-      const commMatch = text.match(/Commodity[\s\n\r]+([^\n\r]+)/i);
-      const commentsMatch = text.match(/COMMENTS[\s\n\r]+([^\n\r]+)/i);
-      const detailNotes = [];
-      if (commMatch && commMatch[1].trim() !== '-') detailNotes.push(commMatch[1].trim());
-      if (commentsMatch && commentsMatch[1].trim() !== '-') detailNotes.push(commentsMatch[1].trim());
+      const eqParts = [];
+      if (eqType) eqParts.push(eqType);
+      if (lengthMatch) eqParts.push(lengthMatch[0] ? lengthMatch[0].trim() : lengthMatch[1].trim());
+      if (weightMatch) eqParts.push(weightMatch[0] ? weightMatch[0].trim() : weightMatch[1].trim());
+      if (capMatch) eqParts.push(capMatch[0] ? capMatch[0].trim() : capMatch[1].trim());
+      const equipStr = eqParts.join(' | ');
 
-      // Strict privacy sanitizer on notes (guarantees zero phone numbers, emails, or broker references leak)
-      const sanitizedNotes = detailNotes.map(n => {
-        return n
+      // 5. Pickup Date (Strict calendar month / MM/DD format, never lbs/ft)
+      let puDate = '';
+      const dateMatch = cleanRow.match(/\b(\d{1,2}\/\d{1,2}(?:\s*-\s*\d{1,2}\/\d{1,2})?)\b/) ||
+                        cleanRow.match(/\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*\d{1,2}(?:\s*-\s*(?:[A-Za-z]{3}\s*)?\d{1,2})?)\b/i) ||
+                        drawerText.match(/\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*\d{1,2}(?:\s*-\s*(?:[A-Za-z]{3}\s*)?\d{1,2})?)\b/i);
+      if (dateMatch) {
+        puDate = dateMatch[1].trim();
+      }
+
+      // 6. Comments & Commodity (From Drawer or Row)
+      const commentsMatch = drawerText.match(/COMMENTS[\s\n\r]+([^\n\r]+)/i) || cleanRow.match(/Comments?[:\s]+([^\n\r]+)/i);
+      const commMatch = drawerText.match(/Commodity[\s\n\r]+([^\n\r]+)/i);
+      const refMatch = drawerText.match(/Reference\s*ID[\s\n\r]+([^\n\r]+)/i) || cleanRow.match(/Ref\s*(?:ID|#)?[:\s]*([A-Za-z0-9]+)/i);
+      
+      const commentItems = [];
+      if (commMatch && commMatch[1].trim() !== '-') commentItems.push(commMatch[1].trim());
+      if (commentsMatch && commentsMatch[1].trim() !== '-') commentItems.push(commentsMatch[1].trim());
+      if (refMatch && refMatch[1].trim() !== '-') commentItems.push('Ref ID: ' + refMatch[1].trim());
+
+      // Strict privacy sanitizer on comments (zero company/phone/email/MC leaks)
+      const sanitizedComments = commentItems.map(c => {
+        return c
           .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, '')
           .replace(/(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, '')
           .replace(/\b(?:MC|DOT)\s*#?\s*\d+\b/gi, '')
@@ -975,19 +1036,14 @@ try {
           .trim();
       }).filter(Boolean);
 
-      // Assemble final multi-line format
+      // Assemble final payload
       const lines = [];
-      if (origin && destination) lines.push('📍 Lane: ' + origin + ' ➔ ' + destination);
-      if (milesStr) lines.push('🛣️ Miles: ' + milesStr);
-      if (rateStr) lines.push('💵 Rate: ' + rateStr);
-      if (equipStr) lines.push('🚛 Equipment: ' + equipStr);
-      if (puDate || delDate) {
-        const schedParts = [];
-        if (puDate) schedParts.push('PU: ' + puDate);
-        if (delDate) schedParts.push('Del: ' + delDate);
-        lines.push('📅 Schedule: ' + schedParts.join(' | '));
-      }
-      if (sanitizedNotes.length > 0) lines.push('📝 Details: ' + sanitizedNotes.join(' | '));
+      if (origin && dest) lines.push(`📍 Lane: ${origin} ➔ ${dest}`);
+      if (milesStr) lines.push(`🛣️ Miles: ${milesStr}`);
+      if (rateStr) lines.push(`💵 Rate: ${rateStr}`);
+      if (equipStr) lines.push(`🚛 Equipment: ${equipStr}`);
+      if (puDate) lines.push(`📅 Date: ${puDate}`);
+      if (sanitizedComments.length > 0) lines.push(`📝 Comments: ${sanitizedComments.join(' | ')}`);
 
       return lines.join('\n');
     };
@@ -1077,7 +1133,7 @@ try {
           if (el.dataset.zonixBlocked === 'true' || el.dataset.zonixChecked === 'true' || el.style.display === 'none') continue;
           
           // Guard: Never touch copy buttons, details view, search bars, filters, forms, tabs, alarms, or data tables
-          if (el.classList.contains('zonix-load-details-btn') || el.classList.contains('zonix-quick-copy-btn') || el.closest('form, [class*="search"], [class*="filter"], [class*="table"], [role="table"], [role="grid"], [role="tab"], [class*="tab"], [class*="alarm"], [class*="detail" i]')) {
+          if (el.classList.contains('zonix-load-details-btn') || el.classList.contains('zonix-row-copy-btn') || el.classList.contains('zonix-quick-copy-btn') || el.closest('form, [class*="search"], [class*="filter"], [class*="table"], [role="table"], [role="grid"], [role="tab"], [class*="tab"], [class*="alarm"], [class*="detail" i]')) {
             el.dataset.zonixChecked = 'true';
             continue;
           }
@@ -1106,7 +1162,7 @@ try {
           }
         }
 
-      // Intercept and cancel clicks on mailto: links & manage Copy Email button (prevent duplicates if DAT has native copy button)
+      // Intercept and manage mailto: links (copies email on click, cancels mail client, removes duplicate quick-copy buttons)
       const mailtoLinks = document.querySelectorAll('a[href^="mailto:"]');
       mailtoLinks.forEach(link => {
         if (!link.dataset.hooked) {
@@ -1114,43 +1170,134 @@ try {
           link.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            const email = (link.getAttribute('href') || '').replace(/^mailto:/i, '').split('?')[0].trim();
+            if (email) safeCopyToClipboard(email);
           }, true);
-          link.style.setProperty('pointer-events', 'none', 'important');
-          link.style.setProperty('cursor', 'default', 'important');
-          link.style.setProperty('text-decoration', 'none', 'important');
+          link.style.setProperty('cursor', 'pointer', 'important');
         }
 
         const parent = link.parentNode;
-        if (!parent) return;
-
-        // Check if DAT One already has a native copy icon adjacent to this email link
-        const hasNativeCopyBtn = Array.from(parent.children).some(child => {
-          if (child === link || child.classList.contains('zonix-quick-copy-btn')) return false;
-          const t = (child.getAttribute('title') || child.getAttribute('aria-label') || child.className || '').toLowerCase();
-          return t.includes('copy') || child.querySelector('svg, mat-icon, [class*="icon" i]');
-        });
-
-        const existingZonixBtn = parent.querySelector('.zonix-quick-copy-btn');
-        if (hasNativeCopyBtn) {
-          // Remove duplicate if DAT One natively renders a copy icon
-          if (existingZonixBtn) existingZonixBtn.remove();
-        } else if (!existingZonixBtn) {
-          const emailText = link.getAttribute('href').replace('mailto:', '');
-          const copyBtn = createStyledCopyButton(() => emailText, 'Copy Email Address');
-          parent.insertBefore(copyBtn, link.nextSibling);
+        if (parent) {
+          const dupBtn = parent.querySelector('.zonix-quick-copy-btn');
+          if (dupBtn) dupBtn.remove();
         }
       });
 
-      // Inject "Copy Load Details" button into DAT One Load Details Drawer
+      // Remove any lingering duplicate quick-copy buttons across the view
+      document.querySelectorAll('.zonix-quick-copy-btn').forEach(b => b.remove());
+
+      // 1. Inject Micro-Copy Button on EVERY Table Row in Search Results (Zero layout shift, 60fps)
       (() => {
-        // Query candidate header elements across tags (h1-h6, divs, sections)
+        const rows = document.querySelectorAll('tr, [role="row"], dat-table-row, [class*="load-row" i], [class*="table-row" i], [class*="cdk-row" i], [class*="dat-row" i]');
+        for (let r = 0; r < rows.length; r++) {
+          const row = rows[r];
+          if (row.closest('thead') || row.querySelector('th, [role="columnheader"]')) continue;
+          if (row.querySelector('.zonix-row-copy-btn')) continue;
+
+          // Target the first cell (Checkbox / Action cell) so no data columns (Lane, Rate, Miles) get squished
+          const cells = Array.from(row.querySelectorAll('td, [role="cell"], [class*="cell" i]'));
+          if (cells.length === 0) continue;
+
+          const targetCell = cells[0];
+          if (!targetCell) continue;
+
+          const copyBtn = document.createElement('button');
+          copyBtn.type = 'button';
+          copyBtn.className = 'zonix-row-copy-btn';
+          copyBtn.title = 'Copy Load Details';
+          copyBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          `;
+          copyBtn.style.cssText = `
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 18px !important;
+            height: 18px !important;
+            min-width: 18px !important;
+            min-height: 18px !important;
+            padding: 0 !important;
+            margin-left: 6px !important;
+            background: #ffffff !important;
+            color: #0284c7 !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 4px !important;
+            cursor: pointer !important;
+            vertical-align: middle !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+            transition: all 0.15s ease-in-out !important;
+            flex-shrink: 0 !important;
+            box-sizing: border-box !important;
+            z-index: 5 !important;
+          `;
+
+          copyBtn.addEventListener('mouseenter', () => {
+            if (!copyBtn.dataset.copied) {
+              copyBtn.style.setProperty('background', '#f0f9ff', 'important');
+              copyBtn.style.setProperty('border-color', '#38bdf8', 'important');
+              copyBtn.style.setProperty('color', '#0369a1', 'important');
+            }
+          });
+          copyBtn.addEventListener('mouseleave', () => {
+            if (!copyBtn.dataset.copied) {
+              copyBtn.style.setProperty('background', '#ffffff', 'important');
+              copyBtn.style.setProperty('border-color', '#cbd5e1', 'important');
+              copyBtn.style.setProperty('color', '#0284c7', 'important');
+            }
+          });
+
+          copyBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const detailsDrawer = document.querySelector('[class*="detail" i], [class*="drawer" i], [class*="pane" i], mat-drawer');
+            const drawerText = detailsDrawer ? (detailsDrawer.innerText || detailsDrawer.textContent || '') : '';
+            const rowText = row.innerText || row.textContent || '';
+            const formattedText = parseLoadFromRowAndDrawer(rowText, drawerText);
+
+            if (!formattedText) return;
+
+            safeCopyToClipboard(formattedText).then(() => {
+              copyBtn.dataset.copied = 'true';
+              copyBtn.style.setProperty('background', '#f0fdf4', 'important');
+              copyBtn.style.setProperty('border-color', '#86efac', 'important');
+              copyBtn.style.setProperty('color', '#16a34a', 'important');
+              copyBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              `;
+              setTimeout(() => {
+                delete copyBtn.dataset.copied;
+                copyBtn.style.setProperty('background', '#ffffff', 'important');
+                copyBtn.style.setProperty('border-color', '#cbd5e1', 'important');
+                copyBtn.style.setProperty('color', '#0284c7', 'important');
+                copyBtn.innerHTML = `
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                `;
+              }, 1200);
+            });
+          });
+
+          targetCell.appendChild(copyBtn);
+        }
+      })();
+
+      // 2. Inject Compact Copy Button in Load Details Drawer Header (When drawer is open)
+      (() => {
         const cityStateRegex = /\b[A-Za-z\s\.\'-]{2,35},\s*[A-Za-z]{2}\b/gi;
         const candidates = document.querySelectorAll('h1, h2, h3, h4, h5, h6, [class*="header" i], [class*="title" i], [class*="lane" i], [class*="summary" i], [class*="details" i], div');
         
         let targetHeader = null;
         for (let i = 0; i < candidates.length; i++) {
           const el = candidates[i];
-          if (el.closest('[role="grid"], [role="row"], table, thead, tbody, tr, td, th')) continue;
+          if (el.closest('[role="grid"], [role="row"], table, thead, tbody, tr, td, th, dat-table-row')) continue;
 
           const text = (el.textContent || '').trim();
           if (text.length < 15 || text.length > 200) continue;
@@ -1160,7 +1307,6 @@ try {
           const locMatches = text.match(cityStateRegex);
           if (!locMatches || locMatches.length < 2) continue;
 
-          // Ensure it's the deepest element containing both locations
           const hasDeeperMatch = Array.from(el.children).some(child => {
             const ct = (child.textContent || '').trim();
             if (ct.length >= 15 && ct.length <= 200 && /mi|dh/i.test(ct)) {
@@ -1177,102 +1323,97 @@ try {
           }
         }
 
-        if (!targetHeader) return;
+        if (targetHeader && !targetHeader.querySelector('.zonix-load-details-btn')) {
+          const detailsBtn = document.createElement('button');
+          detailsBtn.type = 'button';
+          detailsBtn.className = 'zonix-load-details-btn';
+          detailsBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: middle; margin-right: 4px;">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span>Copy</span>
+          `;
+          detailsBtn.style.cssText = `
+            display: inline-flex !important;
+            align-items: center !important;
+            background: #ffffff !important;
+            color: #0284c7 !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 4px !important;
+            padding: 2px 7px !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            font-family: inherit !important;
+            cursor: pointer !important;
+            margin-left: 10px !important;
+            vertical-align: middle !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+            transition: all 0.15s ease-in-out !important;
+            line-height: 1.2 !important;
+            flex-shrink: 0 !important;
+            z-index: 999999 !important;
+            pointer-events: auto !important;
+          `;
 
-        if (targetHeader.querySelector('.zonix-load-details-btn') || targetHeader.nextElementSibling?.classList?.contains('zonix-load-details-btn')) {
-          return; // Already present
-        }
-
-        const detailsBtn = document.createElement('button');
-        detailsBtn.type = 'button';
-        detailsBtn.className = 'zonix-load-details-btn';
-        detailsBtn.innerHTML = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: middle; margin-right: 5px;">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
-          <span>Copy Load Details</span>
-        `;
-        detailsBtn.style.cssText = `
-          display: inline-flex !important;
-          align-items: center !important;
-          background: #0284c7 !important;
-          color: #ffffff !important;
-          border: 1px solid #38bdf8 !important;
-          border-radius: 6px !important;
-          padding: 5px 12px !important;
-          font-size: 12px !important;
-          font-weight: 700 !important;
-          font-family: inherit !important;
-          cursor: pointer !important;
-          margin-left: 14px !important;
-          vertical-align: middle !important;
-          box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4) !important;
-          transition: all 0.15s ease-in-out !important;
-          letter-spacing: 0.2px !important;
-          line-height: 1.2 !important;
-          flex-shrink: 0 !important;
-          z-index: 999999 !important;
-          opacity: 1 !important;
-          visibility: visible !important;
-          pointer-events: auto !important;
-        `;
-
-        detailsBtn.addEventListener('mouseenter', () => {
-          if (!detailsBtn.dataset.copied) {
-            detailsBtn.style.setProperty('background', '#0369a1', 'important');
-            detailsBtn.style.setProperty('border-color', '#7dd3fc', 'important');
-          }
-        });
-        detailsBtn.addEventListener('mouseleave', () => {
-          if (!detailsBtn.dataset.copied) {
-            detailsBtn.style.setProperty('background', '#0284c7', 'important');
-            detailsBtn.style.setProperty('border-color', '#38bdf8', 'important');
-          }
-        });
-
-        detailsBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-
-          let paneRoot = targetHeader;
-          for (let p = 0; p < 8; p++) {
-            if (!paneRoot.parentElement || paneRoot.parentElement === document.body) break;
-            paneRoot = paneRoot.parentElement;
-            if (paneRoot.matches && paneRoot.matches('[class*="detail" i], [class*="drawer" i], [class*="pane" i], mat-drawer')) {
-              break;
-            }
-          }
-
-          const formattedText = extractLoadDetailsFromText(paneRoot.innerText || paneRoot.textContent || '');
-          if (!formattedText) return;
-
-          safeCopyToClipboard(formattedText).then(() => {
-            detailsBtn.dataset.copied = 'true';
-            detailsBtn.style.setProperty('background', '#059669', 'important');
-            detailsBtn.style.setProperty('border-color', '#34d399', 'important');
-            detailsBtn.innerHTML = `
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: middle; margin-right: 5px;">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-              <span>Copied!</span>
-            `;
-            setTimeout(() => {
-              delete detailsBtn.dataset.copied;
-              detailsBtn.style.setProperty('background', '#0284c7', 'important');
+          detailsBtn.addEventListener('mouseenter', () => {
+            if (!detailsBtn.dataset.copied) {
+              detailsBtn.style.setProperty('background', '#f0f9ff', 'important');
               detailsBtn.style.setProperty('border-color', '#38bdf8', 'important');
-              detailsBtn.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: middle; margin-right: 5px;">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-                <span>Copy Load Details</span>
-              `;
-            }, 1500);
+            }
           });
-        });
+          detailsBtn.addEventListener('mouseleave', () => {
+            if (!detailsBtn.dataset.copied) {
+              detailsBtn.style.setProperty('background', '#ffffff', 'important');
+              detailsBtn.style.setProperty('border-color', '#cbd5e1', 'important');
+            }
+          });
 
-        targetHeader.appendChild(detailsBtn);
+          detailsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            let paneRoot = targetHeader;
+            for (let p = 0; p < 8; p++) {
+              if (!paneRoot.parentElement || paneRoot.parentElement === document.body) break;
+              paneRoot = paneRoot.parentElement;
+              if (paneRoot.matches && paneRoot.matches('[class*="detail" i], [class*="drawer" i], [class*="pane" i], mat-drawer')) {
+                break;
+              }
+            }
+
+            const formattedText = parseLoadFromRowAndDrawer('', paneRoot.innerText || paneRoot.textContent || '');
+            if (!formattedText) return;
+
+            safeCopyToClipboard(formattedText).then(() => {
+              detailsBtn.dataset.copied = 'true';
+              detailsBtn.style.setProperty('background', '#f0fdf4', 'important');
+              detailsBtn.style.setProperty('border-color', '#86efac', 'important');
+              detailsBtn.style.setProperty('color', '#16a34a', 'important');
+              detailsBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: middle; margin-right: 4px;">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Copied!</span>
+              `;
+              setTimeout(() => {
+                delete detailsBtn.dataset.copied;
+                detailsBtn.style.setProperty('background', '#ffffff', 'important');
+                detailsBtn.style.setProperty('border-color', '#cbd5e1', 'important');
+                detailsBtn.style.setProperty('color', '#0284c7', 'important');
+                detailsBtn.innerHTML = `
+                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: middle; margin-right: 4px;">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span>Copy</span>
+                `;
+              }, 1200);
+            });
+          });
+
+          targetHeader.appendChild(detailsBtn);
+        }
       })();
 
       // Clean up any lingering location copy buttons

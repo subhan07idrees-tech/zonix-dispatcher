@@ -1,4 +1,4 @@
-const { app, BrowserWindow, session, ipcMain, protocol, Tray, Menu, nativeImage, dialog, safeStorage } = require('electron');
+const { app, BrowserWindow, session, ipcMain, protocol, Tray, Menu, nativeImage, dialog, safeStorage, clipboard } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -1273,6 +1273,20 @@ function registerIPC() {
     const isGuest = typeof sender.isGuest === 'function' && sender.isGuest();
     const typeLabel = isGuest ? 'WebView' : 'Renderer';
     console.log(`[${typeLabel}] [${level}] ${message}`);
+  });
+
+  // Native OS-Level Clipboard Writer (100% reliable copy without DOM focus or webview permission barriers)
+  ipcMain.handle('zonix:clipboard-write', (event, text) => {
+    if (typeof text === 'string') {
+      try {
+        clipboard.writeText(text);
+        return true;
+      } catch (err) {
+        console.error('[ZONIX Main] clipboard.writeText error:', err.message);
+        return false;
+      }
+    }
+    return false;
   });
 
   ipcMain.on('get-app-version', (event) => {
