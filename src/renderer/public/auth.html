@@ -452,6 +452,12 @@
         return;
       }
 
+      if (navigator.onLine === false) {
+        errorEl.textContent = 'No internet connection. Please check your Wi-Fi or network and try again.';
+        errorEl.classList.add('visible');
+        return;
+      }
+
       btn.innerHTML = '<span class="spinner"></span><span>Signing in…</span>';
       btn.disabled = true;
       errorEl.classList.remove('visible');
@@ -487,7 +493,9 @@
           btn.disabled = false;
         }
       } catch (err) {
-        errorEl.textContent = 'Connection error: ' + (err.message || 'Unable to connect to backend.');
+        errorEl.textContent = navigator.onLine === false
+          ? 'No internet connection. Please check your Wi-Fi or network and try again.'
+          : 'Unable to reach ZONIX servers. Please check your internet connection and try again.';
         errorEl.classList.add('visible');
         btn.innerHTML = '<span>Sign in to console</span>';
         btn.disabled = false;

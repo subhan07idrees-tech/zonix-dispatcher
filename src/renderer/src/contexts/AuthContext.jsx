@@ -141,7 +141,9 @@ export function AuthProvider({ children }) {
       setError(data.error || 'Login failed');
       return { success: false, error: data.error };
     } catch (err) {
-      const errorMsg = 'Connection failed. Is the backend running?';
+      const errorMsg = (typeof navigator !== 'undefined' && navigator.onLine === false)
+        ? 'No internet connection. Please check your Wi-Fi or network and try again.'
+        : 'Unable to reach ZONIX servers. Please check your internet connection and try again.';
       setError(errorMsg);
       return { success: false, error: errorMsg };
     }

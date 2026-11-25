@@ -199,6 +199,41 @@ async function zonixFetch(url, options = {}) {
   return nodeFetch(url, { ...options, headers });
 }
 
+/**
+ * Translates raw Node.js / fetch network errors into clean, user-facing messages
+ * without exposing internal backend URLs or low-level socket/DNS details.
+ */
+function formatNetworkError(err) {
+  const msg = (err && err.message) ? String(err.message) : '';
+  const code = (err && (err.code || (err.cause && err.cause.code))) || '';
+
+  if (
+    code === 'ENOTFOUND' ||
+    code === 'EAI_AGAIN' ||
+    code === 'ENETUNREACH' ||
+    code === 'EHOSTUNREACH' ||
+    /ENOTFOUND|EAI_AGAIN|ENETUNREACH|EHOSTUNREACH|getaddrinfo/i.test(msg)
+  ) {
+    return 'No internet connection. Please check your Wi-Fi or network and try again.';
+  }
+
+  if (code === 'ETIMEDOUT' || code === 'ESOCKETTIMEDOUT' || /ETIMEDOUT|timed out|AbortError/i.test(msg)) {
+    return 'Connection timed out while reaching ZONIX servers. Please try again.';
+  }
+
+  if (code === 'ECONNREFUSED' || code === 'ECONNRESET' || /ECONNREFUSED|ECONNRESET|socket hang up/i.test(msg)) {
+    return 'Unable to reach ZONIX servers right now. Please try again in a moment.';
+  }
+
+  if (/request to https?:\/\/|fetch failed|network error/i.test(msg)) {
+    return 'Unable to reach ZONIX servers. Please check your internet connection and try again.';
+  }
+
+  // Strip any accidental URL/hostname from unexpected error strings
+  const sanitized = msg.replace(/https?:\/\/[^\s/$.?#].[^\s]*/gi, 'ZONIX servers').trim();
+  return sanitized || 'Unable to complete request. Please try again.';
+}
+
 // Background Keep-Alive Ping: prevents Render free tier backend from cold-sleeping (15m idle limit)
 let keepAliveTimer = null;
 function startBackendKeepAlive() {
@@ -1427,7 +1462,8 @@ function registerIPC() {
 
       return { success: false, error: result.error || 'Authentication failed' };
     } catch (err) {
-      return { success: false, error: err.message };
+      console.error('[ZONIX Main] auth:login failed:', err.message);
+      return { success: false, error: formatNetworkError(err) };
     }
   });
 
@@ -1603,10 +1639,11 @@ function registerIPC() {
       return { success: true, sessionId: backendSessionId };
     } catch (err) {
       console.error('[ZONIX Main] Launch failed:', err.message);
+      const userMessage = formatNetworkError(err);
       if (syncWindow && !syncWindow.isDestroyed()) {
-        syncWindow.webContents.send('sync:failed', err.message);
+        syncWindow.webContents.send('sync:failed', userMessage);
       }
-      return { success: false, error: err.message };
+      return { success: false, error: userMessage };
     }
   });
 
