@@ -1928,6 +1928,10 @@ function registerIPC() {
         }
 
         const finalLs = (localStorageData && localStorageData !== '{}') ? localStorageData : lastCapturedLocalStorage;
+        if (serializedCookies.length === 0 && (!finalLs || finalLs === '{}')) {
+          console.log(`[ZONIX Main] Skipping cookie sync for user ${targetUserId}: capture window closed with empty session.`);
+          return;
+        }
         const targetDomain = new URL(targetUrl).hostname;
 
         await zonixFetch(`${CONFIG.BACKEND_URL}/api/cookies/store`, {
