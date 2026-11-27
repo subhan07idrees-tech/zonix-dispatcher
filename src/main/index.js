@@ -1838,10 +1838,48 @@ function registerIPC() {
       ? 'https://one.dat.com/search-loads'
       : targetUrl;
 
-    try {
-      await captureWindow.loadURL(effectiveCaptureUrl);
-    } catch (loadErr) {
-      console.error('[ZONIX Main] Capture window failed to load URL:', loadErr.message);
+    // Pre-Flight IP Reputation Guard: verify proxy exit IP is NOT flagged as proxy/hosting before contacting DAT
+    let blockedByReputation = false;
+    if (proxyNode) {
+      const proxyRule = `${proxyNode.protocol.toLowerCase()}://${proxyNode.host}:${proxyNode.port}`;
+      const creds = (proxyNode.username && proxyNode.password)
+        ? { username: proxyNode.username, password: proxyNode.password }
+        : null;
+      const rep = await proxyManager.checkProxyReputation(proxyRule, `capture_${targetUserId}`, creds);
+      if (rep.checked && !rep.safe) {
+        blockedByReputation = true;
+        console.warn(`[ZONIX Security Shield] BLOCKED captureWindow on flagged IP ${rep.ip} (proxy=${rep.proxy}, hosting=${rep.hosting}, isp=${rep.isp}, org=${rep.org})`);
+        const safeHtml = `
+          <!doctype html><html><body style="margin:0;background:#0B0F19;color:#F1F5F9;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;padding:24px;box-sizing:border-box;">
+            <div style="max-width:540px;width:100%;background:#111827;border:1px solid #EF4444;border-radius:16px;padding:32px;box-shadow:0 24px 50px rgba(0,0,0,0.6);">
+              <div style="display:inline-block;background:rgba(239,68,68,0.15);color:#F87171;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;margin-bottom:16px;">ZONIX Security Shield · Login Blocked</div>
+              <h2 style="margin:0 0 10px;font-size:22px;color:#FFFFFF;">Flagged Proxy IP Detected</h2>
+              <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#94A3B8;">
+                ZONIX stopped this window <strong>before</strong> opening DAT to protect your account from being blocked (<code style="color:#FCA5A5;">user is blocked</code>).
+              </p>
+              <div style="background:#0B0F19;border:1px solid #1E293B;border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.7;color:#CBD5E1;margin-bottom:22px;">
+                <div><strong>Exit IP:</strong> ${rep.ip} (${rep.city}, ${rep.region})</div>
+                <div><strong>ISP / Org:</strong> ${rep.isp} / ${rep.org}</div>
+                <div><strong>Risk Flags:</strong> <span style="color:#F87171;">proxy=${rep.proxy}, hosting=${rep.hosting}</span></div>
+              </div>
+              <p style="margin:0 0 22px;font-size:13px;color:#94A3B8;">
+                Replace this proxy with a clean US residential ISP IP (<strong>proxy=false, hosting=false</strong>) in the Admin Portal, then retry.
+              </p>
+              <button onclick="window.close()" style="width:100%;background:#3156F5;color:#FFFFFF;border:none;border-radius:10px;padding:12px 18px;font-size:14px;font-weight:600;cursor:pointer;">Close Window</button>
+            </div>
+          </body></html>`;
+        await captureWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(safeHtml)).catch(() => {});
+      } else if (rep.checked) {
+        console.log(`[ZONIX Security Shield] Pre-flight IP reputation PASSED: ${rep.ip} (${rep.isp}, proxy=false, hosting=false)`);
+      }
+    }
+
+    if (!blockedByReputation) {
+      try {
+        await captureWindow.loadURL(effectiveCaptureUrl);
+      } catch (loadErr) {
+        console.error('[ZONIX Main] Capture window failed to load URL:', loadErr.message);
+      }
     }
 
     let lastCapturedLocalStorage = '{}';

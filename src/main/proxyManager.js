@@ -273,6 +273,83 @@ class ProxyManager {
     }
   }
 
+  /**
+   * Pre-flight IP reputation check routed strictly through the configured proxy.
+   * Detects flagged proxy/hosting/datacenter IPs BEFORE touching sensitive targets like DAT.
+   */
+  async checkProxyReputation(proxyString, sessionId, credentials) {
+    if (!proxyString) return { checked: false, safe: false, reason: 'No proxy configured' };
+
+    try {
+      const partitionKey = `reputation_check_${sessionId}`;
+      const checkSess = session.fromPartition(partitionKey);
+      await checkSess.setProxy({ proxyRules: proxyString });
+
+      const request = net.request({
+        method: 'GET',
+        url: 'http://ip-api.com/json/?fields=status,country,countryCode,regionName,city,isp,org,proxy,hosting,query',
+        session: checkSess
+      });
+
+      request.on('login', (authInfo, callback) => {
+        if (credentials && credentials.username) {
+          callback(credentials.username, credentials.password);
+        } else {
+          callback();
+        }
+      });
+
+      const info = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          request.abort();
+          reject(new Error('Reputation check timeout'));
+        }, 6000);
+
+        request.on('response', (response) => {
+          let body = '';
+          response.on('data', (chunk) => { body += chunk.toString(); });
+          response.on('end', () => {
+            clearTimeout(timeout);
+            try {
+              const parsed = JSON.parse(body);
+              if (parsed && parsed.status === 'success') {
+                resolve(parsed);
+              } else {
+                reject(new Error('Reputation lookup returned non-success status'));
+              }
+            } catch (e) {
+              reject(new Error('Invalid reputation JSON response'));
+            }
+          });
+        });
+
+        request.on('error', (err) => {
+          clearTimeout(timeout);
+          reject(err);
+        });
+
+        request.end();
+      });
+
+      const isFlagged = Boolean(info.proxy) || Boolean(info.hosting);
+      return {
+        checked: true,
+        safe: !isFlagged,
+        proxy: Boolean(info.proxy),
+        hosting: Boolean(info.hosting),
+        ip: info.query || 'Unknown',
+        countryCode: info.countryCode || '',
+        city: info.city || '',
+        region: info.regionName || '',
+        isp: info.isp || '',
+        org: info.org || ''
+      };
+    } catch (err) {
+      console.warn(`[ProxyManager] Reputation pre-flight check skipped (${err.message})`);
+      return { checked: false, safe: true, reason: err.message };
+    }
+  }
+
   stopAll() {
     this.healthChecks.forEach((timer) => clearInterval(timer));
     this.healthChecks.clear();
