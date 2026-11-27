@@ -1740,29 +1740,12 @@ function registerIPC() {
       console.error('[ZONIX Main] Invalid targetUrl:', e.message);
     }
 
-    // Retrieve existing credentials from database to pre-populate capture window
-    const existingData = await fetchCookiesForSession(targetOrgId, targetUserId, targetDomain, token);
-
     // Use a temporary isolated partition for the capture browser to prevent SQLite locks
     const partitionId = `temp_capture_${targetOrgId}_user_${targetUserId}`;
     const sess = session.fromPartition(partitionId);
 
-  // Auto-grant desktop notifications, audio alarms, and clipboard access for copy operations
-  sess.setPermissionRequestHandler((webContents, permission, callback) => {
-    if (
-      permission === 'notifications' ||
-      permission === 'media' ||
-      permission === 'audioCapture' ||
-      permission === 'clipboard-read' ||
-      permission === 'clipboard-write' ||
-      permission === 'clipboard-sanitized-write'
-    ) {
-      return callback(true);
-    }
-    callback(false);
-  });
-  if (typeof sess.setPermissionCheckHandler === 'function') {
-    sess.setPermissionCheckHandler((webContents, permission) => {
+    // Auto-grant desktop notifications, audio alarms, and clipboard access for copy operations
+    sess.setPermissionRequestHandler((webContents, permission, callback) => {
       if (
         permission === 'notifications' ||
         permission === 'media' ||
@@ -1771,25 +1754,29 @@ function registerIPC() {
         permission === 'clipboard-write' ||
         permission === 'clipboard-sanitized-write'
       ) {
-        return true;
+        return callback(true);
       }
-      return false;
+      callback(false);
     });
-  }
-
-    // Clear old cookies from the temp capture session so the admin starts with a clean baseline
-    await sess.clearStorageData({ storages: ['cookies'] });
-
-    // Pre-populate with existing cookies if present to keep session active
-    if (existingData && existingData.cookies && existingData.cookies.length > 0) {
-      console.log(`[ZONIX Main] Pre-populating capture window with ${existingData.cookies.length} existing cookies`);
-      await verifyCookieSync(sess, existingData.cookies, targetUrl);
+    if (typeof sess.setPermissionCheckHandler === 'function') {
+      sess.setPermissionCheckHandler((webContents, permission) => {
+        if (
+          permission === 'notifications' ||
+          permission === 'media' ||
+          permission === 'audioCapture' ||
+          permission === 'clipboard-read' ||
+          permission === 'clipboard-write' ||
+          permission === 'clipboard-sanitized-write'
+        ) {
+          return true;
+        }
+        return false;
+      });
     }
 
-    // Map existing localStorage so the preload script can load it
-    if (existingData && existingData.localStorage) {
-      sessionLocalStorageMap.set(partitionId, existingData.localStorage);
-    }
+    // Clear all old cookies & storage from the temp capture session so the admin always starts with a clean login baseline
+    // (Prevents stale/expired Auth0 tokens from looping or being locked by preload localStorage protection)
+    await sess.clearStorageData({ storages: ['cookies', 'localstorage', 'sessionstorage'] });
 
     if (proxyNode) {
       const proxyRule = `${proxyNode.protocol.toLowerCase()}://${proxyNode.host}:${proxyNode.port}`;
@@ -1810,6 +1797,9 @@ function registerIPC() {
       await sess.setProxy({ proxyRules: '127.0.0.1:0' });
       console.warn('[ZONIX Security Shield] Hard Proxy Enforcement: No active proxy node available for org. Blackholing connection to prevent direct IP leak.');
     }
+
+    // Apply WebRTC leak protection & consistent fingerprint headers during admin login capture
+    securityEngine.applyInterceptors(sess, targetOrgId, `capture_${targetUserId}`, proxyManager);
 
     const captureWindow = new BrowserWindow({
       width: 1280,
